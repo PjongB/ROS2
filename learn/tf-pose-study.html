@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ROS 2 TF와 Pose 발행 실습 노트</title>
+  <style>
+    :root {
+      --ink: #172235;
+      --muted: #64748b;
+      --line: #d9e2ec;
+      --paper: #f5f8fb;
+      --white: #fff;
+      --navy: #10233f;
+      --blue: #1769e0;
+      --cyan: #00a6a6;
+      --green: #18a66a;
+      --orange: #f08a24;
+      --red: #d74949;
+      --code: #0c1929;
+      --shadow: 0 12px 30px rgba(16,35,63,.10);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--paper);
+      font-family: "Noto Sans KR", Pretendard, "Apple SD Gothic Neo", sans-serif;
+      line-height: 1.72;
+    }
+    a { color: var(--blue); }
+    code, pre { font-family: "JetBrains Mono", D2Coding, Consolas, monospace; }
+    :not(pre) > code {
+      padding: .12rem .38rem;
+      color: #075f72;
+      background: #e7f5f7;
+      border-radius: 5px;
+      font-size: .92em;
+    }
+    .hero {
+      position: relative;
+      overflow: hidden;
+      padding: 68px max(24px, calc((100vw - 1180px) / 2)) 64px;
+      color: white;
+      background: linear-gradient(135deg, #0b1a31 0%, #12365b 62%, #00696e 100%);
+    }
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      opacity: .13;
+      background-image:
+        linear-gradient(rgba(255,255,255,.45) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.45) 1px, transparent 1px);
+      background-size: 44px 44px;
+      transform: perspective(500px) rotateX(56deg) scale(1.5) translateY(18%);
+      transform-origin: center bottom;
+    }
+    .hero > * { position: relative; z-index: 1; }
+    .home-link { display: inline-block; margin-bottom: 22px; padding: 8px 12px; color: #d7e8f5; border: 1px solid rgba(255,255,255,.25); border-radius: 9px; background: rgba(255,255,255,.08); text-decoration: none; font-size: .86rem; font-weight: 800; }
+    .home-link:hover { background: rgba(255,255,255,.16); }
+    .eyebrow { margin: 0 0 8px; color: #6de2d8; font-weight: 900; letter-spacing: .09em; }
+    h1 { max-width: 850px; margin: 0; font-size: clamp(2.1rem, 5.5vw, 4rem); line-height: 1.12; letter-spacing: -.04em; }
+    .hero p.lead { max-width: 780px; margin: 22px 0; color: #d7e8f5; font-size: 1.08rem; }
+    .badges { display: flex; flex-wrap: wrap; gap: 9px; }
+    .badge { padding: 7px 12px; border: 1px solid rgba(255,255,255,.28); border-radius: 999px; background: rgba(255,255,255,.08); font-size: .87rem; font-weight: 750; }
+
+    .layout { display: grid; grid-template-columns: 235px minmax(0, 910px); gap: 36px; max-width: 1220px; margin: 0 auto; padding: 38px 24px 90px; }
+    nav { position: sticky; top: 20px; align-self: start; padding: 18px; border: 1px solid var(--line); border-radius: 16px; background: white; box-shadow: var(--shadow); }
+    nav strong { display: block; margin: 0 0 10px 8px; color: var(--navy); }
+    nav a { display: block; padding: 7px 9px; color: var(--muted); border-radius: 8px; text-decoration: none; font-size: .91rem; }
+    nav a:hover { color: var(--blue); background: #eef5ff; }
+    main { min-width: 0; }
+    section { margin-bottom: 28px; padding: 32px; border: 1px solid var(--line); border-radius: 20px; background: white; box-shadow: 0 6px 20px rgba(16,35,63,.05); scroll-margin-top: 18px; }
+    h2 { margin: 0 0 20px; color: var(--navy); font-size: 1.68rem; line-height: 1.3; letter-spacing: -.025em; }
+    h3 { margin: 29px 0 11px; color: #17395c; }
+    h4 { margin: 21px 0 7px; color: #17395c; }
+    p { margin: 10px 0; }
+    ul, ol { padding-left: 1.4rem; }
+    li + li { margin-top: 5px; }
+
+    .flow { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin: 20px 0 4px; }
+    .flow div { position: relative; display: grid; place-items: center; min-height: 76px; padding: 10px; color: var(--navy); background: #eef6ff; border: 1px solid #cadef4; border-radius: 11px; text-align: center; font-size: .9rem; font-weight: 800; }
+    .flow div:not(:last-child)::after { content: "→"; position: absolute; right: -10px; z-index: 2; color: var(--blue); }
+
+    .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 13px; margin: 18px 0; }
+    .card { padding: 17px; border: 1px solid var(--line); border-radius: 13px; background: #fbfdff; }
+    .card .tag { color: var(--cyan); font-size: .79rem; font-weight: 900; letter-spacing: .07em; }
+    .card h3 { margin: 4px 0 7px; font-size: 1.02rem; }
+    .card p { margin: 0; color: var(--muted); font-size: .91rem; }
+
+    .frame-map { display: grid; grid-template-columns: 1fr 110px 1fr; align-items: center; margin: 22px 0; }
+    .frame { padding: 22px; border: 2px solid #bfd5ec; border-radius: 14px; background: #edf6ff; text-align: center; }
+    .frame.child { border-color: #9eddd5; background: #e5faf6; }
+    .frame strong { display: block; color: var(--navy); font-size: 1.1rem; }
+    .transform-arrow { position: relative; color: var(--blue); text-align: center; font-size: 2rem; font-weight: 900; }
+    .transform-arrow small { display: block; color: var(--muted); font-size: .72rem; font-weight: 700; }
+
+    .equation { margin: 16px 0; padding: 18px; color: #093e5b; background: linear-gradient(135deg, #eff8ff, #eefcf9); border: 1px solid #cce3e5; border-radius: 12px; text-align: center; font-family: Georgia, serif; font-size: 1.17rem; }
+    .callout { margin: 17px 0; padding: 15px 17px; border-left: 5px solid var(--blue); border-radius: 8px; background: #edf5ff; }
+    .callout.success { border-color: var(--green); background: #ebfaf3; }
+    .callout.warn { border-color: var(--orange); background: #fff6e7; }
+    .callout.danger { border-color: var(--red); background: #fff0f0; }
+    .callout strong { color: var(--navy); }
+
+    .code-wrap { position: relative; margin: 14px 0 20px; }
+    pre { overflow-x: auto; margin: 0; padding: 20px; color: #dceaf6; background: var(--code); border-radius: 12px; font-size: .87rem; line-height: 1.62; tab-size: 4; }
+    .copy { position: absolute; top: 9px; right: 9px; padding: 5px 9px; color: #dceaf6; background: #233b52; border: 1px solid #47617a; border-radius: 7px; cursor: pointer; font-size: .74rem; }
+    .copy:hover { background: #315773; }
+    table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: .92rem; }
+    th, td { padding: 11px 12px; border: 1px solid var(--line); text-align: left; vertical-align: top; }
+    th { color: var(--navy); background: #eef5fb; }
+    tr:nth-child(even) td { background: #fbfdff; }
+    details { margin: 10px 0; padding: 12px 15px; border: 1px solid var(--line); border-radius: 10px; background: #fbfdff; }
+    summary { color: var(--navy); cursor: pointer; font-weight: 800; }
+    .check { list-style: none; padding-left: 0; }
+    .check li::before { content: "□"; margin-right: 9px; color: var(--cyan); font-weight: 900; }
+    .small { color: var(--muted); font-size: .87rem; }
+    footer { padding: 25px; color: #8491a3; text-align: center; font-size: .84rem; }
+
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+      nav { position: static; columns: 2; }
+      nav strong { column-span: all; }
+      .flow { grid-template-columns: 1fr; }
+      .flow div:not(:last-child)::after { content: "↓"; right: auto; bottom: -17px; }
+      .cards { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 620px) {
+      section { padding: 23px 18px; }
+      nav { columns: 1; }
+      .frame-map { grid-template-columns: 1fr; gap: 7px; }
+      .transform-arrow { transform: rotate(90deg); }
+      th, td { padding: 8px; font-size: .82rem; }
+    }
+    @media print {
+      body { background: white; }
+      .hero { padding: 30px; }
+      .layout { display: block; padding: 20px; }
+      nav, .copy { display: none; }
+      section { box-shadow: none; break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <a class="home-link" href="../index.html">← ROS2 전체 강의</a>
+    <p class="eyebrow">ROS 2 JAZZY · TF2 STUDY NOTE</p>
+    <h1>TF로 좌표계와 자세(Pose) 발행하기</h1>
+    <p class="lead">PDF 이론과 직접 구현한 <b>world → moving_frame</b> TF broadcaster를 연결한 복습 문서. 원운동 위치부터 Quaternion 자세까지 코드와 수식으로 따라간다.</p>
+    <div class="badges">
+      <span class="badge">my_tf_1 · 위치</span>
+      <span class="badge">my_tf_2 · 위치 + 자세</span>
+      <span class="badge">TransformStamped</span>
+      <span class="badge">Quaternion</span>
+      <span class="badge">RViz2</span>
+    </div>
+  </header>
+
+  <div class="layout">
+    <nav aria-label="목차">
+      <strong>목차</strong>
+      <a href="#overview">1. 전체 흐름</a>
+      <a href="#frames">2. 좌표계와 TF</a>
+      <a href="#message">3. TransformStamped</a>
+      <a href="#position">4. my_tf_1 위치 발행</a>
+      <a href="#orientation">5. 자세와 Quaternion</a>
+      <a href="#pose">6. my_tf_2 자세 발행</a>
+      <a href="#package">7. 패키지 구조</a>
+      <a href="#run">8. 실행과 검증</a>
+      <a href="#trouble">9. 오류 해결</a>
+      <a href="#review">10. 복습 문제</a>
+    </nav>
+
+    <main>
+      <section id="overview">
+        <h2>1. 이번 실습의 전체 흐름</h2>
+        <div class="flow">
+          <div>좌표계<br><small>기준축 이해</small></div>
+          <div>TF<br><small>프레임 관계</small></div>
+          <div>원운동<br><small>위치 발행</small></div>
+          <div>Quaternion<br><small>회전 표현</small></div>
+          <div>RViz2<br><small>시각 검증</small></div>
+        </div>
+        <p>첫 번째 프로그램은 반지름 2m 원 위를 움직이는 좌표계를 만든다. 두 번째 프로그램은 같은 원운동에 회전을 추가해 <code>moving_frame</code>의 x축이 항상 원의 중심을 바라보게 한다.</p>
+        <div class="cards">
+          <article class="card"><span class="tag">POSITION</span><h3>위치</h3><p>x, y, z로 부모 프레임에 대한 자식 프레임의 위치를 표현한다.</p></article>
+          <article class="card"><span class="tag">ORIENTATION</span><h3>자세</h3><p>Quaternion x, y, z, w로 자식 프레임의 회전을 표현한다.</p></article>
+          <article class="card"><span class="tag">POSE</span><h3>Pose</h3><p>위치와 자세를 합쳐 공간에서 프레임의 전체 상태를 나타낸다.</p></article>
+        </div>
+      </section>
+
+      <section id="frames">
+        <h2>2. 좌표계(Frame)와 TF</h2>
+        <p>좌표계는 위치와 방향을 표현하는 기준축이다. 로봇 시스템에는 <code>world</code>, <code>base_link</code>, 카메라, 라이다처럼 여러 좌표계가 동시에 존재한다.</p>
+        <div class="frame-map">
+          <div class="frame"><strong>world</strong>부모 프레임<br>고정 기준 좌표계</div>
+          <div class="transform-arrow">→<small>Transform</small></div>
+          <div class="frame child"><strong>moving_frame</strong>자식 프레임<br>원 위를 이동</div>
+        </div>
+        <table>
+          <thead><tr><th>용어</th><th>의미</th></tr></thead>
+          <tbody>
+            <tr><td>Frame</td><td>위치와 방향을 측정하는 기준 좌표계</td></tr>
+            <tr><td>Transform</td><td>두 좌표계 사이의 이동과 회전 관계</td></tr>
+            <tr><td>TF</td><td>ROS에서 여러 좌표계 관계를 다루는 표준 체계</td></tr>
+            <tr><td>tf2</td><td>시간에 따라 변하는 TF 트리를 저장하고 조회하는 라이브러리</td></tr>
+            <tr><td>Broadcaster</td><td>좌표계 변환을 지속적으로 발행하는 주체</td></tr>
+            <tr><td>Listener</td><td>발행된 변환을 받아 저장·조회하는 주체</td></tr>
+          </tbody>
+        </table>
+        <div class="callout"><strong>읽는 법:</strong> <code>world → moving_frame</code>은 “moving_frame의 위치와 자세를 world 기준으로 설명한다”는 뜻이다.</div>
+      </section>
+
+      <section id="message">
+        <h2>3. TransformStamped 메시지 해부</h2>
+        <p>동적 TF 한 개는 <code>geometry_msgs/msg/TransformStamped</code> 메시지에 담긴다.</p>
+        <div class="code-wrap"><button class="copy">복사</button><pre><code>transform = TransformStamped()
+transform.header.stamp = self.get_clock().now().to_msg()
+transform.header.frame_id = 'world'
+transform.child_frame_id = 'moving_frame'
+
+transform.transform.translation.x = x
+transform.transform.translation.y = y
+transform.transform.translation.z = 0.0
+
+transform.transform.rotation.x = qx
+transform.transform.rotation.y = qy
+transform.transform.rotation.z = qz
+transform.transform.rotation.w = qw</code></pre></div>
+        <table>
+          <thead><tr><th>필드</th><th>역할</th></tr></thead>
+          <tbody>
+            <tr><td><code>header.stamp</code></td><td>이 변환이 유효한 ROS 시간</td></tr>
+            <tr><td><code>header.frame_id</code></td><td>부모 프레임 이름: <code>world</code></td></tr>
+            <tr><td><code>child_frame_id</code></td><td>자식 프레임 이름: <code>moving_frame</code></td></tr>
+            <tr><td><code>translation</code></td><td>부모 기준 자식의 위치 x, y, z</td></tr>
+            <tr><td><code>rotation</code></td><td>부모 기준 자식의 Quaternion 자세 x, y, z, w</td></tr>
+          </tbody>
+        </table>
+        <div class="callout warn"><strong>시간이 중요한 이유:</strong> TF는 시간에 따라 변한다. 현재 시간 없이 발행하거나 프레임마다 시간이 크게 다르면 tf2가 원하는 시점의 변환을 계산하지 못할 수 있다.</div>
+      </section>
+
+      <section id="position">
+        <h2>4. my_tf_1: 원운동 위치만 발행</h2>
+        <p>0.1초마다 각도 값을 0.05 rad씩 증가시키고 삼각함수로 원 위의 좌표를 계산한다.</p>
+        <div class="equation">x = 2 cos(θ) &nbsp;&nbsp;·&nbsp;&nbsp; y = 2 sin(θ) &nbsp;&nbsp;·&nbsp;&nbsp; z = 0</div>
+        <ul>
+          <li>반지름: 2m</li>
+          <li>중심: (0, 0)</li>
+          <li>운동 평면: world의 xy 평면</li>
+          <li>타이머 주기: 0.1초, 10Hz</li>
+        </ul>
+
+        <div class="code-wrap"><button class="copy">복사</button><pre><code>class MyTfBroadcaster(Node):
+    def __init__(self):
+        super().__init__('my_tf_broadcaster')
+        self.broadcaster = TransformBroadcaster(self)
+        self.timer = self.create_timer(0.1, self.timer_callback)
+        self.angle = 0.0
+
+    def timer_callback(self):
+        self.angle += 0.05
+
+        transform = TransformStamped()
+        transform.header.stamp = self.get_clock().now().to_msg()
+        transform.header.frame_id = 'world'
+        transform.child_frame_id = 'moving_frame'
+
+        transform.transform.translation.x = 2.0 * math.cos(self.angle)
+        transform.transform.translation.y = 2.0 * math.sin(self.angle)
+        transform.transform.translation.z = 0.0
+
+        transform.transform.rotation.w = 1.0
+        self.broadcaster.sendTransform(transform)</code></pre></div>
+        <div class="callout success"><strong>단위 Quaternion:</strong> 회전이 없더라도 <code>(x,y,z,w)=(0,0,0,1)</code>을 지정한다. 모두 0인 Quaternion은 유효한 회전이 아니다.</div>
+      </section>
+
+      <section id="orientation">
+        <h2>5. 자세 표현: Euler에서 Quaternion까지</h2>
+        <table>
+          <thead><tr><th>표현</th><th>장점</th><th>주의점</th></tr></thead>
+          <tbody>
+            <tr><td>Euler<br><code>roll, pitch, yaw</code></td><td>사람이 직관적으로 이해하기 쉽다.</td><td>회전 순서에 따라 결과가 달라지고 Gimbal Lock이 생길 수 있다.</td></tr>
+            <tr><td>Quaternion<br><code>x, y, z, w</code></td><td>특이점 없이 회전 보간과 합성에 적합하다.</td><td>네 숫자의 의미를 직관적으로 읽기 어렵고 정규화가 필요하다.</td></tr>
+          </tbody>
+        </table>
+        <h3>Roll, Pitch, Yaw</h3>
+        <ul>
+          <li><b>Roll</b>: x축을 중심으로 회전</li>
+          <li><b>Pitch</b>: y축을 중심으로 회전</li>
+          <li><b>Yaw</b>: z축을 중심으로 회전</li>
+        </ul>
+        <p>이번 예제는 xy 평면만 움직이므로 roll과 pitch는 0이고 yaw만 계산한다.</p>
+        <div class="code-wrap"><button class="copy">복사</button><pre><code>from tf_transformations import quaternion_from_euler
+
+quaternion = quaternion_from_euler(
+    0.0,  # roll
+    0.0,  # pitch
+    yaw,
+)</code></pre></div>
+        <div class="callout"><strong>Quaternion 순서:</strong> <code>quaternion_from_euler()</code> 반환값과 ROS 메시지는 모두 여기서 <code>(x, y, z, w)</code> 순서로 사용한다.</div>
+      </section>
+
+      <section id="pose">
+        <h2>6. my_tf_2: 원 중심을 바라보는 자세 발행</h2>
+        <p>현재 위치가 (x, y)라면 원점 방향 벡터는 (-x, -y)다. 이 벡터의 방향각을 <code>atan2</code>로 계산하면 moving_frame의 x축이 world 원점을 바라보게 할 수 있다.</p>
+        <div class="equation">yaw = atan2(-y, -x)</div>
+        <div class="code-wrap"><button class="copy">복사</button><pre><code>x = 2.0 * math.cos(self.angle)
+y = 2.0 * math.sin(self.angle)
+
+# 현재 위치에서 원점으로 향하는 방향
+yaw = math.atan2(-y, -x)
+quaternion = quaternion_from_euler(0.0, 0.0, yaw)
+
+transform.transform.translation.x = x
+transform.transform.translation.y = y
+
+transform.transform.rotation.x = quaternion[0]
+transform.transform.rotation.y = quaternion[1]
+transform.transform.rotation.z = quaternion[2]
+transform.transform.rotation.w = quaternion[3]
+
+self.broadcaster.sendTransform(transform)</code></pre></div>
+
+        <h3>my_tf_1과 my_tf_2 비교</h3>
+        <table>
+          <thead><tr><th>항목</th><th>my_tf_1</th><th>my_tf_2</th></tr></thead>
+          <tbody>
+            <tr><td>이동 경로</td><td>반지름 2m 원</td><td>반지름 2m 원</td></tr>
+            <tr><td>위치</td><td>시간에 따라 변화</td><td>시간에 따라 변화</td></tr>
+            <tr><td>자세</td><td>항상 단위 Quaternion</td><td>원점을 향하도록 yaw 변화</td></tr>
+            <tr><td>RViz 관찰</td><td>축 방향은 고정된 채 이동</td><td>x축이 중심을 바라보며 이동</td></tr>
+          </tbody>
+        </table>
+        <div class="callout success"><strong>실제 검증 결과 예:</strong> 위치 <code>[0.340, 1.971, 0]</code>, Quaternion <code>[0, 0, -0.765, 0.644]</code>가 함께 발행되어 회전이 변하는 것을 확인했다.</div>
+      </section>
+
+      <section id="package">
+        <h2>7. 패키지 구조와 entry point</h2>
+        <div class="code-wrap"><pre><code>~/dev_ws/ros/src/my_tf/
+├── my_tf/
+│   ├── __init__.py
+│   ├── my_tf_1.py
+│   └── my_tf_2.py
+├── resource/
+│   └── my_tf
+├── package.xml
+├── setup.cfg
+└── setup.py</code></pre></div>
+        <p>바깥쪽 <code>my_tf</code>는 ROS 패키지이고, 안쪽 <code>my_tf</code>는 Python 모듈이다. <code>ament_python</code>에서 정상적인 구조다.</p>
+
+        <h3>setup.py의 실행 명령 등록</h3>
+        <div class="code-wrap"><button class="copy">복사</button><pre><code>entry_points={
+    'console_scripts': [
+        'my_tf_1 = my_tf.my_tf_1:main',
+        'my_tf_2 = my_tf.my_tf_2:main',
+    ],
+},</code></pre></div>
+        <table>
+          <thead><tr><th>부분</th><th>예시</th><th>의미</th></tr></thead>
+          <tbody>
+            <tr><td>실행 이름</td><td><code>my_tf_2</code></td><td><code>ros2 run</code> 뒤에 입력할 이름</td></tr>
+            <tr><td>모듈 경로</td><td><code>my_tf.my_tf_2</code></td><td>안쪽 패키지의 Python 파일</td></tr>
+            <tr><td>함수</td><td><code>main</code></td><td>실행할 진입 함수</td></tr>
+          </tbody>
+        </table>
+        <div class="callout"><strong>핵심:</strong> Python 파일만 만들어서는 <code>ros2 run</code>이 찾지 못한다. entry point 등록 후 반드시 다시 빌드해야 한다.</div>
+      </section>
+
+      <section id="run">
+        <h2>8. 빌드·실행·RViz 검증</h2>
+        <h3>최초 빌드 또는 코드 변경 후</h3>
+        <div class="code-wrap"><button class="copy">복사</button><pre><code>cd ~/dev_ws/ros
+source /opt/ros/jazzy/setup.bash
+colcon build --packages-select my_tf
+source install/setup.bash</code></pre></div>
+
+        <h3>위치만 발행</h3>
+        <div class="code-wrap"><button class="copy">복사</button><pre><code>export ROS_DOMAIN_ID=18
+ros2 run my_tf my_tf_1</code></pre></div>
+
+        <h3>위치와 자세 발행</h3>
+        <p><code>my_tf_1</code>을 먼저 <code>Ctrl+C</code>로 종료한 뒤 실행한다.</p>
+        <div class="code-wrap"><button class="copy">복사</button><pre><code>ros2 run my_tf my_tf_2</code></pre></div>
+
+        <h3>터미널에서 TF 확인</h3>
+        <div class="code-wrap"><button class="copy">복사</button><pre><code>source /opt/ros/jazzy/setup.bash
+export ROS_DOMAIN_ID=18
+ros2 run tf2_ros tf2_echo world moving_frame</code></pre></div>
+
+        <h3>RViz2에서 확인</h3>
+        <ol>
+          <li>다른 터미널에서 <code>rviz2</code>를 실행한다.</li>
+          <li>Global Options의 <b>Fixed Frame</b>을 <code>world</code>로 바꾼다.</li>
+          <li><b>Add → TF</b>를 선택한다.</li>
+          <li>TF 옵션에서 <b>Show Names</b>를 켜고 Marker Scale을 조절한다.</li>
+          <li><code>my_tf_1</code>과 <code>my_tf_2</code>의 축 방향 차이를 비교한다.</li>
+        </ol>
+
+        <div class="callout danger"><strong>동시 실행 금지:</strong> 두 노드가 모두 <code>world → moving_frame</code>을 발행한다. 동시에 실행하면 같은 자식 프레임에 서로 다른 변환이 들어가 TF가 흔들리거나 예측할 수 없게 된다.</div>
+      </section>
+
+      <section id="trouble">
+        <h2>9. 자주 겪는 문제와 해결</h2>
+        <details open><summary>RViz에 TF가 보이지 않는다</summary><ul><li>Fixed Frame이 정확히 <code>world</code>인지 확인한다.</li><li>실행 터미널과 RViz의 <code>ROS_DOMAIN_ID</code>가 같은지 확인한다.</li><li><code>ros2 topic echo /tf</code>로 실제 TF 발행 여부를 확인한다.</li></ul></details>
+        <details><summary>Invalid frame ID "world"가 잠깐 출력된다</summary><p>Listener가 시작된 직후 첫 TF를 받기 전에는 정상적으로 잠깐 나타날 수 있다. 이후 Translation과 Rotation이 계속 출력되면 정상이다.</p></details>
+        <details><summary>Quaternion 관련 경고가 나온다</summary><p>회전이 없더라도 <code>rotation.w = 1.0</code>을 지정한다. <code>(0,0,0,0)</code>은 유효한 Quaternion이 아니다.</p></details>
+        <details><summary>No module named tf_transformations</summary><div class="code-wrap"><button class="copy">복사</button><pre><code>sudo apt install ros-jazzy-tf-transformations</code></pre></div></details>
+        <details><summary>가상환경에서 No module named transforms3d</summary><p>ROS apt 패키지의 Python 의존성을 가상환경이 보지 못하는 경우다.</p><div class="code-wrap"><button class="copy">복사</button><pre><code>~/venv/ros/bin/python3 -m pip install transforms3d</code></pre></div></details>
+        <details><summary>ros2 run이 실행 파일을 찾지 못한다</summary><ul><li><code>setup.py</code>의 entry point를 확인한다.</li><li><code>colcon build --packages-select my_tf</code>로 다시 빌드한다.</li><li><code>source install/setup.bash</code>를 다시 실행한다.</li></ul></details>
+        <details><summary>종료할 때 traceback이 출력된다</summary><p>Jazzy의 외부 종료 신호도 정상 종료로 처리하도록 <code>ExternalShutdownException</code>을 함께 catch한다.</p></details>
+      </section>
+
+      <section id="review">
+        <h2>10. 복습 체크리스트와 문제</h2>
+        <ul class="check">
+          <li>부모 프레임과 자식 프레임의 차이를 설명할 수 있다.</li>
+          <li><code>TransformStamped</code>의 시간·frame id·translation·rotation 필드를 설명할 수 있다.</li>
+          <li>왜 x=2cos(θ), y=2sin(θ)가 반지름 2m 원이 되는지 설명할 수 있다.</li>
+          <li>Euler의 Gimbal Lock과 Quaternion의 장점을 설명할 수 있다.</li>
+          <li><code>atan2(-y, -x)</code>가 원점 방향을 만드는 이유를 설명할 수 있다.</li>
+          <li>entry point가 <code>ros2 run</code> 명령과 어떻게 연결되는지 안다.</li>
+        </ul>
+
+        <details><summary>Q1. header.frame_id와 child_frame_id를 반대로 쓰면?</summary><p>변환의 의미가 뒤집힌다. 현재 위치 값을 그대로 두고 이름만 바꾸면 실제 의도와 다른 TF가 만들어진다.</p></details>
+        <details><summary>Q2. my_tf_1의 축 방향은 왜 회전하지 않을까?</summary><p>모든 시점에 단위 Quaternion <code>(0,0,0,1)</code>을 보내므로 world와 같은 방향을 유지한다.</p></details>
+        <details><summary>Q3. my_tf_2가 중심을 바라보는지 수학적으로 어떻게 확인할까?</summary><p>moving_frame의 yaw 방향 단위벡터와 현재 위치에서 원점으로 향하는 벡터 (-x,-y)가 같은 방향인지 확인한다.</p></details>
+        <details><summary>Q4. tf2_echo가 출력하는 transform은 무엇을 뜻할까?</summary><p><code>tf2_echo world moving_frame</code>은 moving_frame 데이터를 world 기준으로 표현하기 위한 변환을 보여준다.</p></details>
+
+        <div class="callout success"><strong>추천 실습:</strong> 반지름을 1m와 3m로 바꿔 보고, 타이머 주기와 각도 증가량을 바꾸면서 “발행 주기”와 “실제 회전 속도”가 어떻게 달라지는지 RViz에서 비교한다.</div>
+        <p class="small">기준 자료: “TF로 좌표계와 자세(pose) 발행하기” PDF 및 로컬 <code>my_tf</code> 구현.</p>
+      </section>
+    </main>
+  </div>
+
+  <footer>ROS 2 TF &amp; Pose Personal Study Note · 2026-08-07</footer>
+  <script>
+    document.querySelectorAll('.copy').forEach((button) => {
+      button.addEventListener('click', async () => {
+        const value = button.nextElementSibling.innerText;
+        try {
+          await navigator.clipboard.writeText(value);
+          button.textContent = '복사됨';
+          setTimeout(() => { button.textContent = '복사'; }, 1200);
+        } catch (_) {
+          button.textContent = '선택 후 복사';
+        }
+      });
+    });
+  </script>
+</body>
+</html>
