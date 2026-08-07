@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ROS 2 TF Listener와 RViz2 시각화 학습 노트</title>
+  <style>
+    :root {
+      --ink: #172033;
+      --muted: #647084;
+      --line: #dce3ea;
+      --paper: #f3f6f8;
+      --white: #ffffff;
+      --navy: #12243b;
+      --blue: #2563eb;
+      --violet: #7657d6;
+      --teal: #008f88;
+      --green: #168b58;
+      --orange: #e17820;
+      --red: #c94343;
+      --code: #0e1726;
+      --shadow: 0 14px 34px rgba(18, 36, 59, .09);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--paper);
+      font-family: "Noto Sans KR", Pretendard, "Apple SD Gothic Neo", sans-serif;
+      line-height: 1.72;
+    }
+    code, pre { font-family: "JetBrains Mono", D2Coding, Consolas, monospace; }
+    :not(pre) > code {
+      padding: .12rem .38rem;
+      color: #075c67;
+      background: #e4f5f5;
+      border-radius: 5px;
+      font-size: .92em;
+    }
+    .hero {
+      position: relative;
+      overflow: hidden;
+      padding: 68px max(24px, calc((100vw - 1220px) / 2)) 62px;
+      color: white;
+      background: linear-gradient(132deg, #0b182c 0%, #17345b 50%, #5340a0 100%);
+    }
+    .hero::after {
+      content: "";
+      position: absolute;
+      width: 480px;
+      height: 480px;
+      right: -120px;
+      top: -200px;
+      border: 70px solid rgba(255,255,255,.06);
+      border-radius: 50%;
+    }
+    .hero > * { position: relative; z-index: 1; }
+    .home-link { display: inline-block; margin-bottom: 22px; padding: 8px 12px; color: #dce8f5; border: 1px solid rgba(255,255,255,.25); border-radius: 9px; background: rgba(255,255,255,.08); text-decoration: none; font-size: .86rem; font-weight: 800; }
+    .home-link:hover { background: rgba(255,255,255,.16); }
+    .eyebrow { margin: 0 0 8px; color: #8ce9df; font-weight: 900; letter-spacing: .1em; }
+    h1 { max-width: 920px; margin: 0; font-size: clamp(2.05rem, 5.3vw, 4rem); line-height: 1.1; letter-spacing: -.045em; }
+    .lead { max-width: 830px; margin: 22px 0; color: #dce8f5; font-size: 1.08rem; }
+    .badges { display: flex; flex-wrap: wrap; gap: 9px; }
+    .badge { padding: 7px 12px; border: 1px solid rgba(255,255,255,.25); border-radius: 999px; background: rgba(255,255,255,.08); font-size: .86rem; font-weight: 760; }
+
+    .layout { display: grid; grid-template-columns: 245px minmax(0, 930px); gap: 36px; max-width: 1250px; margin: 0 auto; padding: 38px 24px 90px; }
+    nav { position: sticky; top: 20px; align-self: start; padding: 18px; border: 1px solid var(--line); border-radius: 16px; background: white; box-shadow: var(--shadow); }
+    nav strong { display: block; margin: 0 0 10px 8px; color: var(--navy); }
+    nav a { display: block; padding: 7px 9px; color: var(--muted); border-radius: 8px; text-decoration: none; font-size: .9rem; }
+    nav a:hover { color: var(--blue); background: #eef4ff; }
+    main { min-width: 0; }
+    section { margin-bottom: 28px; padding: 32px; border: 1px solid var(--line); border-radius: 20px; background: white; box-shadow: 0 6px 20px rgba(18,36,59,.045); scroll-margin-top: 18px; }
+    h2 { margin: 0 0 19px; color: var(--navy); font-size: 1.68rem; line-height: 1.3; letter-spacing: -.025em; }
+    h3 { margin: 29px 0 11px; color: #183b64; }
+    h4 { margin: 22px 0 8px; color: #28486c; }
+    p { margin: 10px 0; }
+    ul, ol { padding-left: 1.4rem; }
+    li + li { margin-top: 5px; }
+
+    .flow { display: grid; grid-template-columns: repeat(7, 1fr); gap: 7px; margin: 20px 0; }
+    .flow div { position: relative; display: grid; place-items: center; min-height: 82px; padding: 9px 6px; color: var(--navy); background: #eef4ff; border: 1px solid #cbdcf5; border-radius: 11px; text-align: center; font-size: .82rem; font-weight: 820; }
+    .flow div:nth-child(4), .flow div:nth-child(5) { background: #f2edff; border-color: #d8cdf7; }
+    .flow div:nth-child(6), .flow div:nth-child(7) { background: #eaf9f6; border-color: #bfe4dc; }
+    .flow div:not(:last-child)::after { content: "→"; position: absolute; right: -10px; z-index: 2; color: var(--violet); font-size: 1.05rem; }
+    .flow small { color: var(--muted); }
+
+    .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 13px; margin: 18px 0; }
+    .card { padding: 17px; border: 1px solid var(--line); border-radius: 13px; background: #fbfcfe; }
+    .card .tag { color: var(--violet); font-size: .78rem; font-weight: 900; letter-spacing: .07em; }
+    .card h3 { margin: 4px 0 7px; font-size: 1.02rem; }
+    .card p { margin: 0; color: var(--muted); font-size: .9rem; }
+
+    .callout { margin: 17px 0; padding: 15px 17px; border-left: 5px solid var(--blue); border-radius: 8px; background: #edf4ff; }
+    .callout.success { border-color: var(--green); background: #eaf8f1; }
+    .callout.warn { border-color: var(--orange); background: #fff5e7; }
+    .callout.danger { border-color: var(--red); background: #fff0f0; }
+    .callout strong { color: var(--navy); }
+    .equation { margin: 16px 0; padding: 18px; color: #173e61; background: linear-gradient(135deg, #edf6ff, #f3efff); border: 1px solid #d1dff0; border-radius: 12px; text-align: center; font-family: Georgia, serif; font-size: 1.18rem; }
+
+    .code-wrap { position: relative; margin: 14px 0 20px; }
+    pre { overflow-x: auto; margin: 0; padding: 20px; color: #deebf6; background: var(--code); border-radius: 12px; font-size: .86rem; line-height: 1.62; tab-size: 4; }
+    .copy { position: absolute; top: 9px; right: 9px; padding: 5px 9px; color: #dceaf6; background: #263950; border: 1px solid #496179; border-radius: 7px; cursor: pointer; font-size: .74rem; }
+    .copy:hover { background: #31536e; }
+    table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: .91rem; }
+    th, td { padding: 11px 12px; border: 1px solid var(--line); text-align: left; vertical-align: top; }
+    th { color: var(--navy); background: #eef3f8; }
+    tr:nth-child(even) td { background: #fbfcfe; }
+    details { margin: 10px 0; padding: 12px 15px; border: 1px solid var(--line); border-radius: 10px; background: #fbfcfe; }
+    summary { color: var(--navy); cursor: pointer; font-weight: 800; }
+    .terminal { margin: 16px 0 24px; padding: 18px; border: 1px solid #cad8e8; border-radius: 14px; background: #f7faff; }
+    .terminal h4 { margin-top: 0; }
+    .terminal .label { display: inline-block; margin-bottom: 7px; padding: 3px 8px; color: white; background: var(--violet); border-radius: 6px; font-size: .76rem; font-weight: 850; }
+    .small { color: var(--muted); font-size: .87rem; }
+
+    .quiz-question { margin: 16px 0; padding: 18px; border: 1px solid var(--line); border-radius: 13px; background: #fbfcfe; }
+    .quiz-question legend { padding: 0 7px; color: var(--navy); font-weight: 850; }
+    .choice { display: block; margin: 7px 0; padding: 9px 11px; border: 1px solid transparent; border-radius: 8px; cursor: pointer; }
+    .choice:hover { background: #f0f5fc; border-color: #d7e2ef; }
+    .choice input { margin-right: 8px; }
+    .quiz-question.correct { border-color: #8ed3b2; background: #f0fbf6; }
+    .quiz-question.wrong { border-color: #eda5a5; background: #fff5f5; }
+    .feedback { display: none; margin: 10px 0 0; padding-top: 9px; border-top: 1px dashed var(--line); color: var(--muted); font-size: .9rem; }
+    .quiz-question.graded .feedback { display: block; }
+    .quiz-actions { position: sticky; bottom: 10px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 24px; padding: 14px; border: 1px solid #d4ddec; border-radius: 13px; background: rgba(255,255,255,.96); box-shadow: var(--shadow); }
+    .primary, .secondary { padding: 10px 16px; border-radius: 9px; cursor: pointer; font-weight: 850; }
+    .primary { color: white; background: var(--blue); border: 1px solid var(--blue); }
+    .secondary { color: var(--navy); background: white; border: 1px solid #bac7d6; }
+    #quiz-result { color: var(--navy); font-weight: 900; }
+    footer { padding: 25px; color: #8491a3; text-align: center; font-size: .84rem; }
+
+    @media (max-width: 980px) {
+      .layout { grid-template-columns: 1fr; }
+      nav { position: static; columns: 2; }
+      nav strong { column-span: all; }
+      .flow { grid-template-columns: 1fr; }
+      .flow div:not(:last-child)::after { content: "↓"; right: auto; bottom: -17px; }
+      .cards { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 620px) {
+      section { padding: 23px 18px; }
+      nav { columns: 1; }
+      th, td { padding: 8px; font-size: .8rem; }
+    }
+    @media print {
+      body { background: white; }
+      .hero { padding: 30px; }
+      .layout { display: block; padding: 20px; }
+      nav, .copy, .quiz-actions { display: none; }
+      section { box-shadow: none; }
+      .feedback { display: block; }
+    }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <a class="home-link" href="../index.html">← ROS2 전체 강의</a>
+    <p class="eyebrow">ROS 2 JAZZY · TF2 LISTENER &amp; RVIZ2</p>
+    <h1>TF를 구독하고 거리와 이동 경로를 시각화하기</h1>
+    <p class="lead">TF Buffer와 Listener로 <b>world → child_frame</b> 변환을 조회하고, 거리·Marker·Path·3D 텍스트로 바꾸는 전체 과정. 실행 순서부터 알고리즘, 핵심 문법, 20문항 퀴즈까지 한 문서에서 복습한다.</p>
+    <div class="badges">
+      <span class="badge">Buffer + Listener</span>
+      <span class="badge">lookup_transform</span>
+      <span class="badge">Euclidean Distance</span>
+      <span class="badge">Marker.LINE_STRIP</span>
+      <span class="badge">nav_msgs/Path</span>
+      <span class="badge">20 Quiz</span>
+    </div>
+  </header>
+
+  <div class="layout">
+    <nav aria-label="목차">
+      <strong>목차</strong>
+      <a href="#overview">1. 전체 흐름</a>
+      <a href="#components">2. Buffer와 Listener</a>
+      <a href="#distance">3. 거리 계산</a>
+      <a href="#marker">4. Marker 궤적</a>
+      <a href="#path">5. Path 궤적</a>
+      <a href="#text">6. 거리 텍스트</a>
+      <a href="#algorithm">7. 전체 알고리즘</a>
+      <a href="#files">8. 파일과 토픽</a>
+      <a href="#run">9. 구동 순서</a>
+      <a href="#syntax">10. 문법 요약</a>
+      <a href="#trouble">11. 오류 해결</a>
+      <a href="#quiz">12. 문법 퀴즈 20</a>
+    </nav>
+
+    <main>
+      <section id="overview">
+        <h2>1. 시스템 전체 흐름</h2>
+        <div class="flow">
+          <div>combined_frame<br><small>TF 생성</small></div>
+          <div>/tf<br><small>변환 전달</small></div>
+          <div>Listener<br><small>자동 구독</small></div>
+          <div>Buffer<br><small>시간별 저장</small></div>
+          <div>lookup<br><small>관계 조회</small></div>
+          <div>거리·경로<br><small>데이터 가공</small></div>
+          <div>RViz2<br><small>화면 표시</small></div>
+        </div>
+        <p><code>combined_frame</code>은 좌표계 관계를 만드는 Broadcaster다. 이번에 추가한 노드들은 그 정보를 받는 Listener다. Listener가 TF를 직접 계산하는 것이 아니라, Buffer에 수집된 변환을 조회한 다음 필요한 거리나 경로로 가공한다.</p>
+        <div class="cards">
+          <article class="card"><span class="tag">INPUT</span><h3>TF Tree</h3><p><code>world → moving_frame → child_frame</code> 관계가 10 Hz로 들어온다.</p></article>
+          <article class="card"><span class="tag">PROCESS</span><h3>조회와 계산</h3><p>최신 변환의 translation을 읽어 거리 또는 이동 기록을 만든다.</p></article>
+          <article class="card"><span class="tag">OUTPUT</span><h3>Topic과 RViz2</h3><p>숫자 토픽, Marker, Path, 텍스트 Marker로 결과를 확인한다.</p></article>
+        </div>
+        <div class="callout warn"><strong>중요:</strong> 시각화 노드만 실행하면 좌표가 생기지 않는다. 먼저 <code>combined_frame</code>이 실행되어 <code>world</code>와 <code>child_frame</code> TF가 존재해야 한다.</div>
+      </section>
+
+      <section id="components">
+        <h2>2. Buffer, Listener, lookup_transform</h2>
+        <table>
+          <thead><tr><th>구성요소</th><th>역할</th><th>핵심 문법</th></tr></thead>
+          <tbody>
+            <tr><td>Buffer</td><td>시간에 따라 들어온 TF 변환을 캐시한다.</td><td><code>Buffer()</code></td></tr>
+            <tr><td>TransformListener</td><td><code>/tf</code>, <code>/tf_static</code>을 구독해 Buffer를 채운다.</td><td><code>TransformListener(buffer, node)</code></td></tr>
+            <tr><td>lookup_transform</td><td>두 프레임 사이의 변환을 Buffer에서 찾는다.</td><td><code>lookup_transform(target, source, time)</code></td></tr>
+            <tr><td>TransformException</td><td>프레임이 아직 없거나 시간 조건이 맞지 않을 때의 예외다.</td><td><code>except TransformException</code></td></tr>
+          </tbody>
+        </table>
+        <div class="code-wrap"><button class="copy">복사</button><pre><code>from tf2_ros import Buffer, TransformException, TransformListener
+
+self.tf_buffer = Buffer()
+self.tf_listener = TransformListener(self.tf_buffer, self)
+
+try:
+    transform = self.tf_buffer.lookup_transform(
+        'world',          # target: 결과를 표현할 기준 프레임
+        'child_frame',    # source: 위치를 알고 싶은 프레임
+        rclpy.time.Time() # 가장 최신 변환
+    )
+except TransformException as error:
+    self.get_logger().warning(str(error))
+    return</code></pre></div>
+        <div class="callout"><strong>읽는 방법:</strong> <code>lookup_transform('world', 'child_frame', ...)</code>은 “child_frame의 데이터를 world 좌표계로 표현하는 변환”을 요청한다. 결과의 translation은 world 원점에서 본 child_frame 위치다.</div>
+      </section>
+
+      <section id="distance">
+        <h2>3. 두 프레임 사이의 거리 계산</h2>
+        <p>TransformStamped 안쪽의 translation에서 x, y, z를 꺼내 3차원 유클리드 거리를 계산한다.</p>
+        <div class="equation">distance = √(x² + y² + z²)</div>
+        <div class="code-wrap"><button class="copy">복사</button><pre><code>translation = transform.transform.translation
+distance = math.sqrt(
+    translation.x ** 2
+    + translation.y ** 2
+    + translation.z ** 2
+)
+
+message = Float32()
+message.data = float(distance)
+self.distance_publisher.publish(message)</code></pre></div>
+        <p><code>transform.transform</code>이 반복되는 이유는 바깥 객체가 <code>TransformStamped</code>이고, 그 안의 <code>transform</code> 필드가 실제 이동·회전 정보를 가진 <code>Transform</code>이기 때문이다.</p>
+        <table>
+          <thead><tr><th>입력</th><th>계산</th><th>출력</th></tr></thead>
+          <tbody><tr><td><code>world → child_frame</code> translation</td><td><code>sqrt(x²+y²+z²)</code></td><td><code>/distance_world_child</code><br><code>std_msgs/Float32</code></td></tr></tbody>
+        </table>
+      </section>
+
+      <section id="marker">
+        <h2>4. Marker.LINE_STRIP으로 이동 궤적 그리기</h2>
+        <p>매 순간의 위치를 Python 리스트에 넣고, 각 좌표를 <code>Point</code>로 바꿔 Marker의 <code>points</code>에 추가한다. RViz2는 배열 순서대로 점을 연결한다.</p>
+        <div class="code-wrap"><button class="copy">복사</button><pre><code>self.positions.append((x, y, z))
+
+marker = Marker()
+marker.header.frame_id = 'world'
+marker.type = Marker.LINE_STRIP
+marker.action = Marker.ADD
+marker.pose.orientation.w = 1.0
+
+for x, y, z in self.positions:
+    point = Point()
+    point.x = x
+    point.y = y
+    point.z = z
+    marker.points.append(point)
+
+marker.scale.x = 0.02  # LINE_STRIP의 선 굵기
+marker.color.r = 1.0
+marker.color.a = 1.0   # 0이면 완전히 투명
+self.marker_publisher.publish(marker)</code></pre></div>
+        <h3>무한 궤적과 최근 궤적</h3>
+        <table>
+          <thead><tr><th>노드</th><th>저장 방식</th><th>화면 결과</th></tr></thead>
+          <tbody>
+            <tr><td><code>frame_trail_publisher_marker</code></td><td>모든 위치를 계속 저장</td><td>지나간 전체 경로</td></tr>
+            <tr><td><code>frame_trail_publisher_marker_2</code></td><td>최근 20개만 저장</td><td>프레임 뒤를 따르는 짧은 꼬리</td></tr>
+          </tbody>
+        </table>
+        <div class="code-wrap"><button class="copy">복사</button><pre><code>self.positions.append((x, y, z))
+if len(self.positions) &gt; self.max_points:
+    self.positions.pop(0)  # 가장 오래된 첫 번째 점 제거</code></pre></div>
+        <div class="callout warn"><strong>메모리:</strong> 전체 경로 예제는 학습용이다. 장시간 동작하는 실제 시스템에서는 길이 제한, 다운샘플링, 기록 파일 분리를 고려해야 한다.</div>
+      </section>
+
+      <section id="path">
+        <h2>5. PoseStamped와 nav_msgs/Path</h2>
+        <p><code>Path</code>는 <code>PoseStamped[]</code> 배열이다. Point만 저장하는 Marker와 달리 위치뿐 아니라 Quaternion 방향도 함께 저장할 수 있어 네비게이션 경로 표현에 적합하다.</p>
+        <div class="code-wrap"><button class="copy">복사</button><pre><code>self.path_message = Path()
+self.path_message.header.frame_id = 'world'
+
+pose = PoseStamped()
+pose.header.stamp = now
+pose.header.frame_id = 'world'
+pose.pose.position.x = transform.transform.translation.x
+pose.pose.position.y = transform.transform.translation.y
+pose.pose.position.z = transform.transform.translation.z
+pose.pose.orientation = transform.transform.rotation
+
+self.path_message.poses.append(pose)
+self.path_message.header.stamp = now
+self.path_publisher.publish(self.path_message)</code></pre></div>
+        <table>
+          <thead><tr><th>비교</th><th>Marker.LINE_STRIP</th><th>nav_msgs/Path</th></tr></thead>
+          <tbody>
+            <tr><td>배열 요소</td><td><code>Point</code></td><td><code>PoseStamped</code></td></tr>
+            <tr><td>방향 정보</td><td>없음</td><td>Quaternion 포함</td></tr>
+            <tr><td>스타일 설정</td><td>메시지에서 색·두께 지정</td><td>RViz Path 디스플레이에서 지정</td></tr>
+            <tr><td>대표 용도</td><td>커스텀 선·도형</td><td>계획 경로·주행 궤적</td></tr>
+          </tbody>
+        </table>
+        <div class="callout success"><strong>슬라이딩 윈도우:</strong> <code>frame_trail_publisher_nav_2</code>는 <code>path_message.poses.pop(0)</code>으로 최근 50개 Pose만 유지한다.</div>
+      </section>
+
+      <section id="text">
+        <h2>6. Path + 거리 + 3D 텍스트 통합</h2>
+        <p><code>frame_trail_publisher_nav_3</code>는 한 번의 TF 조회 결과를 세 가지 출력으로 재사용한다.</p>
+        <div class="cards">
+          <article class="card"><span class="tag">PATH</span><h3>/frame_path</h3><p>최근 50개의 PoseStamped를 경로로 발행한다.</p></article>
+          <article class="card"><span class="tag">NUMBER</span><h3>/child_frame_distance</h3><p>다른 노드가 사용할 수 있는 Float64 거리 값이다.</p></article>
+          <article class="card"><span class="tag">TEXT</span><h3>/distance_marker</h3><p>RViz 카메라를 바라보는 거리 문자열이다.</p></article>
+        </div>
+        <div class="code-wrap"><button class="copy">복사</button><pre><code>marker.type = Marker.TEXT_VIEW_FACING
+marker.pose.position.x = translation.x
+marker.pose.position.y = translation.y
+marker.pose.position.z = translation.z + 0.5
+marker.pose.orientation.w = 1.0
+marker.scale.z = 0.5
+marker.color.a = 1.0
+marker.text = f'Distance: {distance:.2f} m'</code></pre></div>
+        <p><code>TEXT_VIEW_FACING</code>은 보는 방향이 바뀌어도 글자가 카메라를 향한다. 텍스트 크기는 LINE_STRIP의 <code>scale.x</code>와 달리 <code>scale.z</code>로 설정한다.</p>
+      </section>
+
+      <section id="algorithm">
+        <h2>7. 타이머 콜백 알고리즘</h2>
+        <ol>
+          <li>노드 시작 시 Buffer, TransformListener, Publisher, 0.1초 타이머를 생성한다.</li>
+          <li>Listener가 <code>/tf</code>와 <code>/tf_static</code>을 구독해 Buffer에 변환을 축적한다.</li>
+          <li>타이머가 0.1초마다 콜백을 호출한다.</li>
+          <li><code>lookup_transform('world', 'child_frame', Time())</code>으로 최신 변환을 요청한다.</li>
+          <li>변환이 아직 없으면 <code>TransformException</code>을 처리하고 이번 콜백만 끝낸다.</li>
+          <li>성공하면 translation과 rotation을 꺼낸다.</li>
+          <li>노드 목적에 따라 거리 계산, Point 누적 또는 PoseStamped 누적을 수행한다.</li>
+          <li>최대 길이가 정해진 예제는 오래된 첫 요소를 제거한다.</li>
+          <li>Float, Marker 또는 Path 메시지를 완성해 토픽으로 발행한다.</li>
+          <li>RViz2나 <code>ros2 topic echo</code>가 출력 토픽을 구독해 결과를 보여준다.</li>
+        </ol>
+        <div class="callout"><strong>핵심 설계:</strong> 한 번 가져온 TF를 여러 결과로 바꿀 수 있다. <code>nav_3</code>가 같은 translation으로 Path, 숫자 거리, 텍스트 Marker를 만드는 것이 좋은 예다.</div>
+      </section>
+
+      <section id="files">
+        <h2>8. 구현 파일, 실행 이름, 출력 토픽</h2>
+        <table>
+          <thead><tr><th>실행 이름</th><th>출력</th><th>특징</th></tr></thead>
+          <tbody>
+            <tr><td><code>distance_world_child_publisher</code></td><td><code>/distance_world_child</code> Float32</td><td>거리만 계산</td></tr>
+            <tr><td><code>frame_trail_publisher_marker</code></td><td><code>/frame_trail_marker</code> Marker</td><td>전체 Point 궤적</td></tr>
+            <tr><td><code>frame_trail_publisher_marker_2</code></td><td><code>/frame_trail_marker</code> Marker</td><td>최근 20 Point</td></tr>
+            <tr><td><code>frame_trail_publisher_nav</code></td><td><code>/frame_path</code> Path</td><td>전체 Pose 궤적</td></tr>
+            <tr><td><code>frame_trail_publisher_nav_2</code></td><td><code>/frame_path</code> Path</td><td>최근 50 Pose</td></tr>
+            <tr><td><code>frame_trail_publisher_nav_3</code></td><td><code>/frame_path</code>, <code>/child_frame_distance</code>, <code>/distance_marker</code></td><td>경로·숫자·텍스트 통합</td></tr>
+          </tbody>
+        </table>
+        <div class="callout danger"><strong>변형 예제 동시 실행 금지:</strong> Marker 두 버전은 같은 토픽을, Path 세 버전도 같은 토픽을 사용한다. 비교할 때는 기존 변형을 <code>Ctrl+C</code>로 종료하고 다음 버전을 실행한다.</div>
+      </section>
+
+      <section id="run">
+        <h2>9. 빌드와 구동 순서</h2>
+        <h3>0단계 · 코드 변경 후 한 번 빌드</h3>
+        <div class="code-wrap"><button class="copy">복사</button><pre><code>cd ~/dev_ws/ros
+source /opt/ros/jazzy/setup.bash
+colcon build --packages-select my_tf --symlink-install
+source install/local_setup.bash</code></pre></div>
+        <p class="small">새 터미널을 열 때마다 ROS와 작업공간의 setup 파일을 다시 source해야 한다. <code>ROS_DOMAIN_ID</code>를 사용한다면 모든 터미널에서 같은 값을 사용한다.</p>
+
+        <h3>추천 최종 실습 · Path와 거리 텍스트</h3>
+        <div class="terminal">
+          <span class="label">터미널 1 · TF 공급</span>
+          <h4>Broadcaster를 먼저 실행하고 그대로 둔다</h4>
+          <div class="code-wrap"><button class="copy">복사</button><pre><code>source /opt/ros/jazzy/setup.bash
+source ~/dev_ws/ros/install/local_setup.bash
+ros2 run my_tf combined_frame</code></pre></div>
+        </div>
+        <div class="terminal">
+          <span class="label">터미널 2 · TF 활용</span>
+          <h4>Path와 거리 결과를 발행한다</h4>
+          <div class="code-wrap"><button class="copy">복사</button><pre><code>source /opt/ros/jazzy/setup.bash
+source ~/dev_ws/ros/install/local_setup.bash
+ros2 run my_tf frame_trail_publisher_nav_3</code></pre></div>
+        </div>
+        <div class="terminal">
+          <span class="label">터미널 3 · 시각화</span>
+          <h4>RViz2를 실행한다</h4>
+          <div class="code-wrap"><button class="copy">복사</button><pre><code>source /opt/ros/jazzy/setup.bash
+source ~/dev_ws/ros/install/local_setup.bash
+rviz2</code></pre></div>
+          <ol>
+            <li><b>Global Options → Fixed Frame</b>을 <code>world</code>로 설정한다.</li>
+            <li><b>Add → TF</b>를 추가한다.</li>
+            <li><b>Add → Path</b>를 추가하고 Topic을 <code>/frame_path</code>로 고른다.</li>
+            <li><b>Add → Marker</b>를 추가하고 Topic을 <code>/distance_marker</code>로 고른다.</li>
+          </ol>
+        </div>
+        <div class="terminal">
+          <span class="label">터미널 4 · 선택 확인</span>
+          <h4>숫자 토픽을 직접 확인한다</h4>
+          <div class="code-wrap"><button class="copy">복사</button><pre><code>source /opt/ros/jazzy/setup.bash
+source ~/dev_ws/ros/install/local_setup.bash
+ros2 topic echo /child_frame_distance</code></pre></div>
+        </div>
+
+        <h3>다른 예제 실행 방법</h3>
+        <p>터미널 1의 <code>combined_frame</code>은 그대로 두고, 터미널 2에서 아래 중 <b>하나만</b> 실행한다.</p>
+        <div class="code-wrap"><button class="copy">복사</button><pre><code># 거리만 계산
+ros2 run my_tf distance_world_child_publisher
+
+# 전체 Marker 경로
+ros2 run my_tf frame_trail_publisher_marker
+
+# 최근 20점 Marker 경로
+ros2 run my_tf frame_trail_publisher_marker_2
+
+# 전체 Path
+ros2 run my_tf frame_trail_publisher_nav
+
+# 최근 50 Pose Path
+ros2 run my_tf frame_trail_publisher_nav_2</code></pre></div>
+      </section>
+
+      <section id="syntax">
+        <h2>10. 반드시 기억할 문법</h2>
+        <table>
+          <thead><tr><th>문법</th><th>의미</th></tr></thead>
+          <tbody>
+            <tr><td><code>class X(Node)</code></td><td>ROS 2 Python 노드를 만드는 상속 문법</td></tr>
+            <tr><td><code>super().__init__('name')</code></td><td>부모 Node를 초기화하고 ROS 그래프의 노드 이름 지정</td></tr>
+            <tr><td><code>create_publisher(Type, 'topic', 10)</code></td><td>메시지 타입과 토픽 이름, QoS depth로 Publisher 생성</td></tr>
+            <tr><td><code>create_timer(0.1, callback)</code></td><td>0.1초마다 callback 호출, 즉 약 10 Hz</td></tr>
+            <tr><td><code>rclpy.time.Time()</code></td><td>TF 조회에서 가장 최신 변환 요청</td></tr>
+            <tr><td><code>message.data = value</code></td><td>Float32/Float64 메시지의 실제 값 저장</td></tr>
+            <tr><td><code>list.append(item)</code></td><td>배열 끝에 새 위치 또는 Pose 추가</td></tr>
+            <tr><td><code>list.pop(0)</code></td><td>가장 오래된 첫 요소 제거</td></tr>
+            <tr><td><code>f'{distance:.2f}'</code></td><td>실수를 소수점 둘째 자리까지 문자열로 변환</td></tr>
+            <tr><td><code>'name = package.module:main'</code></td><td>setup.py의 console_scripts 진입점 형식</td></tr>
+          </tbody>
+        </table>
+        <div class="callout success"><strong>학습 팁:</strong> 메시지 타입 → Publisher → 메시지 객체 생성 → 필드 채우기 → publish 순서를 한 묶음으로 외우면 대부분의 ROS 2 Python 발행 코드를 읽을 수 있다.</div>
+      </section>
+
+      <section id="trouble">
+        <h2>11. 자주 겪는 문제</h2>
+        <details open><summary>실행했는데 창이 나오지 않는다</summary><p>ROS 노드는 보통 GUI가 아니다. 터미널에서 계속 실행되는 것이 정상이다. 별도 터미널에서 <code>rviz2</code>를 실행하고 Fixed Frame과 디스플레이 토픽을 설정한다.</p></details>
+        <details><summary>Invalid frame ID 또는 Could not transform 경고</summary><p><code>combined_frame</code>을 먼저 실행했는지 확인한다. 시작 직후 첫 TF가 Buffer에 들어오기 전 한두 번의 경고는 정상일 수 있다.</p></details>
+        <details><summary>ros2 run이 실행 파일을 찾지 못한다</summary><p><code>colcon build --packages-select my_tf --symlink-install</code> 후 현재 터미널에서 <code>source ~/dev_ws/ros/install/local_setup.bash</code>를 다시 실행한다.</p></details>
+        <details><summary>RViz에 Path나 Marker가 보이지 않는다</summary><ul><li>Fixed Frame이 <code>world</code>인지 확인한다.</li><li>Path Topic이 <code>/frame_path</code>인지 확인한다.</li><li>Marker Topic이 목적에 따라 <code>/frame_trail_marker</code> 또는 <code>/distance_marker</code>인지 확인한다.</li><li>각 터미널의 <code>ROS_DOMAIN_ID</code>가 같은지 확인한다.</li></ul></details>
+        <details><summary>텍스트는 있는데 선이 안 보인다</summary><p><code>nav_3</code>의 선은 Marker가 아니라 Path다. RViz에 Marker뿐 아니라 <b>Path</b> 디스플레이도 추가해야 한다.</p></details>
+        <details><summary>경로가 이상하게 겹치거나 떨린다</summary><p>같은 출력 토픽을 쓰는 Marker 변형 또는 Path 변형을 동시에 실행했는지 확인한다. 비교 대상 외 노드는 <code>Ctrl+C</code>로 종료한다.</p></details>
+      </section>
+
+      <section id="quiz">
+        <h2>12. ROS 2 TF 문법 퀴즈 20문항</h2>
+        <p>각 문제에서 하나를 선택한 뒤 아래의 <b>채점하기</b>를 누른다. 채점 후 정답과 해설이 표시된다.</p>
+        <form id="quiz-form">
+          <fieldset class="quiz-question" data-answer="b">
+            <legend>1. ROS 2 Python 노드의 부모 클래스를 가져오는 올바른 문법은?</legend>
+            <label class="choice"><input type="radio" name="q1" value="a"> <code>from ros2.node import Node</code></label>
+            <label class="choice"><input type="radio" name="q1" value="b"> <code>from rclpy.node import Node</code></label>
+            <label class="choice"><input type="radio" name="q1" value="c"> <code>import Node from rclpy</code></label>
+            <p class="feedback">정답 B. <code>Node</code>는 <code>rclpy.node</code> 모듈에서 가져온다.</p>
+          </fieldset>
+
+          <fieldset class="quiz-question" data-answer="a">
+            <legend>2. TF 데이터를 시간별로 저장하는 객체 생성 문법은?</legend>
+            <label class="choice"><input type="radio" name="q2" value="a"> <code>self.tf_buffer = Buffer()</code></label>
+            <label class="choice"><input type="radio" name="q2" value="b"> <code>self.tf_buffer = Transform()</code></label>
+            <label class="choice"><input type="radio" name="q2" value="c"> <code>self.tf_buffer = Listener()</code></label>
+            <p class="feedback">정답 A. Buffer가 수신된 변환을 캐시한다.</p>
+          </fieldset>
+
+          <fieldset class="quiz-question" data-answer="c">
+            <legend>3. Listener를 현재 노드에 연결하는 올바른 문법은?</legend>
+            <label class="choice"><input type="radio" name="q3" value="a"> <code>TransformListener(self)</code></label>
+            <label class="choice"><input type="radio" name="q3" value="b"> <code>TransformListener('/tf')</code></label>
+            <label class="choice"><input type="radio" name="q3" value="c"> <code>TransformListener(self.tf_buffer, self)</code></label>
+            <p class="feedback">정답 C. 첫 인자는 채울 Buffer, 두 번째 인자는 구독을 생성할 Node다.</p>
+          </fieldset>
+
+          <fieldset class="quiz-question" data-answer="b">
+            <legend>4. TF에서 가장 최신 변환을 요청할 때 사용하는 시간 표현은?</legend>
+            <label class="choice"><input type="radio" name="q4" value="a"> <code>None</code></label>
+            <label class="choice"><input type="radio" name="q4" value="b"> <code>rclpy.time.Time()</code></label>
+            <label class="choice"><input type="radio" name="q4" value="c"> <code>self.get_clock()</code></label>
+            <p class="feedback">정답 B. 기본 생성된 Time은 TF2에서 최신 변환 조회에 사용한다.</p>
+          </fieldset>
+
+          <fieldset class="quiz-question" data-answer="a">
+            <legend>5. world 기준 child_frame 변환을 조회하는 인자 순서는?</legend>
+            <label class="choice"><input type="radio" name="q5" value="a"> <code>lookup_transform('world', 'child_frame', time)</code></label>
+            <label class="choice"><input type="radio" name="q5" value="b"> <code>lookup_transform('child_frame', 'world', time)</code></label>
+            <label class="choice"><input type="radio" name="q5" value="c"> <code>lookup_transform(time, 'world', 'child_frame')</code></label>
+            <p class="feedback">정답 A. 순서는 target, source, time이다.</p>
+          </fieldset>
+
+          <fieldset class="quiz-question" data-answer="c">
+            <legend>6. 조회 결과에서 x 이동량을 읽는 문법은?</legend>
+            <label class="choice"><input type="radio" name="q6" value="a"> <code>transform.translation.x</code></label>
+            <label class="choice"><input type="radio" name="q6" value="b"> <code>transform.pose.position.x</code></label>
+            <label class="choice"><input type="radio" name="q6" value="c"> <code>transform.transform.translation.x</code></label>
+            <p class="feedback">정답 C. 반환 타입은 TransformStamped이고 내부 transform의 translation을 읽는다.</p>
+          </fieldset>
+
+          <fieldset class="quiz-question" data-answer="b">
+            <legend>7. 3차원 유클리드 거리 계산 문법으로 맞는 것은?</legend>
+            <label class="choice"><input type="radio" name="q7" value="a"> <code>math.sqrt(x + y + z)</code></label>
+            <label class="choice"><input type="radio" name="q7" value="b"> <code>math.sqrt(x**2 + y**2 + z**2)</code></label>
+            <label class="choice"><input type="radio" name="q7" value="c"> <code>math.pow(x + y + z, 2)</code></label>
+            <p class="feedback">정답 B. 각 축 차이의 제곱합에 제곱근을 취한다.</p>
+          </fieldset>
+
+          <fieldset class="quiz-question" data-answer="a">
+            <legend>8. Float32 거리 Publisher를 만드는 문법은?</legend>
+            <label class="choice"><input type="radio" name="q8" value="a"> <code>create_publisher(Float32, 'distance_world_child', 10)</code></label>
+            <label class="choice"><input type="radio" name="q8" value="b"> <code>create_subscription(Float32, 'distance_world_child', 10)</code></label>
+            <label class="choice"><input type="radio" name="q8" value="c"> <code>publish(Float32, 'distance_world_child')</code></label>
+            <p class="feedback">정답 A. create_publisher의 인자는 메시지 타입, 토픽, QoS depth다.</p>
+          </fieldset>
+
+          <fieldset class="quiz-question" data-answer="c">
+            <legend>9. std_msgs/Float32 객체에 실제 값을 저장하는 필드는?</legend>
+            <label class="choice"><input type="radio" name="q9" value="a"> <code>message.value</code></label>
+            <label class="choice"><input type="radio" name="q9" value="b"> <code>message.float</code></label>
+            <label class="choice"><input type="radio" name="q9" value="c"> <code>message.data</code></label>
+            <p class="feedback">정답 C. 표준 단일 값 메시지는 <code>data</code> 필드를 사용한다.</p>
+          </fieldset>
+
+          <fieldset class="quiz-question" data-answer="b">
+            <legend>10. 약 10 Hz로 콜백을 실행하는 타이머 문법은?</legend>
+            <label class="choice"><input type="radio" name="q10" value="a"> <code>create_timer(10.0, callback)</code></label>
+            <label class="choice"><input type="radio" name="q10" value="b"> <code>create_timer(0.1, callback)</code></label>
+            <label class="choice"><input type="radio" name="q10" value="c"> <code>create_timer(100, callback)</code></label>
+            <p class="feedback">정답 B. 주기 0.1초의 역수는 초당 10회다.</p>
+          </fieldset>
+
+          <fieldset class="quiz-question" data-answer="a">
+            <legend>11. 점들을 순서대로 연결하는 Marker 타입은?</legend>
+            <label class="choice"><input type="radio" name="q11" value="a"> <code>Marker.LINE_STRIP</code></label>
+            <label class="choice"><input type="radio" name="q11" value="b"> <code>Marker.TEXT_VIEW_FACING</code></label>
+            <label class="choice"><input type="radio" name="q11" value="c"> <code>Marker.CUBE</code></label>
+            <p class="feedback">정답 A. LINE_STRIP은 points 배열 순서대로 선분을 잇는다.</p>
+          </fieldset>
+
+          <fieldset class="quiz-question" data-answer="c">
+            <legend>12. LINE_STRIP에 새 Point를 추가하는 문법은?</legend>
+            <label class="choice"><input type="radio" name="q12" value="a"> <code>marker.point = point</code></label>
+            <label class="choice"><input type="radio" name="q12" value="b"> <code>marker.add(point)</code></label>
+            <label class="choice"><input type="radio" name="q12" value="c"> <code>marker.points.append(point)</code></label>
+            <p class="feedback">정답 C. points는 Point 메시지의 리스트다.</p>
+          </fieldset>
+
+          <fieldset class="quiz-question" data-answer="b">
+            <legend>13. LINE_STRIP의 선 굵기를 설정하는 필드는?</legend>
+            <label class="choice"><input type="radio" name="q13" value="a"> <code>marker.width</code></label>
+            <label class="choice"><input type="radio" name="q13" value="b"> <code>marker.scale.x</code></label>
+            <label class="choice"><input type="radio" name="q13" value="c"> <code>marker.scale.z</code></label>
+            <p class="feedback">정답 B. LINE_STRIP에서는 scale.x가 선 너비다.</p>
+          </fieldset>
+
+          <fieldset class="quiz-question" data-answer="a">
+            <legend>14. Marker를 완전히 불투명하게 만드는 문법은?</legend>
+            <label class="choice"><input type="radio" name="q14" value="a"> <code>marker.color.a = 1.0</code></label>
+            <label class="choice"><input type="radio" name="q14" value="b"> <code>marker.color.a = 0.0</code></label>
+            <label class="choice"><input type="radio" name="q14" value="c"> <code>marker.alpha = 255</code></label>
+            <p class="feedback">정답 A. alpha 범위는 0.0~1.0이며 1.0이 불투명이다.</p>
+          </fieldset>
+
+          <fieldset class="quiz-question" data-answer="c">
+            <legend>15. PoseStamped 목록으로 이루어진 경로 메시지 타입은?</legend>
+            <label class="choice"><input type="radio" name="q15" value="a"> <code>geometry_msgs/Point</code></label>
+            <label class="choice"><input type="radio" name="q15" value="b"> <code>visualization_msgs/Marker</code></label>
+            <label class="choice"><input type="radio" name="q15" value="c"> <code>nav_msgs/Path</code></label>
+            <p class="feedback">정답 C. Path의 poses 필드는 PoseStamped 배열이다.</p>
+          </fieldset>
+
+          <fieldset class="quiz-question" data-answer="b">
+            <legend>16. Path에 새 PoseStamped를 추가하는 문법은?</legend>
+            <label class="choice"><input type="radio" name="q16" value="a"> <code>path.pose = pose</code></label>
+            <label class="choice"><input type="radio" name="q16" value="b"> <code>path.poses.append(pose)</code></label>
+            <label class="choice"><input type="radio" name="q16" value="c"> <code>path.append_pose(pose)</code></label>
+            <p class="feedback">정답 B. poses는 Python 리스트처럼 append를 사용한다.</p>
+          </fieldset>
+
+          <fieldset class="quiz-question" data-answer="a">
+            <legend>17. 리스트에서 가장 오래된 첫 요소를 제거하는 문법은?</legend>
+            <label class="choice"><input type="radio" name="q17" value="a"> <code>items.pop(0)</code></label>
+            <label class="choice"><input type="radio" name="q17" value="b"> <code>items.pop()</code></label>
+            <label class="choice"><input type="radio" name="q17" value="c"> <code>items.remove(-1)</code></label>
+            <p class="feedback">정답 A. 인덱스 0은 리스트 맨 앞, 즉 가장 먼저 저장된 요소다.</p>
+          </fieldset>
+
+          <fieldset class="quiz-question" data-answer="c">
+            <legend>18. 항상 RViz 카메라를 향하는 텍스트 Marker 타입은?</legend>
+            <label class="choice"><input type="radio" name="q18" value="a"> <code>Marker.TEXT</code></label>
+            <label class="choice"><input type="radio" name="q18" value="b"> <code>Marker.BILLBOARD</code></label>
+            <label class="choice"><input type="radio" name="q18" value="c"> <code>Marker.TEXT_VIEW_FACING</code></label>
+            <p class="feedback">정답 C. TEXT_VIEW_FACING이 시점 방향에 맞춰 글자를 회전한다.</p>
+          </fieldset>
+
+          <fieldset class="quiz-question" data-answer="b">
+            <legend>19. TEXT_VIEW_FACING 글자 높이를 설정하는 필드는?</legend>
+            <label class="choice"><input type="radio" name="q19" value="a"> <code>marker.scale.x</code></label>
+            <label class="choice"><input type="radio" name="q19" value="b"> <code>marker.scale.z</code></label>
+            <label class="choice"><input type="radio" name="q19" value="c"> <code>marker.font_size</code></label>
+            <p class="feedback">정답 B. 텍스트 Marker의 높이는 scale.z로 정한다.</p>
+          </fieldset>
+
+          <fieldset class="quiz-question" data-answer="a">
+            <legend>20. setup.py에 ROS 실행 명령을 등록하는 형식은?</legend>
+            <label class="choice"><input type="radio" name="q20" value="a"> <code>'run_name = package.module:main'</code></label>
+            <label class="choice"><input type="radio" name="q20" value="b"> <code>'run_name: package/module/main'</code></label>
+            <label class="choice"><input type="radio" name="q20" value="c"> <code>'python package.module.main'</code></label>
+            <p class="feedback">정답 A. console_scripts는 실행 이름, 등호, 모듈 경로, 콜론, 함수 이름 순서다.</p>
+          </fieldset>
+
+          <div class="quiz-actions">
+            <button class="primary" type="button" id="grade-quiz">채점하기</button>
+            <button class="secondary" type="reset" id="reset-quiz">다시 풀기</button>
+            <span id="quiz-result" aria-live="polite">20문항에 답해 보세요.</span>
+          </div>
+        </form>
+        <p class="small">기준 자료: “TF frame을 구독하고 좌표계 사이의 정보를 활용하는 법”, “TF frame의 작업 결과를 rviz2에서 시각화하기” PDF와 현재 <code>my_tf</code> 구현.</p>
+      </section>
+    </main>
+  </div>
+
+  <footer>ROS 2 TF Listener &amp; RViz2 Personal Study Note · 2026-08-07</footer>
+  <script>
+    document.querySelectorAll('.copy').forEach((button) => {
+      button.addEventListener('click', async () => {
+        const value = button.nextElementSibling.innerText;
+        try {
+          await navigator.clipboard.writeText(value);
+          button.textContent = '복사됨';
+          setTimeout(() => { button.textContent = '복사'; }, 1200);
+        } catch (_) {
+          button.textContent = '선택 후 복사';
+        }
+      });
+    });
+
+    const questions = [...document.querySelectorAll('.quiz-question')];
+    const result = document.getElementById('quiz-result');
+
+    document.getElementById('grade-quiz').addEventListener('click', () => {
+      let score = 0;
+      let answered = 0;
+
+      questions.forEach((question) => {
+        const selected = question.querySelector('input:checked');
+        question.classList.remove('correct', 'wrong');
+        question.classList.add('graded');
+
+        if (selected) {
+          answered += 1;
+          if (selected.value === question.dataset.answer) {
+            score += 1;
+            question.classList.add('correct');
+          } else {
+            question.classList.add('wrong');
+          }
+        } else {
+          question.classList.add('wrong');
+        }
+      });
+
+      const percent = Math.round((score / questions.length) * 100);
+      result.textContent = `${score} / ${questions.length}점 (${percent}%) · 응답 ${answered}문항`;
+    });
+
+    document.getElementById('reset-quiz').addEventListener('click', () => {
+      questions.forEach((question) => {
+        question.classList.remove('correct', 'wrong', 'graded');
+      });
+      result.textContent = '20문항에 답해 보세요.';
+    });
+  </script>
+</body>
+</html>

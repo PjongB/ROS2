@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>ROS 2 · TF 학습 아카이브</title>
+  <style>
+    :root{--bg:#07110f;--panel:#0c1916;--line:#213a33;--text:#edf7f2;--muted:#91aaa0;--mint:#57e6b1;--yellow:#f6ca58;--blue:#73a9ff}
+    *{box-sizing:border-box} html{scroll-behavior:smooth} body{margin:0;background:radial-gradient(circle at 85% -10%,#15372e 0,transparent 33%),var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Noto Sans KR",sans-serif}
+    a{color:inherit}.shell{width:min(1180px,calc(100% - 32px));margin:auto}.top{display:flex;justify-content:space-between;align-items:center;padding:24px 0}.brand{font-weight:850;letter-spacing:-.03em}.brand b{color:var(--mint)}.source{font-size:13px;color:var(--muted)}
+    .hero{padding:76px 0 46px;border-bottom:1px solid var(--line)}.eyebrow{color:var(--mint);font:700 12px/1.4 ui-monospace,monospace;letter-spacing:.14em}.hero h1{max-width:820px;margin:14px 0 18px;font-size:clamp(40px,7vw,78px);line-height:1.02;letter-spacing:-.065em}.hero p{max-width:680px;margin:0;color:var(--muted);font-size:17px;line-height:1.7}.hero-actions{display:flex;gap:10px;margin-top:26px}.quiz-start{display:inline-flex;align-items:center;gap:9px;padding:13px 18px;border-radius:12px;background:var(--yellow);color:#211900;text-decoration:none;font-weight:850}.statbar{display:flex;gap:32px;margin-top:36px}.stat b{display:block;font-size:24px}.stat span{color:var(--muted);font-size:12px}
+    .tools{position:sticky;top:0;z-index:4;padding:14px 0;background:rgba(7,17,15,.88);backdrop-filter:blur(16px)}.toolrow{display:flex;gap:10px}.search{flex:1;min-width:0;border:1px solid var(--line);border-radius:12px;background:#0a1512;color:var(--text);padding:13px 16px;font-size:15px;outline:none}.search:focus{border-color:var(--mint)}.reset{border:1px solid var(--line);border-radius:12px;background:transparent;color:var(--muted);padding:0 16px;cursor:pointer}.progress{height:3px;background:#172821;margin-top:12px}.progress i{display:block;height:100%;width:0;background:var(--mint);transition:.2s}
+    main{padding:24px 0 80px}.module{margin:42px 0}.module-head{display:flex;align-items:end;justify-content:space-between;margin-bottom:15px}.module h2{margin:0;font-size:24px;letter-spacing:-.04em}.module small{color:var(--muted)}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+    .card{position:relative;display:grid;grid-template-columns:54px 1fr auto;gap:14px;align-items:center;min-height:108px;padding:18px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(145deg,rgba(17,35,30,.9),rgba(10,21,18,.82));transition:.18s}.card:hover{transform:translateY(-2px);border-color:#3a6659}.num{display:grid;place-items:center;width:48px;height:48px;border-radius:13px;background:#132721;color:var(--mint);font:800 14px ui-monospace,monospace}.copy h3{margin:0 0 7px;font-size:16px;letter-spacing:-.025em}.copy p{margin:0;color:var(--muted);font-size:12px}.links{display:flex;gap:7px}.open,.pdf{display:grid;place-items:center;height:36px;border-radius:10px;text-decoration:none;font-size:12px;font-weight:750}.open{padding:0 13px;background:var(--mint);color:#052019}.pdf{width:36px;border:1px solid var(--line);color:var(--muted)}.done{position:absolute;right:12px;top:10px;accent-color:var(--mint)}.card.completed{opacity:.58}.card.completed h3{text-decoration:line-through}
+    .empty{display:none;padding:70px 0;text-align:center;color:var(--muted)}footer{padding:30px 0 50px;border-top:1px solid var(--line);color:var(--muted);font-size:12px}
+    @media(max-width:760px){.grid{grid-template-columns:1fr}.hero{padding-top:48px}.hero h1{font-size:46px}.source{display:none}.card{grid-template-columns:46px 1fr}.links{grid-column:2}.statbar{gap:20px}}
+  </style>
+</head>
+<body>
+<header class="shell top"><div class="brand"><b>ROS</b> FIELD NOTES</div><div class="source">Google Drive 원본 기반 · 로컬 아카이브</div></header>
+<section class="hero"><div class="shell"><div class="eyebrow">FROM SETUP TO TRANSFORMS</div><h1>ROS2</h1><p>개발 환경을 준비하고, ROS 2 통신 구조와 TF 좌표계까지 직접 실행하며 배우는 실습형 학습 아카이브입니다.</p><div class="hero-actions"><a class="quiz-start" href="quiz.html">문제 풀기 →</a></div><div class="statbar"><div class="stat"><b>18</b><span>전체 강의</span></div><div class="stat"><b>60</b><span>연습 문제</span></div><div class="stat"><b id="doneCount">0</b><span>완료한 강의</span></div></div></div></section>
+<div class="tools"><div class="shell"><div class="toolrow"><input id="search" class="search" type="search" placeholder="강의 검색 — TF, 토픽, Jupyter…"><button id="reset" class="reset">진도 초기화</button></div><div class="progress"><i id="bar"></i></div></div></div>
+<main class="shell" id="content"></main>
+<div class="shell empty" id="empty">검색 결과가 없습니다.</div>
+<footer><div class="shell">원본 HTML은 자체 포함형 파일로 저장되어 오프라인에서도 열립니다. PDF 버튼은 Google Drive 원문으로 연결됩니다.</div></footer>
+<script>
+const modules=[
+ {title:"01 · 개발 환경",desc:"Ubuntu에서 ROS 2를 시작하기 위한 준비",lessons:[
+  ["01","Ubuntu 24.04 Desktop 설치","운영체제 설치부터 첫 부팅까지","lessons/01-01-ubuntu-install.html","1xxfdpIVqfO9FtzkzhBRka5ZWp4EJaMUn"],
+  ["02","Python 가상환경","프로젝트별 Python 환경 분리","lessons/01-02-python-venv.html","1Rl-FMnbZBGs6fmn_HincpCjdkAlsNQ6Q"],
+  ["03","Jupyter Notebook","실험과 기록을 위한 노트북 환경","lessons/01-03-jupyter.html","1K8lqTnbsY_2RW_IS7y_llWH0BgrzmBXG"],
+  ["04","VS Code","ROS 개발을 위한 편집기 설정","lessons/01-04-vscode.html","18hH3napt7h2rLYV3WF0D_xT-bTGJfPFH"],
+  ["05","ROS 2를 위한 Ubuntu 환경설정","ROS 2 개발 환경 구성","lessons/01-05-ros2-environment.html","1qmCrxffHigqZX_qmDUhO6D2r-8LisjI8"],
+  ["06","터미널, bashrc, 리눅스","명령줄과 셸 설정 익히기","lessons/01-06-linux-terminal.html","1k5q2rnGlAoKGvXH3by0eMyo_5aOLci86"]
+ ]},
+ {title:"02 · ROS 2 기본기",desc:"토픽에서 액션과 디버깅까지",lessons:[
+  ["01","ROS 기초 명령","노드와 인터페이스를 관찰하는 명령","learn/ros-commands.html","1m_2e6btZ-RQYgqb1s4HmHHRp2dnFqJxx"],
+  ["02","Python으로 ROS 2 토픽 다루기","publisher와 subscriber 작성","learn/topics-python.html","1DQCsybWdyub5ef6JtEPaJN6E3mO57Gya"],
+  ["03","서비스·클라이언트 다루기","요청과 응답 통신 구현","learn/services.html","1wkg9jgud68L_uzKdCVa-mkqMxVWdUa0J"],
+  ["04","패키지 만들고 토픽 다루기","패키지 구조와 실행 흐름","learn/package-topics.html","1Eio_NgsuIxCtzhbKTstzLpID8GB49ilG"],
+  ["05","메시지 정의 만들기","사용자 메시지를 토픽과 서비스에서 활용","learn/custom-messages.html","1Ggb29nzsS8cP00lpk2gsS9B8YTCH9hda"],
+  ["06","액션 익숙해지기","장시간 작업과 피드백 처리","learn/actions.html","1T7LbCi5ObivwSs55i7wy3dLXokD2jSzI"],
+  ["07","파라미터 다루기","노드 설정값 선언과 변경","learn/parameters.html","1KrNmswm3IMoKIJ5rsaGwU8uIPOB1_zK9"],
+  ["08","디버그·관찰 도구와 roslaunch","실행 상태를 읽고 여러 노드 시작하기","learn/debug-launch.html","1l-zXH5nvcwEVjrfNGjyTIuVHrZvUVEx1"]
+ ]},
+ {title:"03 · TF 실습",desc:"좌표계와 자세를 코드로 연결하기",lessons:[
+  ["01","TF로 좌표계와 자세 발행하기","transform과 pose의 핵심","learn/tf-pose.html","14LYabICfNZUf2O06LKVNaZevRKJm_rbH"],
+  ["02","Child frame 하나 추가해보기","프레임 트리를 확장하는 실습","learn/child-frame.html","1C30HVRi8s_OMRDxmirs3-0oZJxT6VGSz"],
+  ["03","TF Frame 구독과 변환 활용","Buffer·Listener로 프레임 사이 거리 계산","learn/tf-listener-visualization-study.html#components","1NR2WZQlX0H1fKWXvuFhs-C0nVM7P4xhI"],
+  ["04","TF 결과를 RViz2에 시각화","Marker·Path·텍스트로 움직임 표현","learn/tf-listener-visualization-study.html#marker","1ih_saRQ2wCQgj6TxAm6Yf654G8Y1AMkA"]
+ ]}
+];
+const key="ros-field-notes-progress-v1";let done=new Set(JSON.parse(localStorage.getItem(key)||"[]"));
+function render(q=""){const root=document.querySelector("#content");root.innerHTML="";let shown=0;modules.forEach((m,mi)=>{const hits=m.lessons.filter(x=>(x[1]+" "+x[2]+" "+m.title).toLowerCase().includes(q.toLowerCase()));if(!hits.length)return;const sec=document.createElement("section");sec.className="module";sec.innerHTML='<div class="module-head"><div><h2>'+m.title+'</h2><small>'+m.desc+'</small></div><small>'+hits.length+' lessons</small></div><div class="grid"></div>';const grid=sec.querySelector(".grid");hits.forEach(x=>{shown++;const id=x[3];const el=document.createElement("article");el.className="card"+(done.has(id)?" completed":"");el.innerHTML='<input class="done" type="checkbox" aria-label="완료 표시" '+(done.has(id)?"checked":"")+'><div class="num">'+x[0]+'</div><div class="copy"><h3>'+x[1]+'</h3><p>'+x[2]+'</p></div><div class="links"><a class="open" href="'+x[3]+'">강의 열기</a><a class="pdf" title="Drive PDF 열기" target="_blank" rel="noopener" href="https://drive.google.com/file/d/'+x[4]+'/view">PDF</a></div>';el.querySelector(".done").onchange=e=>{e.target.checked?done.add(id):done.delete(id);localStorage.setItem(key,JSON.stringify([...done]));update();render(document.querySelector("#search").value)};grid.append(el)});root.append(sec)});document.querySelector("#empty").style.display=shown?"none":"block";update()}
+function update(){document.querySelector("#doneCount").textContent=done.size;document.querySelector("#bar").style.width=(done.size/18*100)+"%"}
+document.querySelector("#search").addEventListener("input",e=>render(e.target.value));document.querySelector("#reset").onclick=()=>{if(confirm("저장된 학습 진도를 초기화할까요?")){done.clear();localStorage.removeItem(key);render(document.querySelector("#search").value)}};render();
+</script>
+</body>
+</html>

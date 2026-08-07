@@ -1,0 +1,73 @@
+const Q=[
+["명령·통신","실행 중인 ROS 2 노드 목록을 보는 명령은?","ros2 node list",["ros2 node list","ros2 topic list","ros2 run list"],"node list는 현재 ROS 그래프에서 발견되는 노드를 보여줍니다."],
+["명령·통신","노드 하나의 publisher, subscriber, service 정보를 확인하려면?","ros2 node info /노드명",["ros2 node show /노드명","ros2 node info /노드명","ros2 info node /노드명"],"ros2 node info 뒤에 전체 노드 이름을 지정합니다."],
+["명령·통신","연속적인 센서 데이터 전달에 가장 적합한 통신은?","Topic",["Service","Topic","Action"],"Topic은 비동기 발행·구독 스트림에 적합합니다."],
+["명령·통신","한 번 요청하고 한 번 응답받는 작업에 적합한 통신은?","Service",["Topic","Service","Parameter"],"Service는 Request와 Response로 구성되는 단발 통신입니다."],
+["명령·통신","진행 피드백과 취소가 필요한 장시간 작업에 적합한 통신은?","Action",["Action","Topic","Logging"],"Action은 Goal, Feedback, Result와 취소 기능을 제공합니다."],
+["명령·통신","토픽의 메시지 타입까지 함께 나열하는 명령은?","ros2 topic list -t",["ros2 topic list -t","ros2 topic echo -t","ros2 interface list -v"],"-t 옵션은 토픽명과 타입을 함께 표시합니다."],
+["명령·통신","메시지 필드 구조를 확인하는 명령은?","ros2 interface show",["ros2 message open","ros2 interface show","ros2 topic fields"],"값을 발행하기 전에 interface show로 필드를 확인하는 습관이 중요합니다."],
+["명령·통신","토픽으로 들어오는 값을 실시간 확인하는 명령은?","ros2 topic echo",["ros2 topic watch","ros2 topic echo","ros2 topic info"],"topic echo는 구독자가 되어 메시지를 출력합니다."],
+["명령·통신","노드와 토픽 연결 구조를 시각화하는 도구는?","rqt_graph",["rviz2","rqt_graph","ros2 bag"],"rqt_graph는 ROS 그래프의 노드·토픽 연결을 보여줍니다."],
+["명령·통신","ROS 2 Jazzy 환경을 현재 셸에 활성화하는 명령은?","source /opt/ros/jazzy/setup.bash",["source /opt/ros/jazzy/setup.bash","ros2 start jazzy","colcon source jazzy"],"새 터미널마다 설치 공간의 setup.bash를 source해야 합니다."],
+["Python 토픽·서비스","Python ROS 2 클라이언트 라이브러리는?","rclpy",["rospy","rclpy","roscpp"],"rclpy는 ROS 2의 Python 클라이언트 라이브러리입니다."],
+["Python 토픽·서비스","구독 메시지가 도착했을 때 실행되는 함수는?","Callback",["Executor","Callback","Parameter"],"Subscriber는 메시지를 받으면 등록된 callback을 호출합니다."],
+["Python 토픽·서비스","콜백을 계속 처리하는 함수는?","rclpy.spin(node)",["rclpy.wait(node)","rclpy.spin(node)","node.loop()"],"spin은 executor가 콜백을 계속 처리하도록 합니다."],
+["Python 토픽·서비스","콜백을 한 번만 처리하고 반환하는 함수는?","rclpy.spin_once(node)",["rclpy.spin_once(node)","rclpy.spin(node)","node.callback_once()"],"spin_once는 준비된 작업을 한 차례 처리할 때 씁니다."],
+["Python 토픽·서비스","Publisher를 생성하는 Node 메서드는?","create_publisher()",["create_topic()","create_publisher()","publish_create()"],"메시지 타입, 토픽 이름, QoS를 전달합니다."],
+["Python 토픽·서비스","주기적으로 메시지를 발행할 때 유용한 기능은?","create_timer()",["create_timer()","wait_for_service()","declare_parameter()"],"타이머 콜백에서 메시지를 생성하고 publish하면 됩니다."],
+["Python 토픽·서비스","Publisher와 Subscriber가 통신하기 위한 필수 조건은?","토픽명과 메시지 타입이 일치",["노드명이 일치","토픽명과 메시지 타입이 일치","타이머 주기가 일치"],"토픽 이름과 타입이 호환되어야 연결됩니다."],
+["Python 토픽·서비스","서비스 서버가 준비될 때까지 기다리는 메서드는?","wait_for_service()",["spin_once()","wait_for_service()","wait_for_topic()"],"호출 전에 서버 발견 여부를 확인하면 실패를 안전하게 다룰 수 있습니다."],
+["Python 토픽·서비스","call_async()가 반환하는 객체는?","Future",["Response","Future","Timer"],"Future에는 비동기 호출이 완료된 뒤 결과가 담깁니다."],
+["Python 토픽·서비스","Future 완료까지 노드 콜백을 처리하며 기다리는 함수는?","spin_until_future_complete()",["spin_until_future_complete()","wait_result()","future.spin()"],"이 함수는 executor를 돌려 응답 콜백이 처리되게 합니다."],
+["패키지·인터페이스","ROS 2 패키지가 들어가는 워크스페이스 하위 폴더는?","src",["bin","src","share"],"소스 패키지는 워크스페이스의 src 폴더에 둡니다."],
+["패키지·인터페이스","ROS 2 워크스페이스 빌드 도구는?","colcon",["cmake만 사용","colcon","pipenv"],"colcon은 패키지 의존 순서에 따라 워크스페이스를 빌드합니다."],
+["패키지·인터페이스","Python 패키지의 ros2 run 실행 이름을 등록하는 곳은?","setup.py의 console_scripts",["README.md","setup.py의 console_scripts","package.xml의 description"],"console_scripts가 실행 이름을 Python main 함수와 연결합니다."],
+["패키지·인터페이스","빌드 후 현재 셸에서 패키지를 찾게 하는 명령은?","source install/setup.bash",["source install/setup.bash","ros2 pkg refresh","colcon activate"],"빌드 결과가 있는 install 공간을 source해야 합니다."],
+["패키지·인터페이스","특정 패키지만 빌드하는 옵션은?","--packages-select",["--only-package","--packages-select","--target-package"],"colcon build --packages-select 패키지명 형식입니다."],
+["패키지·인터페이스","커스텀 토픽 데이터 구조를 정의하는 확장자는?",".msg",[".srv",".action",".msg"],"토픽 메시지 구조는 .msg 파일로 정의합니다."],
+["패키지·인터페이스",".srv 파일에서 요청과 응답을 구분하는 표시는?","---",["---","===","###"],"구분선 위가 Request, 아래가 Response입니다."],
+["패키지·인터페이스",".action 파일의 올바른 구성 순서는?","Goal → Result → Feedback",["Goal → Result → Feedback","Request → Feedback → Response","Topic → Service → Action"],".action은 두 개의 ---로 Goal, Result, Feedback을 나눕니다."],
+["패키지·인터페이스","생성된 커스텀 인터페이스를 확인하는 명령은?","ros2 interface show",["ros2 interface show","ros2 pkg fields","colcon interface"],"빌드와 source 후 패키지/종류/타입 경로로 확인합니다."],
+["패키지·인터페이스","인터페이스 정의를 변경한 뒤 필요한 과정은?","재빌드하고 source",["노드 이름만 변경","재빌드하고 source","rqt만 새로고침"],"언어별 코드가 다시 생성되어야 하므로 build와 source를 반복합니다."],
+["액션·파라미터·도구","액션의 중간 진행 상태를 뜻하는 것은?","Feedback",["Goal","Feedback","Result"],"서버는 작업 중 Feedback을 여러 번 발행할 수 있습니다."],
+["액션·파라미터·도구","액션 서버 작업 완료를 클라이언트에 반환하는 것은?","Result",["Result","Goal","QoS"],"Result는 성공 여부나 최종 계산값을 담습니다."],
+["액션·파라미터·도구","액션 콜백 중 다른 콜백도 병렬 처리하려면?","MultiThreadedExecutor",["SingleThreadedExecutor","MultiThreadedExecutor","타이머 제거"],"재진입 콜백 그룹과 MultiThreadedExecutor 조합을 사용합니다."],
+["액션·파라미터·도구","노드 실행 중 동작을 조정하는 설정값은?","Parameter",["Topic","Parameter","Frame"],"파라미터는 코드를 다시 빌드하지 않고 설정을 바꿀 수 있게 합니다."],
+["액션·파라미터·도구","코드에서 파라미터를 외부에 노출하는 메서드는?","declare_parameter()",["get_parameter()","declare_parameter()","publish_parameter()"],"먼저 선언한 뒤 get_parameter로 값을 읽습니다."],
+["액션·파라미터·도구","param set 후 내부 동작도 즉시 바꾸려면 필요한 것은?","파라미터 변경 콜백",["파라미터 변경 콜백","새 서비스","새 워크스페이스"],"변경 콜백에서 값을 검증하고 내부 변수에 반영해야 합니다."],
+["액션·파라미터·도구","파라미터를 YAML로 저장하는 명령은?","ros2 param dump",["ros2 param save","ros2 param dump","ros2 bag record"],"dump 결과는 나중에 ros2 param load로 불러올 수 있습니다."],
+["액션·파라미터·도구","토픽 데이터를 기록하고 재생하는 도구는?","rosbag",["rqt_console","rosbag","tf2"],"rosbag은 실제 입력을 보존하여 버그를 재현하는 데 유용합니다."],
+["액션·파라미터·도구","여러 노드와 파라미터를 한 번에 실행하는 방식은?","Launch",["Launch","Topic echo","Interface show"],"launch 파일은 시스템 실행 구성을 코드로 관리합니다."],
+["액션·파라미터·도구","print보다 ROS logger가 좋은 이유는?","레벨과 필터를 사용할 수 있어서",["항상 더 빠르기 때문에","레벨과 필터를 사용할 수 있어서","토픽을 자동 생성해서"],"debug/info/warn/error 레벨과 rqt_console 필터를 활용할 수 있습니다."],
+["TF·좌표계","로봇에서 위치와 방향을 해석하는 기준축은?","Frame",["Node","Frame","Action"],"좌표계 또는 frame은 위치·방향의 기준입니다."],
+["TF·좌표계","ROS 2에서 좌표계 변환을 관리하는 라이브러리는?","tf2",["rqt","tf2","colcon"],"tf2는 시간에 따른 프레임 사이 변환을 버퍼링하고 합성합니다."],
+["TF·좌표계","TransformStamped의 header.frame_id는 무엇인가?","부모 프레임",["부모 프레임","자식 프레임","노드 이름"],"변환을 표현하는 기준, 즉 parent frame입니다."],
+["TF·좌표계","TransformStamped의 child_frame_id는 무엇인가?","자식 프레임",["토픽 이름","자식 프레임","패키지 이름"],"부모 기준 변환이 적용될 대상 frame입니다."],
+["TF·좌표계","TF 메시지에 현재 시간 stamp가 중요한 이유는?","시간에 맞는 변환을 조회하기 위해",["파일명을 만들기 위해","시간에 맞는 변환을 조회하기 위해","노드 수를 세기 위해"],"센서 데이터 시각과 맞는 변환을 찾으려면 정확한 timestamp가 필요합니다."],
+["TF·좌표계","ROS 2에서 3차원 회전을 표현하는 표준 방식은?","Quaternion",["Degree만 사용","Quaternion","RGB"],"Quaternion은 4개 값으로 회전을 표현하며 짐벌락을 피합니다."],
+["TF·좌표계","Euler 각의 대표적인 문제는?","Gimbal lock",["Deadlock","Gimbal lock","Packet loss"],"회전 순서에 따라 축이 겹쳐 자유도를 잃을 수 있습니다."],
+["TF·좌표계","world → moving_frame → child_frame 구조는 무엇인가?","TF Tree",["Topic chain","TF Tree","Service queue"],"각 자식은 부모에 대한 상대 변환으로 연결됩니다."],
+["TF·좌표계","child_frame의 전역 위치를 직접 계산하지 않아도 되는 이유는?","tf2가 변환 체인을 합성해서",["항상 원점에 있어서","tf2가 변환 체인을 합성해서","RViz가 좌표를 삭제해서"],"tf2가 world→moving→child 변환을 순서대로 합성합니다."],
+["TF·좌표계","RViz에서 world 기준 TF를 보려면 우선 설정할 것은?","Fixed Frame을 world로 설정",["배경을 흰색으로 변경","Fixed Frame을 world로 설정","토픽 이름을 world로 변경"],"Global Options의 Fixed Frame이 시각화 기준 좌표계입니다."],
+["TF·좌표계","수신한 TF 데이터를 일정 시간 보관하는 객체는?","Buffer",["Marker","Buffer","Path"],"TransformListener가 수신한 변환은 Buffer에 저장됩니다."],
+["TF·좌표계","/tf와 /tf_static을 구독해 Buffer를 채우는 객체는?","TransformListener",["TransformBroadcaster","TransformListener","PoseStamped"],"Listener는 TF 토픽을 자동으로 구독합니다."],
+["TF·좌표계","lookup_transform의 인자 순서는?","target, source, time",["source, target, node","target, source, time","time, child, parent"],"target은 기준 프레임이고 source는 위치를 알고 싶은 프레임입니다."],
+["TF·좌표계","rclpy.time.Time()을 lookup_transform에 전달하면 의미하는 것은?","가장 최신 변환",["가장 최신 변환","정확히 1초 전 변환","정적 변환만"],"시간 0은 Buffer에 있는 가장 최신 변환을 요청합니다."],
+["TF·좌표계","두 프레임 사이 3차원 거리를 계산하는 식은?","sqrt(x²+y²+z²)",["x+y+z","sqrt(x²+y²+z²)","x*y*z"],"translation의 세 축에 유클리드 거리 공식을 적용합니다."],
+["RViz 시각화","점들을 순서대로 연결해 선을 만드는 Marker 타입은?","LINE_STRIP",["TEXT_VIEW_FACING","LINE_STRIP","CUBE"],"LINE_STRIP은 marker.points 순서대로 선분을 연결합니다."],
+["RViz 시각화","Path 메시지의 poses 배열에 들어가는 타입은?","PoseStamped",["Point","PoseStamped","Float32"],"Path는 Header와 PoseStamped 배열로 구성됩니다."],
+["RViz 시각화","Marker와 Path의 핵심 차이로 올바른 것은?","Path는 위치와 방향을 함께 담을 수 있다",["Marker만 RViz에서 보인다","Path는 위치와 방향을 함께 담을 수 있다","Path에는 frame_id가 없다"],"PoseStamped 기반 Path는 position과 orientation을 함께 보존합니다."],
+["RViz 시각화","오래된 경로를 제거하고 최근 N개만 남기는 패턴은?","Sliding window",["Dead reckoning","Sliding window","Goal cancel"],"리스트가 제한을 넘으면 pop(0)으로 가장 오래된 값을 제거합니다."],
+["RViz 시각화","카메라 방향을 향하는 3D 텍스트 Marker 타입은?","TEXT_VIEW_FACING",["TEXT_VIEW_FACING","LINE_LIST","SPHERE"],"거리나 상태 문자열을 읽기 좋게 표시할 때 사용합니다."]
+];
+const categoryNames=[...new Set(Q.map(q=>q[0]))],catBox=document.querySelector("#categories");
+catBox.innerHTML=categoryNames.map(c=>`<label><input type="checkbox" value="${c}" checked> ${c} <small>(${Q.filter(q=>q[0]===c).length})</small></label>`).join("");
+let run=[],wrong=[],index=0,score=0,locked=false;
+const shuffle=a=>[...a].sort(()=>Math.random()-.5);
+document.querySelector("#start").onclick=()=>{const cats=[...catBox.querySelectorAll("input:checked")].map(x=>x.value);if(!cats.length)return alert("출제 범위를 하나 이상 선택하세요.");const pool=shuffle(Q.filter(q=>cats.includes(q[0])));run=pool.slice(0,Math.min(+document.querySelector("#count").value,pool.length));wrong=[];index=0;score=0;document.querySelector("#setup").classList.add("hidden");document.querySelector("#finish").classList.add("hidden");document.querySelector("#quiz").classList.remove("hidden");show()};
+function show(){locked=false;const q=run[index];document.querySelector("#position").textContent=`${index+1} / ${run.length}`;document.querySelector("#scoreText").textContent=`정답 ${score}`;document.querySelector("#bar").style.width=`${index/run.length*100}%`;document.querySelector("#tag").textContent=q[0];document.querySelector("#question").textContent=q[1];document.querySelector("#explain").textContent="답을 선택하세요.";document.querySelector("#next").classList.add("hidden");const box=document.querySelector("#answers");box.innerHTML="";shuffle(q[3]).forEach(a=>{const b=document.createElement("button");b.textContent=a;b.onclick=()=>answer(b,a,q);box.append(b)})}
+function answer(btn,a,q){if(locked)return;locked=true;const ok=a===q[2];if(ok)score++;else wrong.push(q);[...document.querySelector("#answers").children].forEach(b=>{if(b.textContent===q[2])b.classList.add("good");else if(b===btn)b.classList.add("bad")});document.querySelector("#explain").textContent=(ok?"정답! ":"오답. 정답은 ‘"+q[2]+"’. ")+q[4];document.querySelector("#scoreText").textContent=`정답 ${score}`;document.querySelector("#next").classList.remove("hidden")}
+document.querySelector("#next").onclick=()=>{index++;index<run.length?show():finish()};
+function finish(){document.querySelector("#quiz").classList.add("hidden");document.querySelector("#finish").classList.remove("hidden");const pct=Math.round(score/run.length*100);document.querySelector("#finalScore").textContent=pct+"점";document.querySelector("#finalTitle").textContent=pct>=90?"탄탄합니다!":pct>=70?"좋은 흐름이에요.":"오답을 복습해볼까요?";document.querySelector("#finalText").textContent=`${run.length}문제 중 ${score}개 정답 · 오답 ${wrong.length}개`;document.querySelector("#retryWrong").style.display=wrong.length?"inline-block":"none";localStorage.setItem("ros2-quiz-last",JSON.stringify({score,all:run.length,date:new Date().toISOString()}))}
+document.querySelector("#retryWrong").onclick=()=>{run=shuffle(wrong);wrong=[];index=0;score=0;document.querySelector("#finish").classList.add("hidden");document.querySelector("#quiz").classList.remove("hidden");show()};
+document.querySelector("#restart").onclick=()=>{document.querySelector("#finish").classList.add("hidden");document.querySelector("#setup").classList.remove("hidden")};
