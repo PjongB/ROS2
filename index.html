@@ -48,12 +48,13 @@ const modules=[
   ["01","TF로 좌표계와 자세 발행하기","transform과 pose의 핵심","learn/tf-pose-study.html","14LYabICfNZUf2O06LKVNaZevRKJm_rbH"],
   ["02","Child frame 하나 추가해보기","프레임 트리를 확장하는 실습","learn/child-frame.html","1C30HVRi8s_OMRDxmirs3-0oZJxT6VGSz"],
   ["03","TF Frame 구독과 변환 활용","Buffer·Listener로 프레임 사이 거리 계산","learn/tf-listener-visualization-study.html#components","1NR2WZQlX0H1fKWXvuFhs-C0nVM7P4xhI"],
-  ["04","TF 결과를 RViz2에 시각화","Marker·Path·텍스트로 움직임 표현","learn/tf-listener-visualization-study.html#marker","1ih_saRQ2wCQgj6TxAm6Yf654G8Y1AMkA"]
+  ["04","TF 결과를 RViz2에 시각화","Marker·Path·텍스트로 움직임 표현","learn/tf-listener-visualization-study.html#marker","1ih_saRQ2wCQgj6TxAm6Yf654G8Y1AMkA"],
+  ["05","서로 다른 ROS Domain ID에 접근","DDS 통신 격리와 다중 프로세스 도메인 제어","learn/domain-id.html","1M8-LJVqrEq8NbdMgfrxaIcICpaoJn5cZ"]
  ]}
 ];
 const key="ros-field-notes-progress-v1";let done=new Set(JSON.parse(localStorage.getItem(key)||"[]"));
 function render(q=""){const root=document.querySelector("#content");root.innerHTML="";let shown=0;modules.forEach((m,mi)=>{const hits=m.lessons.filter(x=>(x[1]+" "+x[2]+" "+m.title).toLowerCase().includes(q.toLowerCase()));if(!hits.length)return;const sec=document.createElement("section");sec.className="module";sec.innerHTML='<div class="module-head"><div><h2>'+m.title+'</h2><small>'+m.desc+'</small></div><small>'+hits.length+' lessons</small></div><div class="grid"></div>';const grid=sec.querySelector(".grid");hits.forEach(x=>{shown++;const id=x[3];const el=document.createElement("article");el.className="card"+(done.has(id)?" completed":"");el.innerHTML='<input class="done" type="checkbox" aria-label="완료 표시" '+(done.has(id)?"checked":"")+'><div class="num">'+x[0]+'</div><div class="copy"><h3>'+x[1]+'</h3><p>'+x[2]+'</p></div><div class="links"><a class="open" href="'+x[3]+'">강의 열기</a><a class="pdf" title="Drive PDF 열기" target="_blank" rel="noopener" href="https://drive.google.com/file/d/'+x[4]+'/view">PDF</a></div>';el.querySelector(".done").onchange=e=>{e.target.checked?done.add(id):done.delete(id);localStorage.setItem(key,JSON.stringify([...done]));update();render(document.querySelector("#search").value)};grid.append(el)});root.append(sec)});document.querySelector("#empty").style.display=shown?"none":"block";update()}
-function update(){document.querySelector("#doneCount").textContent=done.size;document.querySelector("#bar").style.width=(done.size/18*100)+"%"}
+function update(){document.querySelector("#doneCount").textContent=done.size;document.querySelector("#bar").style.width=(done.size/19*100)+"%"}
 document.querySelector("#search").addEventListener("input",e=>render(e.target.value));document.querySelector("#reset").onclick=()=>{if(confirm("저장된 학습 진도를 초기화할까요?")){done.clear();localStorage.removeItem(key);render(document.querySelector("#search").value)}};render();
 </script>
 </body>

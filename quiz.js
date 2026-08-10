@@ -58,7 +58,12 @@ const Q=[
 ["RViz 시각화","Path 메시지의 poses 배열에 들어가는 타입은?","PoseStamped",["Point","PoseStamped","Float32"],"Path는 Header와 PoseStamped 배열로 구성됩니다."],
 ["RViz 시각화","Marker와 Path의 핵심 차이로 올바른 것은?","Path는 위치와 방향을 함께 담을 수 있다",["Marker만 RViz에서 보인다","Path는 위치와 방향을 함께 담을 수 있다","Path에는 frame_id가 없다"],"PoseStamped 기반 Path는 position과 orientation을 함께 보존합니다."],
 ["RViz 시각화","오래된 경로를 제거하고 최근 N개만 남기는 패턴은?","Sliding window",["Dead reckoning","Sliding window","Goal cancel"],"리스트가 제한을 넘으면 pop(0)으로 가장 오래된 값을 제거합니다."],
-["RViz 시각화","카메라 방향을 향하는 3D 텍스트 Marker 타입은?","TEXT_VIEW_FACING",["TEXT_VIEW_FACING","LINE_LIST","SPHERE"],"거리나 상태 문자열을 읽기 좋게 표시할 때 사용합니다."]
+["RViz 시각화","카메라 방향을 향하는 3D 텍스트 Marker 타입은?","TEXT_VIEW_FACING",["TEXT_VIEW_FACING","LINE_LIST","SPHERE"],"거리나 상태 문자열을 읽기 좋게 표시할 때 사용합니다."],
+["DDS·도메인","같은 네트워크에서 ROS 2 노드의 발견 범위를 논리적으로 분리하는 값은?","ROS_DOMAIN_ID",["ROS_DOMAIN_ID","ROS_NAMESPACE","ROS_DISTRO"],"같은 ROS_DOMAIN_ID를 가진 노드끼리 DDS discovery와 통신이 이루어집니다."],
+["DDS·도메인","ROS_DOMAIN_ID의 기본값은?","0",["0","1","232"],"환경변수를 지정하지 않으면 기본 도메인 0을 사용합니다."],
+["DDS·도메인","ROS 2 통신을 현재 컴퓨터 안으로 제한하는 설정은?","ROS_LOCALHOST_ONLY=1",["ROS_LOCALHOST_ONLY=1","ROS_DOMAIN_ID=0","RMW_LOCAL=1"],"localhost 제한은 외부 컴퓨터의 노드와 DDS 통신하지 않게 합니다."],
+["DDS·도메인","한 Python 스크립트에서 여러 도메인을 동시에 다룰 때 적절한 방식은?","도메인별 multiprocessing",["하나의 rclpy 스레드","도메인별 multiprocessing","노드 이름만 변경"],"각 자식 프로세스가 독립적으로 rclpy.init(domain_id=...)을 호출해야 합니다."],
+["DDS·도메인","Domain 1과 Domain 2에서 같은 /id_test 토픽을 사용하면 어떻게 되는가?","서로 격리되어 통신하지 않는다",["자동으로 합쳐진다","서로 격리되어 통신하지 않는다","토픽 이름 충돌로 둘 다 종료된다"],"토픽 이름이 같아도 DDS 도메인이 다르면 서로 발견하거나 메시지를 주고받지 않습니다."]
 ];
 const categoryNames=[...new Set(Q.map(q=>q[0]))],catBox=document.querySelector("#categories");
 catBox.innerHTML=categoryNames.map(c=>`<label><input type="checkbox" value="${c}" checked> ${c} <small>(${Q.filter(q=>q[0]===c).length})</small></label>`).join("");
