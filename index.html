@@ -19,13 +19,16 @@
 </head>
 <body>
 <header class="shell top"><div class="brand"><b>ROS</b> FIELD NOTES</div><div class="source">Google Drive 원본 기반 · 로컬 아카이브</div></header>
-<section class="hero"><div class="shell"><div class="eyebrow">FROM SETUP TO TRANSFORMS</div><h1>ROS2</h1><p>개발 환경을 준비하고, ROS 2 통신 구조와 TF 좌표계까지 직접 실행하며 배우는 실습형 학습 아카이브입니다.</p><div class="hero-actions"><a class="quiz-start" href="quiz.html">문제 풀기 →</a></div><div class="statbar"><div class="stat"><b>18</b><span>전체 강의</span></div><div class="stat"><b>60</b><span>연습 문제</span></div><div class="stat"><b id="doneCount">0</b><span>완료한 강의</span></div></div></div></section>
+<section class="hero"><div class="shell"><div class="eyebrow">FROM SETUP TO TRANSFORMS</div><h1>ROS2</h1><p>개발 환경을 준비하고, ROS 2 통신 구조와 TF 좌표계까지 직접 실행하며 배우는 실습형 학습 아카이브입니다.</p><div class="hero-actions"><a class="quiz-start" href="quiz.html">문제 풀기 →</a></div><div class="statbar"><div class="stat"><b>20</b><span>전체 강의</span></div><div class="stat"><b>65</b><span>연습 문제</span></div><div class="stat"><b id="doneCount">0</b><span>완료한 강의</span></div></div></div></section>
 <div class="tools"><div class="shell"><div class="toolrow"><input id="search" class="search" type="search" placeholder="강의 검색 — TF, 토픽, Jupyter…"><button id="reset" class="reset">진도 초기화</button></div><div class="progress"><i id="bar"></i></div></div></div>
 <main class="shell" id="content"></main>
 <div class="shell empty" id="empty">검색 결과가 없습니다.</div>
 <footer><div class="shell">원본 HTML은 자체 포함형 파일로 저장되어 오프라인에서도 열립니다. PDF 버튼은 Google Drive 원문으로 연결됩니다.</div></footer>
 <script>
 const modules=[
+ {title:"00 · 추가하기",desc:"기존 코드에 새 기능을 확장하는 방법",lessons:[
+  ["00","새 TF 축과 궤적 추가하기","child_frame_2를 만들고 RViz Marker로 선을 그리는 실습","learn/add-frame.html",""]
+ ]},
  {title:"01 · 개발 환경",desc:"Ubuntu에서 ROS 2를 시작하기 위한 준비",lessons:[
   ["01","Ubuntu 24.04 Desktop 설치","운영체제 설치부터 첫 부팅까지","lessons/01-01-ubuntu-install.html","1xxfdpIVqfO9FtzkzhBRka5ZWp4EJaMUn"],
   ["02","Python 가상환경","프로젝트별 Python 환경 분리","lessons/01-02-python-venv.html","1Rl-FMnbZBGs6fmn_HincpCjdkAlsNQ6Q"],
@@ -53,8 +56,8 @@ const modules=[
  ]}
 ];
 const key="ros-field-notes-progress-v1";let done=new Set(JSON.parse(localStorage.getItem(key)||"[]"));
-function render(q=""){const root=document.querySelector("#content");root.innerHTML="";let shown=0;modules.forEach((m,mi)=>{const hits=m.lessons.filter(x=>(x[1]+" "+x[2]+" "+m.title).toLowerCase().includes(q.toLowerCase()));if(!hits.length)return;const sec=document.createElement("section");sec.className="module";sec.innerHTML='<div class="module-head"><div><h2>'+m.title+'</h2><small>'+m.desc+'</small></div><small>'+hits.length+' lessons</small></div><div class="grid"></div>';const grid=sec.querySelector(".grid");hits.forEach(x=>{shown++;const id=x[3];const el=document.createElement("article");el.className="card"+(done.has(id)?" completed":"");el.innerHTML='<input class="done" type="checkbox" aria-label="완료 표시" '+(done.has(id)?"checked":"")+'><div class="num">'+x[0]+'</div><div class="copy"><h3>'+x[1]+'</h3><p>'+x[2]+'</p></div><div class="links"><a class="open" href="'+x[3]+'">강의 열기</a><a class="pdf" title="Drive PDF 열기" target="_blank" rel="noopener" href="https://drive.google.com/file/d/'+x[4]+'/view">PDF</a></div>';el.querySelector(".done").onchange=e=>{e.target.checked?done.add(id):done.delete(id);localStorage.setItem(key,JSON.stringify([...done]));update();render(document.querySelector("#search").value)};grid.append(el)});root.append(sec)});document.querySelector("#empty").style.display=shown?"none":"block";update()}
-function update(){document.querySelector("#doneCount").textContent=done.size;document.querySelector("#bar").style.width=(done.size/19*100)+"%"}
+function render(q=""){const root=document.querySelector("#content");root.innerHTML="";let shown=0;modules.forEach((m,mi)=>{const hits=m.lessons.filter(x=>(x[1]+" "+x[2]+" "+m.title).toLowerCase().includes(q.toLowerCase()));if(!hits.length)return;const sec=document.createElement("section");sec.className="module";sec.innerHTML='<div class="module-head"><div><h2>'+m.title+'</h2><small>'+m.desc+'</small></div><small>'+hits.length+' lessons</small></div><div class="grid"></div>';const grid=sec.querySelector(".grid");hits.forEach(x=>{shown++;const id=x[3];const el=document.createElement("article");el.className="card"+(done.has(id)?" completed":"");const pdf=x[4]?'<a class="pdf" title="Drive PDF 열기" target="_blank" rel="noopener" href="https://drive.google.com/file/d/'+x[4]+'/view">PDF</a>':'';el.innerHTML='<input class="done" type="checkbox" aria-label="완료 표시" '+(done.has(id)?"checked":"")+'><div class="num">'+x[0]+'</div><div class="copy"><h3>'+x[1]+'</h3><p>'+x[2]+'</p></div><div class="links"><a class="open" href="'+x[3]+'">강의 열기</a>'+pdf+'</div>';el.querySelector(".done").onchange=e=>{e.target.checked?done.add(id):done.delete(id);localStorage.setItem(key,JSON.stringify([...done]));update();render(document.querySelector("#search").value)};grid.append(el)});root.append(sec)});document.querySelector("#empty").style.display=shown?"none":"block";update()}
+function update(){document.querySelector("#doneCount").textContent=done.size;document.querySelector("#bar").style.width=(done.size/20*100)+"%"}
 document.querySelector("#search").addEventListener("input",e=>render(e.target.value));document.querySelector("#reset").onclick=()=>{if(confirm("저장된 학습 진도를 초기화할까요?")){done.clear();localStorage.removeItem(key);render(document.querySelector("#search").value)}};render();
 </script>
 </body>

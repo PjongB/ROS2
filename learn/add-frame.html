@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>새 TF 축과 궤적 추가하기 · ROS2</title>
+  <link rel="stylesheet" href="lesson.css">
+  <style>
+    .tree{padding:20px;border:1px solid var(--paper-line);border-radius:14px;background:#f7faff;color:#183b64;font:700 15px/1.9 ui-monospace,monospace;white-space:pre-wrap}
+    .compare{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.compare>div{padding:18px;border:1px solid var(--paper-line);border-radius:14px;background:#fbfcfe}.compare b{display:block;margin-bottom:7px;color:var(--navy)}
+    @media(max-width:760px){.compare{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<header><div class="shell top"><a class="brand" href="../index.html"><b>ROS</b>2 LEARN</a><a class="back" href="../index.html">← 전체 강의</a></div></header>
+<section class="hero"><div class="shell"><div class="kicker">00.00 · CODE EXTENSION</div><h1>새 TF 축과 궤적 추가하기</h1><p class="lead">기존 <code>child_frame</code>을 유지하면서 <code>child_frame_2</code>를 TF 트리에 추가하고, RViz에서 두 번째 이동 궤적을 확인합니다.</p><div class="meta"><span class="pill">예상 30분</span><span class="pill">TF 추가 → Marker 복제 → RViz 검증</span><span class="pill">ROS 2 Jazzy</span></div></div></section>
+<div class="shell layout">
+  <nav class="toc"><b>LESSON MAP</b><a href="#design">01 구조 설계</a><a href="#tf">02 TF 축 추가</a><a href="#marker">03 Marker 추가</a><a href="#setup">04 실행 등록</a><a href="#run">05 실행·검증</a><a href="#trouble">06 오류 해결</a></nav>
+  <article>
+    <section id="design"><h2>먼저 TF 트리를 설계한다</h2><p class="lead">새 축은 기존 축과 이름이 달라야 하며 부모 프레임을 명확히 정해야 합니다. 이번 실습에서는 두 자식이 모두 <code>moving_frame</code>을 부모로 사용합니다.</p><div class="tree">world
+└── moving_frame
+    ├── child_frame
+    └── child_frame_2</div><div class="note">같은 부모 아래 형제 프레임으로 추가하면 두 프레임의 움직임을 쉽게 비교할 수 있습니다.</div></section>
+    <section id="tf"><h2>combined_frame.py에 새 축 추가</h2><p class="lead"><code>timer_callback()</code> 안에서 기존 <code>child_frame</code>을 발행하는 코드 바로 아래에 추가합니다.</p><pre><code># moving_frame -> child_frame_2
+angle2 = -1.5 * self.t
+x3 = 1.5 * math.cos(angle2)
+y3 = 1.5 * math.sin(angle2)
+yaw3 = math.atan2(-y3, -x3)
+
+self.send_tf(
+    'moving_frame',
+    'child_frame_2',
+    x3, y3, 0.0, yaw3
+)</code></pre><div class="compare"><div><b>기존 child_frame</b><span>반지름 1.0 m, 정방향 2배 속도</span></div><div><b>새 child_frame_2</b><span>반지름 1.5 m, 역방향 1.5배 속도</span></div></div></section>
+    <section id="marker"><h2>두 번째 Marker 노드 만들기</h2><p class="lead"><code>frame_trail_publisher_marker_2.py</code>를 복사해 <code>frame_trail_publisher_marker_3.py</code>를 만든 뒤 아래 항목을 변경합니다.</p><h3>대상 프레임과 노드 이름</h3><pre><code>super().__init__('frame_trail_publisher_2')
+self.target_frame = 'child_frame_2'</code></pre><h3>별도 Marker 토픽</h3><pre><code>self.marker_pub = self.create_publisher(
+    Marker,
+    'frame_trail_marker_2',
+    10
+)</code></pre><h3>구분하기 쉬운 파란색</h3><pre><code>marker.color.r = 0.2
+marker.color.g = 0.5
+marker.color.b = 1.0
+marker.color.a = 0.8</code></pre><div class="note">두 Marker가 같은 토픽과 같은 <code>namespace/id</code>를 쓰면 서로 덮어쓸 수 있습니다. 별도 토픽을 쓰거나 Marker ID를 다르게 지정하세요.</div></section>
+    <section id="setup"><h2>setup.py에 실행 이름 등록</h2><p class="lead"><code>entry_points → console_scripts</code> 목록에 새 실행 파일을 연결합니다.</p><pre><code>'frame_trail_publisher_marker_3 = my_tf.frame_trail_publisher_marker_3:main',</code></pre><p>등록을 바꾼 뒤에는 반드시 다시 빌드하고 현재 셸에 설치 환경을 적용합니다.</p><pre><code>cd ~/dev_ws/my_tf_tutorials
+colcon build --symlink-install --packages-select my_tf
+source install/setup.bash</code></pre></section>
+    <section id="run"><h2>노드를 나눠 실행하고 검증</h2><div class="step" data-n="1"><h3>TF 브로드캐스터</h3><pre><code>ros2study
+ros2 run my_tf combined_frame</code></pre></div><div class="step" data-n="2"><h3>기존 빨간 궤적</h3><pre><code>ros2study
+ros2 run my_tf frame_trail_publisher_marker_2</code></pre></div><div class="step" data-n="3"><h3>새 파란 궤적</h3><pre><code>ros2study
+ros2 run my_tf frame_trail_publisher_marker_3</code></pre></div><div class="step" data-n="4"><h3>RViz</h3><pre><code>ros2study
+rviz2</code></pre></div><table class="study-table"><thead><tr><th>항목</th><th>설정·명령</th><th>정상 결과</th></tr></thead><tbody><tr><td>Fixed Frame</td><td><code>world</code></td><td>TF 전체가 표시됨</td></tr><tr><td>첫 Marker</td><td><code>/frame_trail_marker</code></td><td>빨간 선 표시</td></tr><tr><td>두 번째 Marker</td><td><code>/frame_trail_marker_2</code></td><td>파란 선 표시</td></tr><tr><td>TF 확인</td><td><code>ros2 run tf2_ros tf2_echo world child_frame_2</code></td><td>변환 값이 계속 갱신됨</td></tr></tbody></table></section>
+    <section id="trouble"><h2>자주 발생하는 오류</h2><details class="trouble"><summary>target_frame does not exist</summary><p><code>combined_frame</code>을 먼저 실행했는지, 모든 터미널의 <code>ROS_DOMAIN_ID</code>가 같은지 확인합니다.</p></details><details class="trouble"><summary>RViz Marker가 Status: Error</summary><p><code>Error subscribing: Empty topic name</code>이면 Marker 디스플레이의 Topic 행에 정확한 토픽을 선택합니다.</p></details><details class="trouble"><summary>새 실행 파일을 찾지 못함</summary><p><code>setup.py</code>의 <code>:main</code>과 모듈명을 확인한 뒤 다시 빌드하고 <code>source install/setup.bash</code>를 실행합니다.</p></details><div class="sourcebar"><a class="button" href="../index.html">전체 목차로 돌아가기</a></div></section>
+  </article>
+</div>
+</body>
+</html>
