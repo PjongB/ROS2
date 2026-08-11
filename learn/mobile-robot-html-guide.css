@@ -1,0 +1,9 @@
+.source-order{display:grid;grid-template-columns:minmax(190px,1fr) 1.5fr;gap:20px}
+.source-order>div{padding:18px;border-radius:13px;color:#fff;background:linear-gradient(135deg,#17345b,#6049b0)}
+.source-order small,.source-order b,.source-order span{display:block}
+.source-order small{color:#a9eee5;font:750 11px ui-monospace,monospace}
+.source-order b{margin:7px 0;font-size:18px}
+.source-order span{color:#e2e9f4;font-size:13px}
+.source-order ol{margin:0;padding:8px 0 8px 24px}
+.source-order li{margin:7px 0;color:#405069}
+@media(max-width:760px){.source-order{grid-template-columns:1fr}}

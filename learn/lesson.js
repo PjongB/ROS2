@@ -91,16 +91,16 @@ if(id==="mobile-robot-description"){
 }
 if(id==="mobile-robot-description"){
   const topicList=[
-    ["setup","01","패키지 설치와 구조","Workspace·rosdep·colcon·source"],
-    ["files","02","파일·폴더·확장자","package.xml·CMake·DAE·STL"],
-    ["launch","03","Launch 코드 해부","Node·Command·LaunchConfiguration"],
-    ["urdf-xacro","04","URDF와 Xacro","include·macro·is_sim 조건"],
-    ["links-joints","05","Link와 Joint","parent·child·origin·axis"],
-    ["geometry-inertia","06","Visual·Collision·Inertial","mesh·질량·관성 텐서"],
-    ["sensors-tf","07","센서 Frame과 TF","가상 link·header.frame_id"],
-    ["rviz-simulation","08","RViz·Upload·Gazebo","모델 검증·설정 저장·시뮬레이션"]
+    ["setup","01","패키지 설치와 구조","Workspace·rosdep·colcon·source","HTML 4–16"],
+    ["files","02","파일·폴더·확장자","package.xml·CMake·DAE·STL","HTML 17–21"],
+    ["launch","03","Launch 코드 해부","Node·Command·LaunchConfiguration","HTML 22–29"],
+    ["urdf-xacro","04","URDF와 Xacro","include·macro·is_sim 조건","HTML 30–45"],
+    ["links-joints","05","Link와 Joint","parent·child·origin·axis","HTML 46–64"],
+    ["geometry-inertia","06","Visual·Collision·Inertial","mesh·질량·관성 텐서","HTML 40–44·49–52"],
+    ["sensors-tf","07","센서 Frame과 TF","가상 link·header.frame_id","HTML 65–75"],
+    ["rviz-simulation","08","RViz·Upload·Gazebo","모델 검증·설정 저장·시뮬레이션","HTML 76–90"]
   ];
-  const hub=document.createElement("section");hub.id="topic-hub";hub.innerHTML=`<h2>주제별로 깊게 학습하기</h2><p class="lead">전체 흐름을 확인한 뒤 필요한 주제를 선택하세요. 각 페이지에서 그림, 실제 Pinky 코드, 실행 검증과 복습을 함께 학습합니다.</p><div class="topic-cards">${topicList.map(x=>`<a href="mobile-robot-topic.html?topic=${x[0]}"><small>TOPIC ${x[1]}</small><b>${x[2]}</b><span>${x[3]}</span><i>상세 학습 →</i></a>`).join("")}</div>`;document.querySelector("#visuals").before(hub);
+  const hub=document.createElement("section");hub.id="topic-hub";hub.innerHTML=`<h2>HTML 순서로 주제별 학습하기</h2><p class="lead">다운로드한 93장 HTML의 실제 흐름을 8개 학습 주제로 묶었습니다. 각 페이지에서 원본 순서, 그림, 현재 Pinky 코드와 실행 검증을 함께 봅니다.</p><div class="topic-cards">${topicList.map(x=>`<a href="mobile-robot-topic.html?topic=${x[0]}"><small>TOPIC ${x[1]} · ${x[4]}</small><b>${x[2]}</b><span>${x[3]}</span><i>상세 학습 →</i></a>`).join("")}</div>`;document.querySelector("#visuals").before(hub);
   const imageTopics={"pinky-pro-model.png":"sensors-tf","pinky-pro-architecture.png":"setup","pdf-page-13.jpg":"files","pdf-page-23.jpg":"links-joints","pdf-page-38.jpg":"launch","pdf-page-41.jpg":"rviz-simulation","pdf-page-21.jpg":"geometry-inertia","pdf-page-27.jpg":"links-joints","pdf-page-37.jpg":"urdf-xacro"};
   document.querySelectorAll("#visuals img").forEach(img=>{if(img.parentElement.tagName!=="A"){const a=document.createElement("a");img.replaceWith(a);a.append(img);a.href=img.src;}});
   document.querySelectorAll("#visuals a").forEach(a=>{const match=Object.keys(imageTopics).find(name=>a.getAttribute("href").endsWith(name));if(match){a.href=`mobile-robot-topic.html?topic=${imageTopics[match]}`;a.target="_self";a.title="관련 상세 학습 페이지로 이동";}});
