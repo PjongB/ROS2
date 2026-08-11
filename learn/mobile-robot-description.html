@@ -1,1 +1,37 @@
-<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="lesson.css"></head><body data-lesson="mobile-robot-description"><div id="app"></div><script src="lesson.js"></script></body></html>
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>모바일 로봇 Description 패키지 · ROS2</title>
+  <link rel="stylesheet" href="mobile-robot-summary.css">
+</head>
+<body>
+  <header><div class="shell top"><a class="brand" href="../index.html"><b>ROS</b>2 LEARN</a><a href="../index.html">← 전체 강의</a></div></header>
+  <section class="hero"><div class="shell"><small>03.08 · ROS 2 JAZZY</small><h1>모바일 로봇 Description 패키지</h1><p>Pinky Pro의 Description 패키지를 이해할 때 꼭 알아야 할 내용만 목차 순서로 정리했습니다.</p><div class="source-buttons"><a class="html" target="_blank" rel="noopener" href="https://drive.google.com/file/d/12eEnKOK6Co-JQ-RzraE8efQt_JzV795n/view">원본 HTML 열기</a><a class="pdf" target="_blank" rel="noopener" href="https://drive.google.com/file/d/1S2dtW0XMwecv6hEyguWuLhtLrsK-pUHZ/view">강의 PDF 열기</a></div></div></section>
+  <div class="shell layout">
+    <nav><b>목차</b><a href="#install">01 설치</a><a href="#overview">02 패키지 개요</a><a href="#launch">03 Launch</a><a href="#urdf">04 URDF·Xacro</a><a href="#links">05 Link·Joint</a><a href="#physics">06 형상·관성</a><a href="#sensors">07 센서·TF</a><a href="#rviz">08 RViz·Gazebo</a></nav>
+    <main>
+      <div class="intro"><b>읽는 방법</b><span>이 페이지에서 핵심을 먼저 확인하고, 그림과 전체 코드는 위의 HTML 또는 PDF 버튼으로 열어보세요.</span></div>
+      <section id="install"><div class="number">01</div><div><h2>설치부터 시작</h2><p class="range">원본 HTML 4–16</p><ul><li>워크스페이스는 <code>~/pinky</code>, 소스는 <code>~/pinky/src</code>에 둡니다.</li><li><code>rosdep</code>으로 의존성을 설치하고 <code>colcon build</code>로 빌드합니다.</li><li>빌드 후 현재 터미널에서 <code>source ~/pinky/install/local_setup.bash</code>를 실행합니다.</li></ul></div></section>
+      <section id="overview"><div class="number">02</div><div><h2>Description 패키지 개요</h2><p class="range">원본 HTML 17–21</p><ul><li><code>launch</code>는 실행 구성, <code>urdf</code>는 로봇 구조, <code>meshes</code>는 3D 형상, <code>rviz</code>는 화면 설정입니다.</li><li><code>package.xml</code>은 의존성, <code>CMakeLists.txt</code>는 리소스 설치 규칙을 담당합니다.</li><li>DAE는 주로 화면 표시, STL은 주로 충돌 형상에 사용합니다.</li></ul></div></section>
+      <section id="launch"><div class="number">03</div><div><h2>view_robot.launch.py</h2><p class="range">원본 HTML 22–29</p><ul><li><code>Node</code>로 RViz2, robot_state_publisher, joint_state_publisher_gui를 실행합니다.</li><li><code>Command</code>가 Xacro를 전개하고 결과 XML을 <code>robot_description</code>에 넣습니다.</li><li><code>get_package_share_directory()</code>로 설치된 패키지의 파일 경로를 찾습니다.</li></ul></div></section>
+      <section id="urdf"><div class="number">04</div><div><h2>URDF와 Xacro</h2><p class="range">원본 HTML 30–45</p><ul><li>URDF는 XML 형식으로 로봇의 link와 joint 구조를 표현합니다.</li><li>Xacro는 변수·수식·매크로·조건문을 사용해 반복되는 URDF를 줄입니다.</li><li><code>robot.urdf.xacro</code>가 진입점이고 <code>pinky.urdf.xacro</code>의 <code>insert_robot</code> 매크로를 호출합니다.</li></ul></div></section>
+      <section id="links"><div class="number">05</div><div><h2>Link와 Joint</h2><p class="range">원본 HTML 46–64</p><ul><li>link는 부품 또는 좌표 프레임이고 joint는 부모·자식 link의 관계입니다.</li><li><code>origin xyz/rpy</code>는 장착 위치와 방향, <code>axis</code>는 관절 운동축입니다.</li><li>Pinky의 고정부는 <code>fixed</code>, 구동 바퀴와 캐스터는 주로 <code>continuous</code>를 사용합니다.</li></ul></div></section>
+      <section id="physics"><div class="number">06</div><div><h2>Visual·Collision·Inertial</h2><p class="range">원본 HTML 40–44·49–52</p><ul><li><code>visual</code>은 보이는 형상, <code>collision</code>은 충돌 계산 형상입니다.</li><li><code>inertial</code>에는 질량, 무게중심, 관성 텐서를 정의합니다.</li><li>잘못된 관성값은 Gazebo에서 떨림이나 발산을 만들 수 있습니다.</li></ul></div></section>
+      <section id="sensors"><div class="number">07</div><div><h2>센서 Frame과 TF</h2><p class="range">원본 HTML 65–75</p><ul><li>LiDAR·카메라·IMU·초음파 link는 센서 데이터의 좌표 기준입니다.</li><li>형상이 없는 빈 link도 <code>header.frame_id</code>와 TF를 위한 프레임으로 필요할 수 있습니다.</li><li>물리적인 mount와 실제 측정 기준 sensor frame을 분리하면 관리하기 쉽습니다.</li></ul></div></section>
+      <section id="rviz"><div class="number">08</div><div><h2>Upload·RViz·Gazebo</h2><p class="range">원본 HTML 76–90</p><ul><li><code>view_robot</code>은 바로 확인하는 용도이고 <code>upload_robot</code>은 다른 시스템에 모델을 제공하는 용도입니다.</li><li>RViz RobotModel에서 Description Topic을 <code>/robot_description</code>으로 설정합니다.</li><li>RViz 설정은 <code>.rviz</code>로 저장하고 <code>rviz2 -d 파일명.rviz</code>로 재사용합니다.</li></ul></div></section>
+      <section class="commands"><h2>핵심 실행 명령</h2><pre><code>source /opt/ros/jazzy/setup.bash
+source ~/pinky/install/local_setup.bash
+ros2 launch pinky_description view_robot.launch.py
+
+# 모델만 업로드
+ros2 launch pinky_description upload_robot.launch.py
+
+# 시뮬레이션
+ros2 launch pinky_gz_sim launch_sim.launch.xml</code></pre></section>
+      <div class="bottom-buttons"><a target="_blank" rel="noopener" href="https://drive.google.com/file/d/12eEnKOK6Co-JQ-RzraE8efQt_JzV795n/view">원본 HTML</a><a target="_blank" rel="noopener" href="https://drive.google.com/file/d/1S2dtW0XMwecv6hEyguWuLhtLrsK-pUHZ/view">강의 PDF</a></div>
+    </main>
+  </div>
+</body>
+</html>
