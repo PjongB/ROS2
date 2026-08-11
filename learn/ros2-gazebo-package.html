@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>ROS 2 Gazebo 패키지 · ROS2</title>
+  <link rel="stylesheet" href="mobile-robot-summary.css">
+</head>
+<body>
+  <header><div class="shell top"><a class="brand" href="../index.html"><b>ROS</b>2 LEARN</a><a href="../index.html">← 전체 강의</a></div></header>
+  <section class="hero"><div class="shell"><small>03.09 · ROS 2 JAZZY</small><h1>ROS 2 Gazebo 패키지</h1><p>Pinky Pro 시뮬레이션을 실행하고 로봇 구동과 센서 데이터를 ROS 2에 연결할 때 꼭 알아야 할 내용입니다.</p><div class="source-buttons"><a class="html" target="_blank" rel="noopener" href="https://drive.google.com/file/d/1r0x395Wg_Bg2Ihss65GAKUgyV-c0-n-x/view">원본 HTML 열기</a><a class="pdf" target="_blank" rel="noopener" href="https://drive.google.com/file/d/1AegEMscNneuqBxdhKm9KNGgxzutn2LAh/view">강의 PDF 열기</a></div></div></section>
+  <div class="shell layout">
+    <nav><b>목차</b><a href="#basics">01 Gazebo 기본</a><a href="#package">02 패키지 구성</a><a href="#launch">03 Launch 흐름</a><a href="#xacro">04 Gazebo Xacro</a><a href="#bridge">05 센서·Bridge</a><a href="#practice">06 실행·확인</a></nav>
+    <main>
+      <div class="intro"><b>읽는 방법</b><span>여기서 전체 흐름을 먼저 익히고, 그림과 전체 설정 코드는 위의 HTML 또는 PDF로 확인하세요.</span></div>
+      <section id="basics"><div class="number">01</div><div><h2>Gazebo 기본과 버전</h2><p class="range">원본 목차 1–2</p><ul><li>ROS 2 Jazzy에서는 최신 Gazebo 계열과 맞는 패키지·브리지를 사용해야 합니다.</li><li>ROS 배포판과 Gazebo 버전의 호환 조합을 먼저 확인합니다.</li><li>가상 머신에서는 3D 가속과 그래픽 성능에 따라 실행이 느리거나 화면이 표시되지 않을 수 있습니다.</li></ul></div></section>
+      <section id="package"><div class="number">02</div><div><h2>Pinky Gazebo 패키지 구성</h2><p class="range">원본 목차 2.4–2.5</p><ul><li>Description 패키지는 로봇 구조를, Gazebo 패키지는 world·시뮬레이션 실행·플러그인을 담당합니다.</li><li><code>launch</code>에는 실행 구성을, <code>urdf</code>에는 Gazebo 전용 Xacro 설정을 둡니다.</li><li>패키지 리소스는 <code>CMakeLists.txt</code> 설치 규칙에 포함되어야 실행 시 찾을 수 있습니다.</li></ul></div></section>
+      <section id="launch"><div class="number">03</div><div><h2>launch_sim.launch.xml 실행 흐름</h2><p class="range">원본 목차 3</p><ul><li>Gazebo 서버와 클라이언트를 시작하고 원하는 world를 불러옵니다.</li><li>Description의 upload launch가 <code>robot_description</code>을 발행하면 spawn 과정이 그 모델을 Gazebo에 생성합니다.</li><li>ROS–Gazebo bridge와 카메라 bridge를 함께 실행해 양쪽 통신을 연결합니다.</li></ul></div></section>
+      <section id="xacro"><div class="number">04</div><div><h2>pinky_gz.launch.xacro</h2><p class="range">원본 목차 4</p><ul><li>Differential drive에는 좌우 바퀴 joint, 바퀴 간 거리와 반지름 설정이 필요합니다.</li><li><code>gz_ros2_control</code>을 쓰면 ROS 2 controller가 구동을 맡고, 쓰지 않으면 Gazebo diff-drive plugin을 사용할 수 있습니다.</li><li>마찰 계수와 바퀴의 물리 특성이 잘못되면 미끄러지거나 움직임이 불안정해집니다.</li></ul></div></section>
+      <section id="bridge"><div class="number">05</div><div><h2>센서와 ROS–Gazebo Bridge</h2><p class="range">원본 목차 3.8–3.9·4.7–4.9</p><ul><li>Gazebo transport와 ROS 2 topic은 별개이므로 <code>ros_gz_bridge</code>가 메시지를 변환합니다.</li><li>LiDAR, 두 대의 카메라, IMU마다 topic 이름·메시지 형식·방향을 맞춰야 합니다.</li><li>RViz에서 데이터가 보이지 않으면 bridge 실행 여부, topic, QoS와 <code>frame_id</code>를 확인합니다.</li></ul></div></section>
+      <section id="practice"><div class="number">06</div><div><h2>실행하고 RViz에서 확인</h2><p class="range">원본 목차 5</p><ul><li>시뮬레이션을 실행한 뒤 RViz Fixed Frame과 RobotModel을 먼저 확인합니다.</li><li>LaserScan과 Image display를 추가해 LiDAR 및 두 카메라 영상을 확인합니다.</li><li>키보드 teleop으로 <code>/cmd_vel</code>을 발행하고 로봇이 정상적으로 이동하는지 시험합니다.</li></ul></div></section>
+      <section class="commands"><h2>핵심 실행 명령</h2><pre><code>source /opt/ros/jazzy/setup.bash
+source ~/pinky/install/local_setup.bash
+
+# Gazebo 시뮬레이션 실행
+ros2 launch pinky_gz_sim launch_sim.launch.xml
+
+# RViz 실행
+rviz2
+
+# 키보드로 로봇 조작
+ros2 run teleop_twist_keyboard teleop_twist_keyboard</code></pre></section>
+      <div class="bottom-buttons"><a target="_blank" rel="noopener" href="https://drive.google.com/file/d/1r0x395Wg_Bg2Ihss65GAKUgyV-c0-n-x/view">원본 HTML</a><a target="_blank" rel="noopener" href="https://drive.google.com/file/d/1AegEMscNneuqBxdhKm9KNGgxzutn2LAh/view">강의 PDF</a></div>
+    </main>
+  </div>
+</body>
+</html>
