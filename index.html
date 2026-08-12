@@ -19,7 +19,7 @@
 </head>
 <body>
 <header class="shell top"><div class="brand"><b>ROS</b> FIELD NOTES</div><div class="source">Google Drive 원본 기반 · 로컬 아카이브</div></header>
-<section class="hero"><div class="shell"><div class="eyebrow">FROM SETUP TO TRANSFORMS</div><h1>ROS2</h1><p>개발 환경을 준비하고, ROS 2 통신 구조와 TF 좌표계까지 직접 실행하며 배우는 실습형 학습 아카이브입니다.</p><div class="hero-actions"><a class="quiz-start" href="quiz.html">문제 풀기 →</a></div><div class="statbar"><div class="stat"><b>25</b><span>전체 강의</span></div><div class="stat"><b>65</b><span>연습 문제</span></div><div class="stat"><b id="doneCount">0</b><span>완료한 강의</span></div></div></div></section>
+<section class="hero"><div class="shell"><div class="eyebrow">FROM SETUP TO TRANSFORMS</div><h1>ROS2</h1><p>개발 환경을 준비하고, ROS 2 통신 구조와 TF 좌표계까지 직접 실행하며 배우는 실습형 학습 아카이브입니다.</p><div class="hero-actions"><a class="quiz-start" href="quiz.html">문제 풀기 →</a></div><div class="statbar"><div class="stat"><b>26</b><span>전체 강의</span></div><div class="stat"><b>65</b><span>연습 문제</span></div><div class="stat"><b id="doneCount">0</b><span>완료한 강의</span></div></div></div></section>
 <div class="tools"><div class="shell"><div class="toolrow"><input id="search" class="search" type="search" placeholder="강의 검색 — TF, 토픽, Jupyter…"><button id="reset" class="reset">진도 초기화</button></div><div class="progress"><i id="bar"></i></div></div></div>
 <main class="shell" id="content"></main>
 <div class="shell empty" id="empty">검색 결과가 없습니다.</div>
@@ -57,12 +57,13 @@ const modules=[
   ["07","3개 Domain을 하나의 브리지로 연결","Domain 1의 chatter를 Domain 2의 chitter와 Domain 3의 chatter로 중계","learn/ros-domain-bridge.html","1PEpzcKN5bDJ1xuh8EpuA0Kc91x77bzLs"],
   ["08","모바일 로봇 Description 패키지","Pinky Pro의 URDF·Xacro·launch와 RViz 모델 시각화","learn/mobile-robot-description.html","1S2dtW0XMwecv6hEyguWuLhtLrsK-pUHZ"],
   ["09","ROS 2 Gazebo 패키지","Pinky Pro를 Gazebo에 생성하고 구동·센서 데이터를 연결하는 실습","learn/ros2-gazebo-package.html","1AegEMscNneuqBxdhKm9KNGgxzutn2LAh"],
-  ["10","ROS 2 SLAM 지도 작성","SLAM Toolbox로 Pinky Pro 주행 지도를 생성하고 저장하는 실습","learn/ros2-slam-map-building.html","1UeyTKSmA5HGmavQJp-92GcIOCamT-_Yq"]
+  ["10","ROS 2 SLAM 지도 작성","SLAM Toolbox로 Pinky Pro 주행 지도를 생성하고 저장하는 실습","learn/ros2-slam-map-building.html","1UeyTKSmA5HGmavQJp-92GcIOCamT-_Yq"],
+  ["11","ROS 2 Localization","AMCL 파티클 필터로 저장된 지도 위의 로봇 위치를 추정하는 실습","learn/ros2-localization.html","1RGs82Eb-vckUOdBirfFcDN43ObdVvr-_"]
  ]}
 ];
 const key="ros-field-notes-progress-v1";let done=new Set(JSON.parse(localStorage.getItem(key)||"[]"));
 function render(q=""){const root=document.querySelector("#content");root.innerHTML="";let shown=0;modules.forEach((m,mi)=>{const hits=m.lessons.filter(x=>(x[1]+" "+x[2]+" "+m.title).toLowerCase().includes(q.toLowerCase()));if(!hits.length)return;const sec=document.createElement("section");sec.className="module";sec.innerHTML='<div class="module-head"><div><h2>'+m.title+'</h2><small>'+m.desc+'</small></div><small>'+hits.length+' lessons</small></div><div class="grid"></div>';const grid=sec.querySelector(".grid");hits.forEach(x=>{shown++;const id=x[3];const el=document.createElement("article");el.className="card"+(done.has(id)?" completed":"");const pdf=x[4]?'<a class="pdf" title="Drive PDF 열기" target="_blank" rel="noopener" href="https://drive.google.com/file/d/'+x[4]+'/view">PDF</a>':'';el.innerHTML='<input class="done" type="checkbox" aria-label="완료 표시" '+(done.has(id)?"checked":"")+'><div class="num">'+x[0]+'</div><div class="copy"><h3>'+x[1]+'</h3><p>'+x[2]+'</p></div><div class="links"><a class="open" href="'+x[3]+'">강의 열기</a>'+pdf+'</div>';el.querySelector(".done").onchange=e=>{e.target.checked?done.add(id):done.delete(id);localStorage.setItem(key,JSON.stringify([...done]));update();render(document.querySelector("#search").value)};grid.append(el)});root.append(sec)});document.querySelector("#empty").style.display=shown?"none":"block";update()}
-function update(){document.querySelector("#doneCount").textContent=done.size;document.querySelector("#bar").style.width=(done.size/25*100)+"%"}
+function update(){document.querySelector("#doneCount").textContent=done.size;document.querySelector("#bar").style.width=(done.size/26*100)+"%"}
 document.querySelector("#search").addEventListener("input",e=>render(e.target.value));document.querySelector("#reset").onclick=()=>{if(confirm("저장된 학습 진도를 초기화할까요?")){done.clear();localStorage.removeItem(key);render(document.querySelector("#search").value)}};render();
 </script>
 </body>
