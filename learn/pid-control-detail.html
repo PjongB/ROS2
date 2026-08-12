@@ -10,36 +10,45 @@
   <header><div class="shell top"><a class="brand" href="../index.html"><b>ROS</b>2 LEARN</a><a href="ultra-simple-navigation.html">← 12번 강의</a></div></header>
   <section class="hero"><div class="shell"><small>03.12 SUPPLEMENT · CONTROL</small><h1>PID 제어 상세 해설</h1><p>목표와 현재 상태의 오차를 속도 명령으로 바꾸는 P·I·D 항의 역할과 Pinky Simple Navigator에서의 실제 적용 방법을 단계별로 살펴봅니다.</p></div></section>
   <div class="shell layout">
-    <nav><b>목차</b><a href="#concept">01 제어의 핵심</a><a href="#terms">02 P·I·D 항</a><a href="#code">03 코드 읽기</a><a href="#linear">04 선속도 제어</a><a href="#angular">05 각속도 제어</a><a href="#normalize">06 각도 정규화</a><a href="#tuning">07 튜닝 방법</a><a href="#limits">08 코드의 한계</a></nav>
+    <nav><b>목차</b><a href="#words">먼저 알아둘 말</a><a href="#concept">01 제어의 핵심</a><a href="#analogy">02 운전으로 이해</a><a href="#terms">03 P·I·D 항</a><a href="#response">04 제어 결과 읽기</a><a href="#code">05 코드 읽기</a><a href="#linear">06 선속도 제어</a><a href="#angular">07 각속도 제어</a><a href="#normalize">08 각도 정규화</a><a href="#tuning">09 튜닝 방법</a><a href="#limits">10 코드의 한계</a></nav>
     <main>
       <div class="intro"><b>핵심</b><span>PID 제어는 “목표에서 얼마나 벗어났는가”를 측정하고, 그 오차를 줄이는 방향으로 명령을 반복 계산하는 피드백 제어입니다.</span></div>
+      <section id="words"><div class="number">START</div><div><h2>먼저 알아둘 네 가지 말</h2><p class="range">수식보다 개념부터</p><ul><li><b>목표값(Setpoint):</b> 로봇이 도달해야 할 값입니다. 예: 목표 거리 0m, 목표 방향 0rad.</li><li><b>현재값(Process value):</b> 센서나 TF로 측정한 지금 상태입니다.</li><li><b>오차(Error):</b> <code>목표값 − 현재값</code>입니다. PID가 입력으로 받는 핵심 값입니다.</li><li><b>제어 입력(Control input):</b> 오차를 줄이기 위해 로봇에 보내는 명령입니다. 이 예제에서는 <code>linear.x</code>와 <code>angular.z</code>입니다.</li></ul><pre><code>목표 방향 90° - 현재 방향 30° = 방향 오차 60°
+목표 거리  0m  - 남은 거리  2m = 거리 오차 -2m
+
+※ 코드에서는 거리의 크기를 양수로 계산해 전진 속도로 사용합니다.</code></pre></div></section>
       <section id="concept"><div class="number">01</div><div><h2>오차를 줄이는 폐루프 제어</h2><p class="range">측정 → 비교 → 제어 → 재측정</p><pre><code>목표값(goal) ─┐
               ├─ 오차(error) → PID → 속도 명령 → 로봇
 현재값(TF) ───┘                              │
       ↑                                      │
-      └──────────── 다시 측정 ────────────────┘</code></pre><p>Simple Navigator는 0.1초마다 TF에서 현재 위치와 방향을 다시 읽습니다. 한 번 계산한 속도로 끝까지 움직이는 것이 아니라, 이동 결과를 다시 측정하고 다음 명령을 수정합니다.</p></div></section>
-      <section id="terms"><div class="number">02</div><div><h2>P·I·D 세 항의 역할</h2><p class="range">u = Kp·e + Ki·Σe + Kd·Δe</p><ul><li><b>P — 비례:</b> 현재 오차가 클수록 강하게 움직입니다. 값이 너무 크면 목표 주변에서 빠르게 진동하고, 너무 작으면 반응이 느립니다.</li><li><b>I — 적분:</b> 과거 오차를 누적해 작은 오차가 오래 남는 현상을 제거합니다. 너무 크면 누적값 때문에 목표를 지나쳐 계속 움직이는 wind-up이 발생할 수 있습니다.</li><li><b>D — 미분:</b> 오차가 얼마나 빠르게 변하는지 보고 제동 역할을 합니다. overshoot와 진동을 줄이지만 센서 노이즈에 민감합니다.</li></ul><pre><code>P: 지금 얼마나 틀렸는가?
+      └──────────── 다시 측정 ────────────────┘</code></pre><p>Simple Navigator는 0.1초마다 TF에서 현재 위치와 방향을 다시 읽습니다. 한 번 계산한 속도로 끝까지 움직이는 것을 <b>개루프 제어</b>라고 합니다. 반대로 이 예제처럼 결과를 계속 측정해 명령을 고치는 방식을 <b>폐루프 또는 피드백 제어</b>라고 합니다.</p></div></section>
+      <section id="analogy"><div class="number">02</div><div><h2>자동차 운전으로 이해하기</h2><p class="range">정지선에 부드럽게 멈추기</p><ul><li><b>P는 가속 페달:</b> 정지선이 멀면 세게 밟고 가까우면 약하게 밟습니다. 현재 거리만 보고 즉시 반응합니다.</li><li><b>I는 계속 남은 불만:</b> 약한 오르막이나 마찰 때문에 조금 못 가고 있으면 남은 오차를 계속 모아 더 강한 힘을 냅니다.</li><li><b>D는 브레이크 감각:</b> 정지선에 너무 빠르게 접근하고 있으면 미리 힘을 줄여 지나치는 것을 막습니다.</li></ul><p>P만 있으면 간단하고 빠르지만 관성 때문에 목표를 지나칠 수 있습니다. D는 접근 속도를 보고 제동하며, I는 마찰처럼 지속적으로 남는 오차를 없애는 역할을 합니다.</p></div></section>
+      <section id="terms"><div class="number">03</div><div><h2>P·I·D 세 항의 역할</h2><p class="range">u = Kp·e + Ki·Σe + Kd·Δe</p><ul><li><b>P — 비례:</b> 현재 오차가 클수록 강하게 움직입니다. 즉각적이고 이해하기 쉽지만 P만 너무 크면 목표를 계속 넘나들 수 있습니다.</li><li><b>I — 적분:</b> 과거 오차를 누적해 작은 오차가 오래 남는 현상인 정상상태 오차를 제거합니다. 너무 크면 누적값 때문에 목표를 지나쳐 계속 움직이는 wind-up이 발생할 수 있습니다.</li><li><b>D — 미분:</b> 오차가 얼마나 빠르게 변하는지 보고 미래의 움직임을 짐작하는 제동 역할을 합니다. overshoot와 진동을 줄이지만 센서 노이즈에 민감합니다.</li></ul><pre><code>P: 지금 얼마나 틀렸는가?
 I: 지금까지 얼마나 오래 틀렸는가?
 D: 오차가 얼마나 빠르게 변하는가?</code></pre></div></section>
-      <section id="code"><div class="number">03</div><div><h2>예제 PID 클래스 읽기</h2><p class="range">simple_navigator.py</p><pre><code>def update(self, error):
+      <section id="response"><div class="number">04</div><div><h2>좋은 제어와 나쁜 제어 구분하기</h2><p class="range">목표에 도달하는 모양을 관찰</p><ul><li><b>상승 시간:</b> 출발 후 목표 근처까지 도달하는 시간입니다. 너무 길면 반응이 답답합니다.</li><li><b>Overshoot:</b> 목표를 지나쳐 버린 크기입니다.</li><li><b>진동:</b> 목표의 양쪽을 반복해서 오가는 현상입니다.</li><li><b>정착 시간:</b> 진동이 끝나고 허용 오차 안에 안정적으로 머물기까지 걸리는 시간입니다.</li><li><b>정상상태 오차:</b> 시간이 지나도 끝까지 남는 작은 오차입니다.</li></ul><pre><code>현재 ──────── 목표 ────────
+빠르지만 overshoot 큼:  ───────╱╲__ 목표
+느리지만 안정적:       ────╱╱╱── 목표
+진동함:                ───╱╲╱╲╱─ 목표</code></pre><p>좋은 제어는 무조건 빠른 제어가 아닙니다. 로봇과 환경에 맞게 빠르면서도 목표를 크게 지나치지 않고 안정적으로 멈추는 균형이 중요합니다.</p></div></section>
+      <section id="code"><div class="number">05</div><div><h2>예제 PID 클래스 읽기</h2><p class="range">simple_navigator.py</p><pre><code>def update(self, error):
     self.integral += error
     derivative = error - self.previous_error
     self.previous_error = error
     return (self.P * error
             + self.I * self.integral
             + self.D * derivative)</code></pre><ul><li><code>integral</code>은 지금까지의 오차를 더한 값입니다.</li><li><code>derivative</code>는 이번 오차와 직전 오차의 차이입니다.</li><li>새 목표를 받으면 <code>reset()</code>으로 이전 목표의 누적값을 지웁니다.</li><li>현재 게인은 <code>I=0</code>이므로 실제 동작은 PID보다 <b>PD 제어</b>에 가깝습니다.</li></ul></div></section>
-      <section id="linear"><div class="number">04</div><div><h2>거리 오차를 선속도로 변환</h2><p class="range">move_to_goal 상태</p><pre><code>dx = goal_x - current_x
+      <section id="linear"><div class="number">06</div><div><h2>거리 오차를 선속도로 변환</h2><p class="range">move_to_goal 상태</p><pre><code>dx = goal_x - current_x
 dy = goal_y - current_y
 distance_error = sqrt(dx² + dy²)
 linear.x = linear_pid.update(distance_error)</code></pre><p>목표가 멀면 거리 오차가 커져 빠르게 전진하고, 가까워지면 속도가 줄어듭니다. 예제의 선속도 게인은 <code>P=0.5, I=0.0, D=0.1</code>입니다.</p></div></section>
-      <section id="angular"><div class="number">05</div><div><h2>방향 오차를 각속도로 변환</h2><p class="range">rotate_to_goal·move_to_goal·rotate_to_final</p><pre><code>desired_heading = atan2(dy, dx)
+      <section id="angular"><div class="number">07</div><div><h2>방향 오차를 각속도로 변환</h2><p class="range">rotate_to_goal·move_to_goal·rotate_to_final</p><pre><code>desired_heading = atan2(dy, dx)
 error_angle = normalize_angle(
     desired_heading - current_yaw)
 angular.z = angular_pid.update(error_angle)</code></pre><p>양의 <code>angular.z</code>는 반시계 방향, 음의 값은 시계 방향 회전을 뜻합니다. 예제의 각속도 게인은 <code>P=1.5, I=0.0, D=0.2</code>이며, 직진 중에도 방향 오차를 계속 보정합니다.</p></div></section>
-      <section id="normalize"><div class="number">06</div><div><h2>각도 정규화가 필요한 이유</h2><p class="range">−π ≤ error ≤ π</p><pre><code>def normalize_angle(angle):
+      <section id="normalize"><div class="number">08</div><div><h2>각도 정규화가 필요한 이유</h2><p class="range">−π ≤ error ≤ π</p><pre><code>def normalize_angle(angle):
     return atan2(sin(angle), cos(angle))</code></pre><p>각도는 360°와 0°가 같은 순환 값입니다. 현재 방향이 179°이고 목표가 −179°일 때 단순 뺄셈은 −358°를 만들지만 실제 최단 회전은 2°입니다. 정규화는 항상 짧은 방향의 회전 오차를 선택합니다.</p></div></section>
-      <section id="tuning"><div class="number">07</div><div><h2>안전한 튜닝 순서</h2><p class="range">한 번에 하나의 값만 변경</p><ul><li><b>1단계:</b> I와 D를 0으로 두고 P를 낮은 값부터 올려 반응 속도를 맞춥니다.</li><li><b>2단계:</b> 목표를 지나치거나 진동하면 D를 조금씩 올려 제동을 추가합니다.</li><li><b>3단계:</b> 마찰 때문에 작은 오차가 계속 남을 때만 I를 아주 작게 추가합니다.</li><li><b>4단계:</b> 각 변경 후 같은 시작 위치와 목표로 반복 시험합니다.</li></ul><ul><li><b>느리게 접근:</b> P가 너무 작을 가능성</li><li><b>목표 주변 진동:</b> P가 너무 크거나 D가 부족할 가능성</li><li><b>반응이 거칠고 떨림:</b> D가 너무 크거나 측정 노이즈가 큰 가능성</li><li><b>한참 뒤 목표를 지나침:</b> I가 과도하게 누적된 가능성</li></ul></div></section>
-      <section id="limits"><div class="number">08</div><div><h2>현재 예제 구현에서 주의할 점</h2><p class="range">교육용 단순 구현</p><ul><li>일반적인 PID는 적분과 미분에 제어 주기 <code>dt</code>를 반영하지만 예제는 단순히 오차를 더하고 뺍니다. 타이머 주기가 달라지면 같은 게인도 동작이 달라질 수 있습니다.</li><li>선속도와 각속도에 상한이 없어 큰 오차에서 명령이 과도해질 수 있습니다. 실제 로봇에서는 최대 속도 제한이 필요합니다.</li><li>적분 wind-up 방지, 미분 필터, 가속도 제한이 없습니다.</li><li>PID는 목표를 향하게 만들 뿐 장애물을 피할 경로는 생성하지 않습니다. 장애물 회피와 복구에는 Nav2의 planner·controller·costmap이 필요합니다.</li></ul></div></section>
+      <section id="tuning"><div class="number">09</div><div><h2>안전한 튜닝 순서</h2><p class="range">한 번에 하나의 값만 변경</p><ul><li><b>1단계:</b> I와 D를 0으로 두고 P를 낮은 값부터 올려 반응 속도를 맞춥니다.</li><li><b>2단계:</b> 목표를 지나치거나 진동하면 D를 조금씩 올려 제동을 추가합니다.</li><li><b>3단계:</b> 마찰 때문에 작은 오차가 계속 남을 때만 I를 아주 작게 추가합니다.</li><li><b>4단계:</b> 각 변경 후 같은 시작 위치와 목표로 반복 시험합니다.</li></ul><ul><li><b>느리게 접근:</b> P가 너무 작을 가능성</li><li><b>목표 주변 진동:</b> P가 너무 크거나 D가 부족할 가능성</li><li><b>반응이 거칠고 떨림:</b> D가 너무 크거나 측정 노이즈가 큰 가능성</li><li><b>한참 뒤 목표를 지나침:</b> I가 과도하게 누적된 가능성</li></ul></div></section>
+      <section id="limits"><div class="number">10</div><div><h2>현재 예제 구현에서 주의할 점</h2><p class="range">교육용 단순 구현</p><ul><li>일반적인 PID는 적분과 미분에 제어 주기 <code>dt</code>를 반영하지만 예제는 단순히 오차를 더하고 뺍니다. 타이머 주기가 달라지면 같은 게인도 동작이 달라질 수 있습니다.</li><li>선속도와 각속도에 상한이 없어 큰 오차에서 명령이 과도해질 수 있습니다. 실제 로봇에서는 최대 속도 제한이 필요합니다.</li><li>적분 wind-up 방지, 미분 필터, 가속도 제한이 없습니다.</li><li>PID는 목표를 향하게 만들 뿐 장애물을 피할 경로는 생성하지 않습니다. 장애물 회피와 복구에는 Nav2의 planner·controller·costmap이 필요합니다.</li></ul></div></section>
       <section class="commands"><h2>관찰 명령</h2><pre><code># 내비게이터가 만드는 속도 명령
 ros2 topic echo /cmd_vel
 
