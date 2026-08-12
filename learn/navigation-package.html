@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Navigation PKG 다뤄보기 · ROS2</title>
+  <link rel="stylesheet" href="mobile-robot-summary.css">
+</head>
+<body>
+  <header><div class="shell top"><a class="brand" href="../index.html"><b>ROS</b>2 LEARN</a><a href="../index.html">← 전체 강의</a></div></header>
+  <section class="hero"><div class="shell"><small>03.13 · ROS 2 JAZZY · 상세 해설</small><h1>Navigation PKG 다뤄보기</h1><p>Gazebo에서 Pinky Pro를 실행하고 Nav2에 저장 지도를 연결한 뒤, RViz2에서 초기 자세와 목표를 지정해 경로 계획·장애물 회피 주행을 수행합니다.</p></div></section>
+  <div class="shell layout">
+    <nav><b>목차</b><a href="#key-points">핵심 포인트</a><a href="#architecture">전체 구조</a><a href="#launch">01 실행</a><a href="#initial-pose">02 초기 자세</a><a href="#goal">03 목표 주행</a><a href="#nav2">04 Nav2 내부 동작</a><a href="#costmap">05 Costmap</a><a href="#inflation">06 Inflation</a><a href="#tuning">07 튜닝</a><a href="#troubleshoot">08 문제 해결</a></nav>
+    <main>
+      <div class="intro"><b>한 줄 정리</b><span>Nav2는 현재 위치와 목표 위치를 받아 안전한 경로를 만들고, 로봇이 그 경로를 따라가도록 <code>/cmd_vel</code>을 계산하는 내비게이션 프레임워크입니다.</span></div>
+      <div class="intro"><b>12번과 차이</b><span>12번의 Simple Navigator는 목표까지 직선으로 이동하지만, 13번의 Nav2는 지도·costmap·planner·controller를 이용해 장애물을 고려한 경로를 생성합니다.</span></div>
+
+      <section id="key-points"><div class="number">KEY</div><div><h2>반드시 기억할 핵심 포인트</h2><p class="range">11쪽 강의자료 요약</p><ul><li>Gazebo, Nav2, RViz2를 각각 실행하며 모든 노드가 <code>use_sim_time:=true</code>로 같은 시뮬레이션 시간을 사용해야 합니다.</li><li>저장된 지도와 LaserScan이 어긋나면 <code>2D Pose Estimate</code>로 AMCL의 초기 위치와 방향을 다시 지정합니다.</li><li><code>Nav2 Goal</code>은 도착 좌표뿐 아니라 도착했을 때 로봇이 바라볼 방향까지 지정합니다.</li><li>Nav2는 전역 경로를 만들고 지역 장애물을 반영하며 속도 명령을 계속 갱신합니다.</li><li><code>inflation_radius</code>는 장애물 주변에 로봇이 피해야 할 비용 영역을 얼마나 넓게 만들지 결정합니다.</li></ul></div></section>
+
+      <section id="architecture"><div class="number">FLOW</div><div><h2>전체 데이터 흐름</h2><p class="range">지도와 센서에서 속도 명령까지</p><pre><code>저장 지도(my_map.yaml) ──→ Map Server ─┐
+LaserScan + TF + Odometry ─→ AMCL ──────┤ 현재 자세
+RViz2 Nav2 Goal ─────────────────────────┤ 목표 자세
+                                        ↓
+                      Global Planner → 전역 경로
+                                        ↓
+                      Local Controller + Costmap
+                                        ↓
+                              /cmd_vel → Pinky Pro</code></pre><p>AMCL이 지도 안에서 로봇의 현재 자세를 추정하고, planner가 목표까지의 큰 경로를 만듭니다. controller는 센서로 확인한 주변 장애물과 경로를 함께 보면서 실제 선속도와 각속도를 계산합니다.</p></div></section>
+
+      <section id="launch"><div class="number">01</div><div><h2>세 터미널에서 시스템 실행</h2><p class="range">Gazebo → Nav2 → RViz2 순서</p><pre><code># 터미널 1: Gazebo 시뮬레이션
+cd ~/pinky
+source install/local_setup.bash
+ros2 launch pinky_gz_sim launch_sim.launch.xml
+
+# 터미널 2: 저장 지도와 Nav2 전체 실행
+cd ~/pinky
+source install/local_setup.bash
+ros2 launch pinky_navigation bringup_launch.xml \
+  map:=$HOME/pinky/my_map.yaml use_sim_time:=true
+
+# 터미널 3: RViz2
+cd ~/pinky
+source install/local_setup.bash
+ros2 launch pinky_navigation nav2_view.launch.xml</code></pre><ul><li><code>launch_sim.launch.xml</code>은 세계와 로봇 및 시뮬레이션 센서를 실행합니다.</li><li><code>bringup_launch.xml</code>은 Map Server, AMCL, planner, controller, behavior server 등 Nav2 구성 요소를 함께 시작합니다.</li><li><code>nav2_view.launch.xml</code>은 지도·레이저·경로·costmap을 관찰하고 목표를 지정할 RViz2를 실행합니다.</li></ul></div></section>
+
+      <section id="initial-pose"><div class="number">02</div><div><h2>2D Pose Estimate로 초기 자세 맞추기</h2><p class="range">지도와 LaserScan이 일치하도록 AMCL 초기화</p><ol><li>Gazebo에서 로봇의 실제 위치와 정면 방향을 확인합니다.</li><li>RViz2 상단의 <b>2D Pose Estimate</b>를 선택합니다.</li><li>지도에서 같은 위치를 클릭한 채, 로봇이 바라보는 방향으로 드래그한 뒤 놓습니다.</li><li>보라색 LaserScan 점이 지도의 벽 윤곽과 겹치는지 확인합니다.</li></ol><p>클릭 위치는 <code>x, y</code>, 화살표 방향은 <code>yaw</code>의 초기 추정값입니다. 이 입력은 <code>/initialpose</code>로 전달되고 AMCL 파티클이 주변에 다시 분포합니다. 지도 자체를 회전하는 기능이 아니라, <b>지도 안에서 로봇 자세를 수정하는 기능</b>입니다.</p><pre><code>올바른 상태: LaserScan의 벽 점 ↔ 지도의 검은 벽이 겹침
+잘못된 상태: 스캔 전체가 평행 이동되거나 일정 각도로 돌아가 있음</code></pre></div></section>
+
+      <section id="goal"><div class="number">03</div><div><h2>Nav2 Goal로 목적지와 방향 지정</h2><p class="range">클릭 위치 + 드래그 방향</p><ol><li>RViz2 상단에서 <b>Nav2 Goal</b>을 선택합니다.</li><li>도착할 위치를 클릭합니다.</li><li>도착 후 로봇이 바라볼 방향으로 화살표를 드래그해 놓습니다.</li><li>생성된 전역 경로와 로봇의 주행을 관찰합니다.</li></ol><p>목표는 <code>PoseStamped</code> 형태로 전달됩니다. 위치만 지정하는 것이 아니므로 화살표 방향이 반대이면 로봇이 목적지에 도착한 뒤 다시 크게 회전할 수 있습니다.</p></div></section>
+
+      <section id="nav2"><div class="number">04</div><div><h2>Nav2 안에서는 무엇이 동작할까?</h2><p class="range">계획·제어·복구의 역할 분담</p><ul><li><b>Map Server:</b> <code>my_map.yaml</code>과 PGM 이미지를 읽어 정적 지도를 제공합니다.</li><li><b>AMCL:</b> 지도, LaserScan, odometry를 비교해 <code>map → odom</code> 변환을 추정합니다.</li><li><b>Global Planner:</b> 지도 위에서 시작점부터 목표점까지 충돌하지 않는 전역 경로를 계산합니다.</li><li><b>Local Controller:</b> 전역 경로를 따라가면서 로봇 가까이의 장애물을 고려해 <code>/cmd_vel</code>을 만듭니다.</li><li><b>Behavior Server:</b> 막힘이나 실패 상황에서 회전·후진·대기 같은 복구 행동을 제공합니다.</li><li><b>BT Navigator:</b> 목표 주행의 계획, 제어, 재계획, 복구 순서를 Behavior Tree로 관리합니다.</li></ul></div></section>
+
+      <section id="costmap"><div class="number">05</div><div><h2>Costmap은 장애물 지도가 아니라 비용 지도</h2><p class="range">갈 수 있음과 위험도를 숫자로 표현</p><ul><li><b>Free space:</b> 이동 가능한 낮은 비용의 공간입니다.</li><li><b>Obstacle/Lethal:</b> 벽이나 센서가 감지한 충돌 영역으로 통과할 수 없습니다.</li><li><b>Inflation 영역:</b> 장애물 바로 옆을 위험한 공간으로 표시하며, 거리가 멀어질수록 비용이 낮아집니다.</li><li><b>Global costmap:</b> 전체 지도에서 장거리 경로를 계획하는 데 사용합니다.</li><li><b>Local costmap:</b> 로봇 주변의 최신 센서 정보로 짧은 구간의 속도 제어에 사용합니다.</li></ul><p>경로 계획기는 단순히 장애물만 피하는 것이 아니라 비용 합이 낮은 경로를 찾기 때문에, inflation 설정에 따라 벽과의 거리와 경로 모양이 달라집니다.</p></div></section>
+
+      <section id="inflation"><div class="number">06</div><div><h2>inflation_radius 0.2와 0.1의 차이</h2><p class="range">장애물 주변 안전 여유</p><ul><li><b><code>0.2m</code>:</b> 장애물 주변 비용 영역이 더 넓습니다. 경로가 벽에서 떨어져 안전하지만 좁은 통로를 막힌 공간으로 판단할 가능성이 커집니다.</li><li><b><code>0.1m</code>:</b> 비용 영역이 좁아 벽 가까이 지나고 좁은 통로를 통과하기 쉬워집니다. 대신 위치 추정 오차나 실제 로봇 크기를 충분히 고려하지 못하면 충돌 위험이 커집니다.</li></ul><pre><code>장애물 ███  0.2m: ███▓▓▒▒░     넓은 안전 영역
+장애물 ███  0.1m: ███▓▒         좁은 안전 영역</code></pre><p><code>inflation_radius</code>는 로봇 반지름 자체가 아닙니다. 실제 충돌 영역은 URDF와 costmap의 footprint 또는 robot radius가 결정하고, inflation은 그 바깥의 추가 위험 비용을 만듭니다.</p></div></section>
+
+      <section id="tuning"><div class="number">07</div><div><h2>안전한 Costmap 튜닝 방법</h2><p class="range">동일 조건에서 한 값씩 비교</p><ol><li>먼저 로봇의 footprint 또는 robot radius가 실제 외형과 맞는지 확인합니다.</li><li><code>inflation_radius</code>를 로봇 크기와 통로 폭에 맞게 정합니다.</li><li>벽에서 비용이 감소하는 정도는 <code>cost_scaling_factor</code>로 조절합니다.</li><li>같은 시작점과 목표를 사용해 경로의 벽 간격, 통과 가능 여부, 주행 흔들림을 비교합니다.</li><li>값을 너무 작게 만들어 통과만 성공시키지 말고 위치 오차와 센서 오차를 포함한 안전 여유를 둡니다.</li></ol><p>ROS 2에서는 배포판과 노드 설정에 따라 RQt의 동적 파라미터 화면 또는 <code>ros2 param</code> 명령으로 값을 확인·변경할 수 있습니다. 변경한 값은 재실행하면 사라질 수 있으므로 최종값은 Nav2 파라미터 YAML에 반영해야 합니다.</p><pre><code># 관련 노드와 파라미터 이름 확인
+ros2 node list
+ros2 param list /global_costmap/global_costmap
+ros2 param list /local_costmap/local_costmap</code></pre></div></section>
+
+      <section id="troubleshoot"><div class="number">08</div><div><h2>자주 생기는 문제 빠르게 구분하기</h2><p class="range">증상 → 확인할 항목</p><ul><li><b>지도와 스캔이 어긋남:</b> Fixed Frame이 <code>map</code>인지 확인하고 2D Pose Estimate로 위치·방향을 다시 지정합니다.</li><li><b>목표를 눌러도 경로가 없음:</b> Navigation 2 패널 상태, lifecycle 노드, 목표가 장애물 위인지 확인합니다.</li><li><b>경로는 있지만 움직이지 않음:</b> <code>/cmd_vel</code>, Gazebo bridge, controller server 상태를 확인합니다.</li><li><b>좁은 길을 못 지나감:</b> footprint가 과도하게 크거나 inflation radius가 넓은지 확인합니다.</li><li><b>벽에 너무 가까이 붙음:</b> inflation radius가 너무 작거나 cost scaling이 급격한지 확인합니다.</li><li><b>시간 관련 오류:</b> Nav2와 RViz 및 센서 노드가 시뮬레이션 시간을 일관되게 사용하는지 확인합니다.</li></ul><pre><code>ros2 topic echo /scan
+ros2 topic echo /cmd_vel
+ros2 run tf2_ros tf2_echo map base_footprint
+ros2 lifecycle nodes</code></pre></div></section>
+
+      <section class="commands"><h2>핵심 실행 명령</h2><pre><code># alias를 등록했다면 Gazebo와 RViz는 기존 명령 사용
+pk_gz
+pk_rviz
+
+# Nav2 전체 bringup용 alias 예시
+alias pk_nav='pk_start; cd ~/pinky; ros2 launch pinky_navigation bringup_launch.xml map:=$HOME/pinky/my_map.yaml use_sim_time:=true'
+pk_nav</code></pre><p>기존 <code>pk_local</code>은 AMCL 위치 추정만 실행합니다. 13번의 목표 경로 생성과 주행에는 planner와 controller까지 포함하는 <code>bringup_launch.xml</code>이 필요합니다.</p></section>
+      <div class="bottom-buttons"><a href="ultra-simple-navigation.html">← 12번 강의</a><a href="../index.html">전체 강의</a></div>
+    </main>
+  </div>
+</body>
+</html>
