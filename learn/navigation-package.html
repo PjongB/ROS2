@@ -8,9 +8,9 @@
 </head>
 <body>
   <header><div class="shell top"><a class="brand" href="../index.html"><b>ROS</b>2 LEARN</a><a href="../index.html">← 전체 강의</a></div></header>
-  <section class="hero"><div class="shell"><small>03.13 · ROS 2 JAZZY · 상세 해설</small><h1>Navigation PKG 다뤄보기</h1><p>Gazebo에서 Pinky Pro를 실행하고 Nav2에 저장 지도를 연결한 뒤, RViz2에서 초기 자세와 목표를 지정해 경로 계획·장애물 회피 주행을 수행합니다.</p></div></section>
+  <section class="hero"><div class="shell"><small>03.13 · ROS 2 JAZZY · 상세 해설</small><h1>Navigation PKG 다뤄보기</h1><p>Gazebo에서 Pinky Pro를 실행하고 Nav2에 저장 지도를 연결한 뒤, RViz2에서 초기 자세와 목표를 지정해 경로 계획·장애물 회피 주행을 수행합니다.</p><div class="source-buttons"><a class="pdf" target="_blank" rel="noopener" href="../assets/lesson-13/navigation-package.pdf">강의 PDF 바로 열기</a><a class="html" href="#quick-start">터미널 실행 순서 ↓</a></div></div></section>
   <div class="shell layout">
-    <nav><b>목차</b><a href="#key-points">핵심 포인트</a><a href="#architecture">전체 구조</a><a href="#launch">01 실행</a><a href="#initial-pose">02 초기 자세</a><a href="#goal">03 목표 주행</a><a href="#nav2">04 Nav2 내부 동작</a><a href="#costmap">05 Costmap</a><a href="#inflation">06 Inflation</a><a href="#tuning">07 튜닝</a><a href="#troubleshoot">08 문제 해결</a></nav>
+    <nav><b>목차</b><a href="#key-points">핵심 포인트</a><a href="#architecture">전체 구조</a><a href="#launch">01 명령 해설</a><a href="#initial-pose">02 초기 자세</a><a href="#goal">03 목표 주행</a><a href="#nav2">04 Nav2 내부 동작</a><a href="#costmap">05 Costmap</a><a href="#inflation">06 Inflation</a><a href="#tuning">07 튜닝</a><a href="#troubleshoot">08 문제 해결</a><a href="#quick-start">마지막 실행 순서</a></nav>
     <main>
       <div class="intro"><b>한 줄 정리</b><span>Nav2는 현재 위치와 목표 위치를 받아 안전한 경로를 만들고, 로봇이 그 경로를 따라가도록 <code>/cmd_vel</code>을 계산하는 내비게이션 프레임워크입니다.</span></div>
       <div class="intro"><b>12번과 차이</b><span>12번의 Simple Navigator는 목표까지 직선으로 이동하지만, 13번의 Nav2는 지도·costmap·planner·controller를 이용해 장애물을 고려한 경로를 생성합니다.</span></div>
@@ -65,14 +65,36 @@ ros2 topic echo /cmd_vel
 ros2 run tf2_ros tf2_echo map base_footprint
 ros2 lifecycle nodes</code></pre></div></section>
 
-      <section class="commands"><h2>핵심 실행 명령</h2><pre><code># alias를 등록했다면 Gazebo와 RViz는 기존 명령 사용
-pk_gz
-pk_rviz
+      <section id="quick-start" class="commands"><h2>핵심 실행 명령</h2><p>아래 순서대로 새 터미널을 열어 하나씩 실행합니다. 앞 터미널의 프로그램은 종료하지 않습니다.</p><pre><code># 터미널 1 — Gazebo
+cd ~/pinky
+source /opt/ros/jazzy/setup.bash
+source install/setup.bash
+ros2 launch pinky_gz_sim launch_sim.launch.xml
 
-# Nav2 전체 bringup용 alias 예시
+# 터미널 2 — Nav2 전체 실행
+cd ~/pinky
+source /opt/ros/jazzy/setup.bash
+source install/setup.bash
+ros2 launch pinky_navigation bringup_launch.xml \
+  map:=$HOME/pinky/my_map.yaml use_sim_time:=true
+
+# 터미널 3 — RViz2
+cd ~/pinky
+source /opt/ros/jazzy/setup.bash
+source install/setup.bash
+ros2 launch pinky_navigation nav2_view.launch.xml</code></pre><h2>alias를 등록했다면</h2><pre><code># ~/.bashrc에 한 번만 추가
 alias pk_nav='pk_start; cd ~/pinky; ros2 launch pinky_navigation bringup_launch.xml map:=$HOME/pinky/my_map.yaml use_sim_time:=true'
-pk_nav</code></pre><p>기존 <code>pk_local</code>은 AMCL 위치 추정만 실행합니다. 13번의 목표 경로 생성과 주행에는 planner와 controller까지 포함하는 <code>bringup_launch.xml</code>이 필요합니다.</p></section>
-      <div class="bottom-buttons"><a href="ultra-simple-navigation.html">← 12번 강의</a><a href="../index.html">전체 강의</a></div>
+
+# 이후에는 터미널별로 짧게 실행
+# 터미널 1
+pk_gz
+
+# 터미널 2
+pk_nav
+
+# 터미널 3
+pk_rviz</code></pre><ol><li>Gazebo에서 로봇과 월드가 보인 뒤 Nav2를 실행합니다.</li><li>Nav2가 활성화된 뒤 RViz2를 실행합니다.</li><li>RViz2에서 <b>2D Pose Estimate</b>로 지도와 LaserScan을 맞춥니다.</li><li><b>Nav2 Goal</b>로 목적지와 최종 방향을 지정합니다.</li></ol><p><b>중요:</b> 12번의 <code>pk_local</code>과 <code>pk_drive</code>는 함께 실행하지 않습니다. 13번에서는 <code>pk_nav</code>가 localization, planner, controller를 모두 실행합니다.</p></section>
+      <div class="bottom-buttons"><a href="ultra-simple-navigation.html">← 12번 강의</a><a target="_blank" rel="noopener" href="../assets/lesson-13/navigation-package.pdf">강의 PDF</a><a href="../index.html">전체 강의</a></div>
     </main>
   </div>
 </body>
