@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>ROS2·로봇 용어 정리</title>
+  <link rel="stylesheet" href="mobile-robot-summary.css">
+  <style>
+    .term-search{width:100%;margin:0 0 18px;padding:15px 17px;border:1px solid #cbd7e4;border-radius:12px;background:#fff;color:#172033;font-size:15px}.term-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.term{padding:14px;border:1px solid #e1e7ee;border-radius:11px;background:#f9fbfd}.term h3{margin:0 0 5px;color:#10233d;font-size:16px}.term h3 code{color:#2563eb}.term p{margin:0;color:#526176;font-size:13px;line-height:1.65}.term.hide{display:none}.category.hide{display:none}.category>div>h2{margin-bottom:12px}@media(max-width:720px){.term-grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <header><div class="shell top"><a class="brand" href="../index.html"><b>ROS</b>2 LEARN</a><a href="../index.html">← 전체 강의</a></div></header>
+  <section class="hero"><div class="shell"><small>REFERENCE · GLOSSARY</small><h1>ROS2·로봇 용어 정리</h1><p>강의에서 반복해서 등장하는 통신, 좌표계, 시뮬레이션, SLAM, Nav2, 제어 용어를 역할과 관계 중심으로 정리합니다.</p></div></section>
+  <div class="shell layout">
+    <nav><b>분야</b><a href="#ros">ROS 2 기본</a><a href="#tf">TF·로봇 모델</a><a href="#sensor">센서·시뮬레이션</a><a href="#slam">SLAM·위치 추정</a><a href="#nav2">Nav2 구조</a><a href="#planner">경로 탐색</a><a href="#controller">Local Controller</a><a href="#costmap">Costmap</a><a href="#control">PID 제어</a></nav>
+    <main>
+      <input class="term-search" id="termSearch" type="search" placeholder="용어 검색 — 예: DWB, map, quaternion, 오버슈트">
+      <div class="intro"><b>읽는 법</b><span>Planner는 목적지까지의 길을 만들고, Controller는 그 길을 따라갈 속도를 만듭니다. 센서와 TF는 두 기능이 현재 상태와 장애물을 판단할 근거를 제공합니다.</span></div>
+
+      <section class="category" id="ros"><div class="number">ROS</div><div><h2>ROS 2 기본</h2><div class="term-grid">
+        <article class="term"><h3>Node · 노드</h3><p>센서 처리, 제어, 지도 제공처럼 하나의 역할을 수행하는 실행 단위입니다.</p></article>
+        <article class="term"><h3>Topic · 토픽</h3><p>Publisher가 계속 발행하고 Subscriber가 받아보는 비동기 데이터 통로입니다.</p></article>
+        <article class="term"><h3>Publisher / Subscriber</h3><p>토픽에 메시지를 보내는 쪽과 그 메시지를 구독해 처리하는 쪽입니다.</p></article>
+        <article class="term"><h3>Service · 서비스</h3><p>요청 하나에 응답 하나를 돌려주는 통신입니다. 짧은 작업에 적합합니다.</p></article>
+        <article class="term"><h3>Action · 액션</h3><p>오래 걸리는 목표를 보내고 진행 피드백·결과·취소를 처리하는 통신입니다. Nav2 Goal도 액션으로 처리됩니다.</p></article>
+        <article class="term"><h3>Message · 메시지</h3><p>토픽·서비스·액션에서 교환하는 데이터 형식입니다. 예: Twist, PoseStamped, LaserScan.</p></article>
+        <article class="term"><h3>Parameter · 파라미터</h3><p>노드의 동작을 바꾸는 설정값입니다. RQt, YAML, <code>ros2 param</code>으로 확인하거나 변경합니다.</p></article>
+        <article class="term"><h3>Launch</h3><p>여러 노드와 파라미터를 한 번에 실행하는 구성 파일 또는 실행 과정입니다.</p></article>
+        <article class="term"><h3>Package · 패키지</h3><p>노드, 설정, launch, 리소스와 의존성을 기능별로 묶은 ROS 2 프로젝트 단위입니다.</p></article>
+        <article class="term"><h3>Workspace / Colcon</h3><p>여러 패키지를 개발하는 작업 공간과 이를 빌드하는 도구입니다. 빌드 후 install 환경을 source해야 합니다.</p></article>
+        <article class="term"><h3>DDS / Domain ID</h3><p>DDS는 ROS 2 통신 기반이며 Domain ID가 같은 프로세스끼리 기본적으로 서로 발견하고 통신합니다.</p></article>
+        <article class="term"><h3>QoS</h3><p>메시지 신뢰성, 보관 수, 내구성 등을 정하는 통신 품질 규칙입니다. 양쪽 설정이 맞지 않으면 연결되지 않을 수 있습니다.</p></article>
+      </div></div></section>
+
+      <section class="category" id="tf"><div class="number">TF</div><div><h2>TF·로봇 모델</h2><div class="term-grid">
+        <article class="term"><h3>TF / Transform</h3><p>두 좌표계 사이의 이동과 회전 관계입니다. 로봇 각 부품과 지도 속 자세를 연결합니다.</p></article>
+        <article class="term"><h3>Frame · 프레임</h3><p>위치와 방향을 표현하는 기준 좌표계입니다. 좌표값은 어느 frame 기준인지 함께 알아야 의미가 있습니다.</p></article>
+        <article class="term"><h3><code>map</code></h3><p>지도에 고정된 전역 좌표계입니다. AMCL이 <code>map → odom</code>을 보정합니다.</p></article>
+        <article class="term"><h3><code>odom</code></h3><p>바퀴 odometry를 기준으로 연속적인 이동을 표현하는 좌표계입니다. 부드럽지만 시간이 지나면 오차가 누적됩니다.</p></article>
+        <article class="term"><h3><code>base_footprint</code></h3><p>바닥에 투영된 로봇 중심 좌표계입니다. 2D 내비게이션의 로봇 자세 기준으로 자주 사용합니다.</p></article>
+        <article class="term"><h3><code>base_link</code></h3><p>로봇 본체의 기준 링크입니다. 높이를 포함할 수 있어 base_footprint와 구분됩니다.</p></article>
+        <article class="term"><h3>Quaternion / Yaw</h3><p>Quaternion은 3D 회전을 안정적으로 표현하는 네 값이며, yaw는 2D 평면에서 Z축을 중심으로 도는 방향각입니다.</p></article>
+        <article class="term"><h3>URDF / Xacro</h3><p>URDF는 링크·조인트·형상을 기술하는 로봇 모델이고, Xacro는 반복과 변수를 사용할 수 있게 확장한 작성 방식입니다.</p></article>
+        <article class="term"><h3>Link / Joint</h3><p>Link는 로봇의 강체 부품이고 Joint는 두 Link가 연결되고 움직이는 관계입니다.</p></article>
+        <article class="term"><h3>Odometry</h3><p>바퀴 회전과 속도 등을 적분해 로봇의 상대 이동을 추정한 값입니다. 미끄러짐 때문에 장기 오차가 생깁니다.</p></article>
+      </div></div></section>
+
+      <section class="category" id="sensor"><div class="number">SENSE</div><div><h2>센서·시뮬레이션</h2><div class="term-grid">
+        <article class="term"><h3>LaserScan / <code>/scan</code></h3><p>2D 라이다가 각 방향에서 측정한 장애물 거리 배열입니다. RViz의 점과 costmap 장애물의 근거가 됩니다.</p></article>
+        <article class="term"><h3>LiDAR · 라이다</h3><p>레이저를 쏘고 돌아오는 시간을 이용해 주변 물체까지 거리를 측정하는 센서입니다.</p></article>
+        <article class="term"><h3><code>/cmd_vel</code> / Twist</h3><p>로봇에 전달하는 목표 선속도와 각속도입니다. 보통 <code>linear.x</code>와 <code>angular.z</code>를 사용합니다.</p></article>
+        <article class="term"><h3>Gazebo</h3><p>로봇, 센서, 물리 환경을 가상으로 실행하는 시뮬레이터입니다.</p></article>
+        <article class="term"><h3>Bridge</h3><p>Gazebo Transport와 ROS 2 토픽 사이에서 메시지 형식을 변환해 전달합니다.</p></article>
+        <article class="term"><h3><code>use_sim_time</code></h3><p>시스템 시간이 아니라 Gazebo의 <code>/clock</code>을 사용하게 하는 설정입니다. 시뮬레이션 노드들이 같은 시간을 써야 합니다.</p></article>
+      </div></div></section>
+
+      <section class="category" id="slam"><div class="number">MAP</div><div><h2>SLAM·위치 추정</h2><div class="term-grid">
+        <article class="term"><h3>SLAM</h3><p>로봇의 위치를 추정하면서 동시에 주변 지도를 만드는 기술입니다.</p></article>
+        <article class="term"><h3>Occupancy Grid</h3><p>공간을 격자로 나눠 각 칸을 비어 있음, 점유됨, 알 수 없음으로 표현한 지도입니다.</p></article>
+        <article class="term"><h3>PGM / YAML</h3><p>PGM은 지도 이미지이고 YAML은 해상도, 원점, 임계값과 이미지 경로를 저장합니다.</p></article>
+        <article class="term"><h3>Localization</h3><p>이미 만들어진 지도 안에서 현재 로봇의 위치와 방향을 찾는 과정입니다.</p></article>
+        <article class="term"><h3>AMCL</h3><p>LaserScan, 지도, odometry를 비교하고 파티클 필터로 지도 속 로봇 자세를 추정합니다.</p></article>
+        <article class="term"><h3>Particle · 파티클</h3><p>로봇이 있을 가능성이 있는 자세 후보입니다. 센서와 잘 맞는 후보의 확률이 높아집니다.</p></article>
+        <article class="term"><h3>2D Pose Estimate</h3><p>AMCL에 초기 위치와 방향을 알려주는 RViz 도구입니다. 지도를 회전시키는 기능이 아닙니다.</p></article>
+      </div></div></section>
+
+      <section class="category" id="nav2"><div class="number">NAV2</div><div><h2>Nav2 구조</h2><div class="term-grid">
+        <article class="term"><h3>Nav2 Goal</h3><p>도착할 위치와 최종 방향을 지정하는 목표 자세입니다.</p></article>
+        <article class="term"><h3>Planner Server</h3><p>현재 위치부터 목표까지 Global Plan을 계산하는 planner 플러그인을 실행합니다.</p></article>
+        <article class="term"><h3>Controller Server</h3><p>Global Plan을 따라가도록 Local Controller를 실행하고 <code>/cmd_vel</code>을 계산합니다.</p></article>
+        <article class="term"><h3>Global Plan</h3><p>전체 지도에서 목적지까지 어느 길로 갈지 나타내는 장거리 경로입니다.</p></article>
+        <article class="term"><h3>Local Plan</h3><p>Global Plan을 따라가기 위해 지금 로봇 주변에서 선택하는 짧은 실제 주행 궤적입니다.</p></article>
+        <article class="term"><h3>BT Navigator</h3><p>계획, 경로 추종, 재계획, 복구 순서를 Behavior Tree로 관리합니다.</p></article>
+        <article class="term"><h3>Behavior Tree · BT</h3><p>조건과 행동 노드를 트리로 연결해 내비게이션 실행 순서와 실패 대응을 표현합니다.</p></article>
+        <article class="term"><h3>Lifecycle Node</h3><p>unconfigured, inactive, active 같은 상태를 거쳐 시작·정지되는 관리형 노드입니다.</p></article>
+        <article class="term"><h3>Recovery / Behavior</h3><p>로봇이 막혔을 때 대기, 회전, 후진, costmap 초기화, 재계획 등을 수행하는 복구 행동입니다.</p></article>
+      </div></div></section>
+
+      <section class="category" id="planner"><div class="number">PATH</div><div><h2>경로 탐색 알고리즘</h2><div class="term-grid">
+        <article class="term"><h3>A*</h3><p>현재까지의 이동 비용과 목표까지의 예상 비용을 더해 목적지 방향을 우선 탐색하는 Global Planner 알고리즘입니다.</p></article>
+        <article class="term"><h3>Dijkstra · 다익스트라</h3><p>시작점에서 누적 비용이 작은 곳부터 넓게 탐색해 최단 경로를 찾습니다. 목표 방향 휴리스틱을 사용하지 않습니다.</p></article>
+        <article class="term"><h3>D*</h3><p>환경이나 비용이 바뀌었을 때 기존 탐색 결과를 활용해 경로를 효율적으로 다시 계산하는 계열입니다. Dijkstra와 다른 알고리즘입니다.</p></article>
+        <article class="term"><h3>NavFn</h3><p>Nav2의 격자 기반 planner 플러그인으로 A* 또는 Dijkstra를 사용해 경로를 만들 수 있습니다.</p></article>
+        <article class="term"><h3>Smac Planner</h3><p>2D A*, Hybrid-A*, State Lattice 등을 제공하며 로봇 형태와 운동 제약을 더 자세히 고려할 수 있는 planner 계열입니다.</p></article>
+        <article class="term"><h3>Heuristic · 휴리스틱</h3><p>A*가 현재 칸에서 목표까지 남은 비용을 추정하는 값입니다. 탐색 방향과 속도를 개선합니다.</p></article>
+      </div></div></section>
+
+      <section class="category" id="controller"><div class="number">DRIVE</div><div><h2>Local Controller</h2><div class="term-grid">
+        <article class="term"><h3>DWA</h3><p>현재 낼 수 있는 여러 선속도·각속도 조합으로 미래 궤적을 예측하고 가장 좋은 속도를 선택하는 Dynamic Window Approach입니다.</p></article>
+        <article class="term"><h3>DWB</h3><p>DWA 기반 후보 궤적을 장애물, 경로 정렬, 목표 거리, 진동 등의 Critic으로 평가하는 Nav2 Local Controller입니다.</p></article>
+        <article class="term"><h3>Critic</h3><p>DWB에서 후보 궤적에 점수를 매기는 평가 기준입니다. 예: PathAlign, GoalDist, BaseObstacle.</p></article>
+        <article class="term"><h3>RPP</h3><p>Global Plan 앞쪽의 lookahead point를 추종하고 곡률·장애물에 따라 속도를 조절하는 Regulated Pure Pursuit Controller입니다.</p></article>
+        <article class="term"><h3>Lookahead Point</h3><p>경로 추종 시 로봇이 당장 향할 Global Plan 위의 앞쪽 기준점입니다.</p></article>
+        <article class="term"><h3>Trajectory · 궤적</h3><p>특정 속도 명령을 적용했을 때 로봇이 앞으로 지나갈 것으로 예측되는 위치와 방향의 연속입니다.</p></article>
+      </div></div></section>
+
+      <section class="category" id="costmap"><div class="number">COST</div><div><h2>Costmap·튜닝</h2><div class="term-grid">
+        <article class="term"><h3>Costmap</h3><p>공간을 이동 가능 여부뿐 아니라 위험 비용으로 표현한 격자 지도입니다.</p></article>
+        <article class="term"><h3>Global Costmap</h3><p>전체 지도에서 Global Plan을 계산하는 데 쓰는 장거리 비용 지도입니다.</p></article>
+        <article class="term"><h3>Local Costmap</h3><p>로봇 주변 센서 정보를 갱신하며 Local Controller가 충돌과 회피를 판단하는 비용 지도입니다.</p></article>
+        <article class="term"><h3>Inflation Layer</h3><p>장애물 주변에 거리에 따른 위험 비용을 퍼뜨려 경로가 벽에 너무 붙지 않게 하는 계층입니다.</p></article>
+        <article class="term"><h3><code>inflation_radius</code></h3><p>장애물 비용이 퍼지는 최대 범위입니다. 높이면 안전 영역이 넓어지고 좁은 통로는 줄어듭니다.</p></article>
+        <article class="term"><h3><code>cost_scaling_factor</code></h3><p>거리 증가에 따라 비용이 감소하는 속도입니다. 높이면 비용이 더 빨리 떨어져 벽 가까운 경로를 허용하기 쉬워집니다.</p></article>
+        <article class="term"><h3>Footprint / Padding</h3><p>Footprint는 충돌 검사에 사용하는 로봇 외곽선이고 padding은 그 외곽에 추가하는 안전 여유입니다.</p></article>
+        <article class="term"><h3>Lethal Obstacle</h3><p>로봇이 통과하면 충돌한다고 판단하는 최고 위험 비용의 장애물 영역입니다.</p></article>
+      </div></div></section>
+
+      <section class="category" id="control"><div class="number">PID</div><div><h2>PID·제어 응답</h2><div class="term-grid">
+        <article class="term"><h3>P · 비례 제어</h3><p>현재 오차가 클수록 큰 출력을 냅니다. 너무 크면 overshoot와 진동이 증가합니다.</p></article>
+        <article class="term"><h3>I · 적분 제어</h3><p>오래 남은 오차를 누적해 정상상태 오차를 제거합니다. 과하면 wind-up이 생깁니다.</p></article>
+        <article class="term"><h3>D · 미분 제어</h3><p>오차 변화 속도를 보고 미리 제동해 overshoot와 진동을 줄입니다. 센서 노이즈에 민감합니다.</p></article>
+        <article class="term"><h3>Overshoot</h3><p>응답이 목표를 지나쳐 반대편으로 벗어난 크기입니다.</p></article>
+        <article class="term"><h3>Steady-state Error</h3><p>충분한 시간이 지난 뒤에도 목표와 현재값 사이에 남는 정상상태 오차입니다.</p></article>
+        <article class="term"><h3>Wind-up</h3><p>로봇이 움직이지 못하거나 출력이 포화된 동안 I 항이 계속 누적돼 나중에 과도한 출력을 만드는 현상입니다.</p></article>
+        <article class="term"><h3>Tolerance · 허용 오차</h3><p>완벽한 0 대신 이 범위 안이면 목표에 도달했다고 판단하는 기준입니다.</p></article>
+        <article class="term"><h3>Saturation · 출력 포화</h3><p>계산 출력이 커져도 모터 또는 설정된 최대 명령 이상으로 낼 수 없는 상태입니다.</p></article>
+      </div></div></section>
+      <div class="bottom-buttons"><a href="../index.html">전체 강의로 돌아가기</a></div>
+    </main>
+  </div>
+  <script>
+    const input=document.querySelector('#termSearch');
+    input.addEventListener('input',()=>{
+      const q=input.value.trim().toLowerCase();
+      document.querySelectorAll('.category').forEach(category=>{
+        let visible=0;
+        category.querySelectorAll('.term').forEach(term=>{
+          const match=!q||term.textContent.toLowerCase().includes(q);
+          term.classList.toggle('hide',!match);
+          if(match) visible++;
+        });
+        category.classList.toggle('hide',visible===0);
+      });
+    });
+  </script>
+</body>
+</html>
