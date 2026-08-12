@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Ultra Simple Navigation · ROS2</title>
+  <link rel="stylesheet" href="mobile-robot-summary.css">
+</head>
+<body>
+  <header><div class="shell top"><a class="brand" href="../index.html"><b>ROS</b>2 LEARN</a><a href="../index.html">← 전체 강의</a></div></header>
+  <section class="hero"><div class="shell"><small>03.12 · ROS 2 JAZZY</small><h1>Ultra Simple Navigation</h1><p>Nav2의 복잡한 기능에 들어가기 전에, TF로 현재 자세를 읽고 PID와 상태 머신으로 목표 위치·방향까지 주행하는 원리를 직접 구현합니다.</p><div class="source-buttons"><a class="html" target="_blank" rel="noopener" href="https://drive.google.com/file/d/14hZLcVXKdGtHe_svGRhSlHx2scdy4o-d/view">원본 HTML 열기</a><a class="pdf" target="_blank" rel="noopener" href="https://drive.google.com/file/d/1v1PM2dAPH-jySXtX13_cl377LEM5L4Jr/view">강의 PDF 열기</a></div></div></section>
+  <div class="shell layout">
+    <nav><b>목차</b><a href="#key-points">핵심 포인트</a><a href="#package">01 패키지 준비</a><a href="#pid">02 PID 제어</a><a href="#topics">03 TF와 토픽</a><a href="#states">04 상태 머신</a><a href="#launch">05 실행</a><a href="#limits">06 한계와 다음 단계</a></nav>
+    <main>
+      <div class="intro"><b>한 줄 정리</b><span>RViz2의 <code>/goal_pose</code>를 받아 현재 <code>map → base_link</code> TF와 비교하고, <code>/cmd_vel</code>을 발행해 목표까지 이동합니다.</span></div>
+      <div class="intro"><b>실습 자료</b><span>내려받은 <code>pinky_for_edu-main</code>의 <code>pinky_simple_navigator</code> 패키지를 워크스페이스 <code>src</code>에 복사해 사용합니다.</span></div>
+      <section id="key-points"><div class="number">KEY</div><div><h2>반드시 기억할 핵심 포인트</h2><p class="range">34장 강의와 예제 코드 요약</p><ul><li><b>입력:</b> RViz2의 2D Goal Pose가 <code>geometry_msgs/PoseStamped</code> 형식으로 <code>/goal_pose</code>에 들어옵니다.</li><li><b>현재 자세:</b> 토픽을 별도로 구독하지 않고 TF Buffer에서 <code>map → base_link</code> 변환을 조회합니다.</li><li><b>출력:</b> 계산한 선속도와 각속도를 <code>geometry_msgs/Twist</code>로 <code>/cmd_vel</code>에 발행합니다.</li><li><b>제어 주기:</b> 타이머가 0.1초마다 제어 루프를 실행합니다.</li><li><b>허용 오차:</b> 각도 0.05rad, 거리 0.15m 이내이면 다음 상태로 넘어갑니다.</li><li><b>상태 순서:</b> <code>idle → rotate_to_goal → move_to_goal → rotate_to_final → idle</code>입니다.</li><li><b>주의:</b> 예제는 장애물 감지·경로 계획·복구 기능이 없는 직선 기반 교육용 내비게이터입니다.</li></ul></div></section>
+      <section id="package"><div class="number">01</div><div><h2>pinky_simple_navigator 패키지 준비</h2><p class="range">원본 5–7쪽</p><ul><li>강의의 예제 저장소는 <code>PinkWink/pinky_for_edu</code>이며 필요한 폴더는 <code>pinky_simple_navigator</code>입니다.</li><li><code>package.xml</code>은 <code>rclpy</code>, <code>geometry_msgs</code>, <code>tf2_ros</code>, <code>tf_transformations</code>에 의존합니다.</li><li><code>setup.py</code>의 콘솔 스크립트 <code>simple_navigator</code>가 Python의 <code>main()</code>을 실행합니다.</li><li>패키지를 복사한 뒤 워크스페이스에서 빌드하고 새 설치 환경을 source합니다.</li></ul></div></section>
+      <section id="pid"><div class="number">02</div><div><h2>PID와 각도 정규화</h2><p class="range">원본 8–11쪽</p><ul><li><code>PID.update()</code>는 현재 오차에 P·I·D 항을 적용해 속도 명령을 계산합니다.</li><li>각속도 제어기는 <code>P=1.5, D=0.2</code>, 선속도 제어기는 <code>P=0.5, D=0.1</code>을 사용합니다.</li><li><code>atan2(sin(angle), cos(angle))</code>로 각도 오차를 −π에서 π 사이로 정규화해 불필요한 장거리 회전을 막습니다.</li><li>새 목표를 받으면 두 PID의 누적 오차와 이전 오차를 초기화합니다.</li></ul></div></section>
+      <section id="topics"><div class="number">03</div><div><h2>TF를 읽고 goal_pose를 받아 cmd_vel 발행</h2><p class="range">원본 12–18쪽</p><ul><li><code>TransformListener</code>가 채운 Buffer에서 로봇의 x·y와 quaternion을 읽고 yaw로 변환합니다.</li><li><code>/goal_pose</code> 콜백은 목표를 저장하고 상태를 <code>rotate_to_goal</code>로 전환합니다.</li><li>목표가 없거나 <code>idle</code>이면 빈 Twist를 발행해 로봇을 정지시킵니다.</li><li>TF 조회 실패 시 경고를 남기고 해당 제어 주기를 건너뜁니다. RViz와 실제 TF의 베이스 프레임이 다르면 코드의 <code>base_link</code>를 맞춰야 합니다.</li></ul></div></section>
+      <section id="states"><div class="number">04</div><div><h2>세 단계 상태 머신</h2><p class="range">원본 19–21쪽</p><ul><li><b>rotate_to_goal:</b> 현재 위치에서 목표점을 향하는 방위각을 구해 먼저 제자리 회전합니다.</li><li><b>move_to_goal:</b> 목표까지 직진하면서 방위각 오차도 계속 보정합니다.</li><li><b>rotate_to_final:</b> 목표 위치 도착 후 PoseStamped에 담긴 최종 quaternion 방향으로 회전합니다.</li><li>최종 방향 오차가 허용 범위에 들어오면 목표를 비우고 <code>idle</code>로 복귀합니다.</li></ul></div></section>
+      <section id="launch"><div class="number">05</div><div><h2>Gazebo·Localization·RViz2와 함께 실행</h2><p class="range">원본 22–31쪽</p><ul><li><code>simple_drive.launch.xml</code>은 <code>use_sim_time: true</code>로 내비게이터 노드 하나를 실행합니다.</li><li>Gazebo와 Localization을 시작하고 RViz2에서 초기 위치를 지정한 뒤 내비게이터를 실행합니다.</li><li>RViz2 도구 모음에 SetGoal을 추가하고 <code>2D Goal Pose</code>로 지도 위의 목표 위치와 방향을 드래그해 지정합니다.</li><li>TF 표시가 복잡하면 필요한 프레임만 남겨 이동 결과를 관찰합니다.</li></ul></div></section>
+      <section id="limits"><div class="number">06</div><div><h2>간단한 구현의 한계</h2><p class="range">원본 32–33쪽</p><ul><li>목표까지 직선으로 움직이므로 앞의 장애물을 감지하거나 회피하지 못합니다.</li><li>전역·지역 costmap과 경로 계획기가 없어 비선형 경로를 만들 수 없습니다.</li><li>위치 추정을 잃었을 때의 복구 시나리오가 없습니다.</li><li>이 기능들을 계층적으로 제공하는 Nav2를 배우기 전에 기본 데이터 흐름과 제어 원리를 확인하는 데 목적이 있습니다.</li></ul></div></section>
+      <section class="commands"><h2>핵심 실행 명령</h2><pre><code>source /opt/ros/jazzy/setup.bash
+
+# 패키지를 ~/pinky/src에 복사한 뒤 빌드
+cd ~/pinky
+colcon build --symlink-install
+source install/setup.bash
+
+# 터미널 1: Gazebo
+ros2 launch pinky_gz_sim launch_sim.launch.xml
+
+# 터미널 2: 저장된 지도로 위치 추정
+ros2 launch pinky_navigation localization_only_launch.xml map:=my_map.yaml
+
+# 터미널 3: RViz2
+ros2 launch pinky_navigation nav2_view.launch.xml
+
+# 터미널 4: 단순 PID 내비게이터
+ros2 launch pinky_simple_navigator simple_drive.launch.xml
+
+# 연결 확인
+ros2 topic echo /goal_pose
+ros2 topic echo /cmd_vel
+ros2 run tf2_ros tf2_echo map base_link</code></pre></section>
+      <div class="bottom-buttons"><a target="_blank" rel="noopener" href="https://drive.google.com/file/d/14hZLcVXKdGtHe_svGRhSlHx2scdy4o-d/view">원본 HTML</a><a target="_blank" rel="noopener" href="https://drive.google.com/file/d/1v1PM2dAPH-jySXtX13_cl377LEM5L4Jr/view">강의 PDF</a></div>
+    </main>
+  </div>
+</body>
+</html>
