@@ -107,6 +107,17 @@ const categoryNames=[...new Set(Q.map(q=>q[0]))].sort((a,b)=>{
  return a03!==b03?(a03?-1:1):a.localeCompare(b,'ko');
 }),catBox=document.querySelector("#categories");
 catBox.innerHTML=categoryNames.map(c=>`<label><input type="checkbox" value="${c}" checked> ${c} <small>(${Q.filter(q=>q[0]===c).length})</small></label>`).join("");
+const requestedLesson=new URLSearchParams(location.search).get('lesson');
+if(requestedLesson){
+ const inputs=[...catBox.querySelectorAll('input')];
+ inputs.forEach(input=>input.checked=input.value.startsWith(requestedLesson+' ·'));
+ const selected=inputs.find(input=>input.checked);
+ if(selected){
+  document.querySelector('.intro p').textContent=`${selected.value} 강의에서 출제한 10문제입니다.`;
+  document.querySelector('#count').value='10';
+  selected.closest('label').scrollIntoView({block:'center'});
+ }
+}
 let run=[],wrong=[],index=0,score=0,locked=false;
 const shuffle=a=>[...a].sort(()=>Math.random()-.5);
 document.querySelector("#start").onclick=()=>{const cats=[...catBox.querySelectorAll("input:checked")].map(x=>x.value);if(!cats.length)return alert("출제 범위를 하나 이상 선택하세요.");const pool=shuffle(Q.filter(q=>cats.includes(q[0])));run=pool.slice(0,Math.min(+document.querySelector("#count").value,pool.length));wrong=[];index=0;score=0;document.querySelector("#setup").classList.add("hidden");document.querySelector("#finish").classList.add("hidden");document.querySelector("#quiz").classList.remove("hidden");show()};
