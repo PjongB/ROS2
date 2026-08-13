@@ -65,6 +65,43 @@ const Q=[
 ["DDS·도메인","한 Python 스크립트에서 여러 도메인을 동시에 다룰 때 적절한 방식은?","도메인별 multiprocessing",["하나의 rclpy 스레드","도메인별 multiprocessing","노드 이름만 변경"],"각 자식 프로세스가 독립적으로 rclpy.init(domain_id=...)을 호출해야 합니다."],
 ["DDS·도메인","Domain 1과 Domain 2에서 같은 /id_test 토픽을 사용하면 어떻게 되는가?","서로 격리되어 통신하지 않는다",["자동으로 합쳐진다","서로 격리되어 통신하지 않는다","토픽 이름 충돌로 둘 다 종료된다"],"토픽 이름이 같아도 DDS 도메인이 다르면 서로 발견하거나 메시지를 주고받지 않습니다."]
 ];
+const LESSON03=[
+["03-01 · TF 발행",[
+["TF의 frame이 뜻하는 것은?","위치와 방향의 기준 좌표계"],["TransformStamped.header.frame_id는?","부모 frame"],["TransformStamped.child_frame_id는?","자식 frame"],["반지름 r의 원운동 좌표식은?","x=r cosθ, y=r sinθ"],["목표점을 바라보는 yaw 계산은?","atan2(dy, dx)"],["움직이는 TF에 timestamp가 필요한 이유는?","측정 시각의 변환을 조회하기 위해"],["Euler 회전의 대표 문제는?","Gimbal lock"],["평면 yaw ψ의 Quaternion qz는?","sin(ψ/2)"],["회전 Quaternion의 정규화 조건은?","x²+y²+z²+w²=1"],["TF를 발행하는 객체는?","TransformBroadcaster"]]],
+["03-02 · Child frame",[
+["Child pose는 무엇을 기준으로 하는가?","Parent frame"],["world→parent와 parent→child의 합성은?","world→child"],["같은 child를 두 노드가 발행하면?","TF 권한 충돌"],["관련 TF를 함께 발행할 때 권장 timestamp는?","동일 timestamp"],["별도 broadcaster 노드의 장점은?","기능 분리와 장애 격리"],["통합 broadcaster의 장점은?","시간과 실행 관리 단순화"],["TF tree에서 child가 가질 수 있는 parent 수는?","하나"],["Parent가 움직이면 고정 child의 world pose는?","Parent와 함께 변함"],["TF tree를 파일로 확인하는 도구는?","view_frames"],["Transform 생성 중복을 줄이는 방법은?","공통 send_tf 함수"]]],
+["03-03 · TF Listener",[
+["수신 TF 이력을 저장하는 객체는?","Buffer"],["/tf와 /tf_static을 구독하는 객체는?","TransformListener"],["lookup_transform 인자 순서는?","target, source, time"],["rclpy.time.Time() 조회의 일반적 의미는?","최신 변환"],["시작 직후 lookup이 실패하는 이유는?","Buffer에 TF가 아직 없어서"],["TransformException의 적절한 처리는?","로그 후 다음 주기에 재시도"],["평면 두 frame의 거리식은?","sqrt(x²+y²)"],["센서와 TF를 정확히 맞추는 방법은?","센서 timestamp의 TF 조회"],["Broadcaster와 Listener의 차이는?","관계 발행과 관계 조회"],["TF 조회에서 긴 blocking의 문제는?","다른 callback 지연"]]],
+["03-04 · RViz 시각화",[
+["점을 순서대로 잇는 Marker 타입은?","LINE_STRIP"],["Path.poses의 원소 타입은?","PoseStamped"],["Marker가 투명할 때 확인할 값은?","color.a"],["같은 namespace와 id를 재발행하면?","기존 Marker 갱신"],["경로 배열을 무한히 늘릴 때 문제는?","메시지와 렌더링 비용 증가"],["카메라를 향하는 문자 Marker는?","TEXT_VIEW_FACING"],["Path와 Marker의 핵심 차이는?","Path는 PoseStamped 경로 의미"],["회전 없는 Pose의 Quaternion은?","w=1인 단위 Quaternion"],["RViz Transform 오류 시 먼저 볼 것은?","frame_id와 Fixed Frame 연결"],["최근 N개만 유지하는 패턴은?","Sliding window"]]],
+["03-05 · Domain ID",[
+["ROS_DOMAIN_ID의 역할은?","DDS discovery 영역 분리"],["기본 ROS_DOMAIN_ID는?","0"],["실행 후 export 변경이 기존 노드에 반영되는가?","반영되지 않음"],["여러 Domain을 동시에 다루는 권장 방식은?","Domain별 multiprocessing"],["rclpy.init의 Domain 지정 인자는?","domain_id"],["Domain 분리는 완전한 보안 경계인가?","아닌 논리적 격리"],["터미널 Domain 실수를 줄이는 방법은?","프롬프트에 ID 표시"],["다른 Domain의 같은 Topic 이름은?","서로 독립"],["Process 분리의 장점은?","독립 Context와 장애 격리"],["LOCALHOST discovery 설정 목적은?","통신을 현재 PC로 제한"]]],
+["03-06 · 다중 Domain 제어",[
+["같은 cmd_vel이 다른 거북이를 제어하는 이유는?","Domain별 Graph 격리"],["지속 속도 명령에 적합한 통신은?","Topic"],["TeleportAbsolute의 통신 방식은?","Service"],["RotateAbsolute의 통신 방식은?","Action"],["Action 서버 대기 메서드는?","wait_for_server"],["Goal Future와 Result Future의 관계는?","서로 다른 단계"],["부모가 자식 Process 종료를 기다리는 메서드는?","join"],["자식 종료 시 ROS 정리는?","destroy_node와 shutdown"],["angular.z 부호를 바꾸면?","회전 방향 반전"],["Thread보다 Process를 쓴 핵심 이유는?","독립 rclpy Context"]]],
+["03-07 · Domain Bridge",[
+["Domain Bridge의 기본 동작은?","Source 구독 후 Target 발행"],["Bridge YAML의 핵심 정보는?","출발·도착 Domain과 Topic 타입"],["Source Subscriber와 QoS가 맞아야 할 대상은?","Source Publisher"],["Best Effort 센서를 Reliable로 가정할 때 문제는?","QoS 비호환"],["A→B와 B→A 동시 중계의 위험은?","메시지 순환"],["Bridge 전후 검증 명령은?","각 Domain의 topic echo"],["Bridge가 공유하는 범위는?","설정한 Interface"],["대상 Topic 이름 변경 방식은?","Remap"],["Jazzy Bridge 패키지는?","ros-jazzy-domain-bridge"],["실행 전 터미널별 확인 환경은?","Domain과 discovery 범위"]]],
+["03-08 · Description",[
+["URDF의 기본 구성은?","Link와 Joint"],["Xacro의 목적은?","변수·매크로·조건으로 URDF 재사용"],["Visual과 Collision의 차이는?","표시 형상과 충돌 형상"],["Inertial이 담는 것은?","질량·무게중심·관성"],["robot_state_publisher 역할은?","URDF와 joint state로 TF 발행"],["Movable Joint TF에 필요한 입력은?","joint_states"],["URDF OK인데 caster TF만 없을 때 확인할 것은?","해당 Joint state"],["package:// URI 기준은?","설치된 Package share"],["view_robot Launch 용도는?","RViz 모델 검증"],["upload Launch 용도는?","robot_description 제공"]]],
+["03-09 · Gazebo",[
+["Gazebo에 Robot Entity를 만드는 과정은?","Spawn"],["ros_gz_bridge 역할은?","Gazebo와 ROS 메시지 변환"],["Simulation clock 사용 설정은?","use_sim_time=true"],["cmd_vel의 일반 Bridge 방향은?","ROS→Gazebo"],["scan과 odom의 일반 Bridge 방향은?","Gazebo→ROS"],["wheel separation 오류의 영향은?","회전 Odometry 오류"],["바퀴 마찰이 너무 작을 때 현상은?","Wheel slip"],["중복 Simulator 확인 명령은?","pgrep -a -f gz sim"],["cmd_vel 후 점검 계층 순서는?","Bridge→Drive plugin→Wheel joint"],["Gazebo 센서가 ROS에 없을 때 확인할 것은?","Bridge mapping과 방향"]]],
+["03-10 · SLAM",[
+["SLAM의 뜻은?","위치추정과 지도작성 동시 수행"],["Front-end 역할은?","Scan matching과 상대 제약"],["Back-end 역할은?","Pose graph 최적화"],["Loop Closure 효과는?","재방문으로 누적 오차 보정"],["Resolution을 작게 할 때 변화는?","정밀도와 계산량 증가"],["빠른 회전의 지도 문제는?","Scan 왜곡과 이중 벽"],["Map 저장 도구는?","map_saver_cli"],["Map resolution 단위는?","m/cell"],["휘어진 복도의 가능 원인은?","Odom과 Loop Closure 오차"],["SLAM 전에 먼저 검증할 것은?","Scan·Odom·TF·Timestamp"]]],
+["03-11 · Localization",[
+["Localization과 SLAM의 차이는?","저장 지도에서 Pose만 추정"],["Map Server 역할은?","정적 Occupancy Grid 제공"],["AMCL Particle의 의미는?","가능한 Robot Pose 가설"],["Particle Weight의 의미는?","Scan과 Map 일치 가능성"],["Resampling 목적은?","높은 Weight 가설에 집중"],["AMCL의 주요 TF 출력은?","map→odom"],["초기 Pose 지정 RViz 도구는?","2D Pose Estimate"],["Map·Scan 불일치 때 지도를 회전해야 하는가?","아니며 Initial Pose와 TF 점검"],["Particle 수가 해결 못 하는 것은?","잘못된 Sensor TF"],["Lifecycle Manager 역할은?","Map Server와 AMCL 상태 관리"]]],
+["03-12 · PID Navigation",[
+["PID 출력 구성은?","P+I+D 항의 합"],["P가 너무 클 때 현상은?","진동과 Overshoot"],["I 항의 목적은?","정상상태 오차 제거"],["Integral Windup은?","적분값 과도 누적"],["D가 너무 클 때 현상은?","Noise 민감과 출력 떨림"],["각도 정규화 범위는?","-π~π"],["상태 머신 순서는?","회전→직진→최종 회전"],["거리 PID 출력 축은?","linear.x"],["각도 PID 출력 축은?","angular.z"],["단순 PID Navigator 한계는?","장애물 회피와 재계획 부재"]]],
+["03-13 · Navigation",[
+["Global Plan은?","전체 지도상의 큰 경로"],["Local Controller 출력은?","cmd_vel"],["Costmap은?","이동 위험과 비용 지도"],["inflation_radius 증가 효과는?","벽 주변 비용 영역 확대"],["좁은 통로에서 먼저 확인할 것은?","실제 Footprint"],["Global과 Local Costmap 관계는?","별도 설정 가능"],["rqt 변경 후 확인 명령은?","ros2 param get"],["안전한 Tuning 방법은?","한 번에 한 항목 변경"],["Costmap에 길이 보이면 항상 안전한가?","아님"],["Goal 전 우선 조건은?","Map과 Scan 정렬"]]],
+["03-14 · Python Nav2",[
+["Nav2 Python 편의 API는?","BasicNavigator"],["Global Goal의 일반 frame은?","map"],["Nav2 Active 대기 메서드는?","waitUntilNav2Active"],["Goal 이동 시작 메서드는?","goToPose"],["Task 완료 확인 메서드는?","isTaskComplete"],["남은 거리는 어디에서 얻는가?","Navigation Feedback"],["Cancel 직후 UNKNOWN 이유는?","결과 미확정"],["올바른 Cancel 처리 순서는?","Cancel→완료 대기→Result"],["goal_pose Topic 방식의 단점은?","Feedback·Result 직접 수신 어려움"],["get_subscription_count 의미는?","Subscriber discovery 참고값"]]],
+["03-15 · Nav2 설정",[
+["bringup_launch 역할은?","Localization과 Navigation 조립"],["Lifecycle active 상태는?","실제 Service 수행 상태"],["Composable Node 장점은?","Process 수와 복사 비용 감소"],["AMCL alpha 파라미터는?","Odometry Motion Noise"],["RPP lookahead가 너무 작을 때는?","민감한 추종과 좌우 진동"],["Progress Checker 목적은?","일정 시간 이동량 판정"],["Velocity Smoother 목적은?","속도 변화 제한"],["A*와 Dijkstra 차이는?","A*는 Heuristic 추가"],["Behavior Server와 BT Navigator 차이는?","행동 제공과 실행 정책"],["권장 Tuning 순서는?","TF→Costmap→Planner→Controller"]]]
+];
+for(const [cat,items] of LESSON03){const answers=items.map(x=>x[1]);items.forEach(([question,answer],i)=>{const wrong=[answers[(i+3)%10],answers[(i+7)%10]];Q.push([cat,question,answer,[answer,...wrong],`${answer} — ${question.replace(/\?$/,'')}의 핵심 개념입니다.`])})}
+document.querySelector('.kicker').textContent=`${Q.length} QUESTIONS · INSTANT FEEDBACK`;
+document.querySelector('.intro p').textContent='03 과정은 강의자료별로 10문제씩 준비했습니다. 학습한 강의 번호만 선택해서 풀 수 있습니다.';
+document.querySelector('#count').innerHTML='<option value="10">10문제</option><option value="20">20문제</option><option value="30">30문제</option><option value="50">50문제</option><option value="100">100문제</option><option value="9999">선택 범위 전체</option>';
+
 const categoryNames=[...new Set(Q.map(q=>q[0]))],catBox=document.querySelector("#categories");
 catBox.innerHTML=categoryNames.map(c=>`<label><input type="checkbox" value="${c}" checked> ${c} <small>(${Q.filter(q=>q[0]===c).length})</small></label>`).join("");
 let run=[],wrong=[],index=0,score=0,locked=false;
