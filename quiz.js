@@ -102,7 +102,10 @@ document.querySelector('.kicker').textContent=`${Q.length} QUESTIONS · INSTANT 
 document.querySelector('.intro p').textContent='03 과정은 강의자료별로 10문제씩 준비했습니다. 학습한 강의 번호만 선택해서 풀 수 있습니다.';
 document.querySelector('#count').innerHTML='<option value="10">10문제</option><option value="20">20문제</option><option value="30">30문제</option><option value="50">50문제</option><option value="100">100문제</option><option value="9999">선택 범위 전체</option>';
 
-const categoryNames=[...new Set(Q.map(q=>q[0]))],catBox=document.querySelector("#categories");
+const categoryNames=[...new Set(Q.map(q=>q[0]))].sort((a,b)=>{
+ const a03=a.startsWith('03-'),b03=b.startsWith('03-');
+ return a03!==b03?(a03?-1:1):a.localeCompare(b,'ko');
+}),catBox=document.querySelector("#categories");
 catBox.innerHTML=categoryNames.map(c=>`<label><input type="checkbox" value="${c}" checked> ${c} <small>(${Q.filter(q=>q[0]===c).length})</small></label>`).join("");
 let run=[],wrong=[],index=0,score=0,locked=false;
 const shuffle=a=>[...a].sort(()=>Math.random()-.5);
