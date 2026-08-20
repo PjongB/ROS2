@@ -1,15 +1,25 @@
 <!doctype html>
 <html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PinkyPro로 맵 작성하기 · ROS2</title><link rel="stylesheet" href="mobile-robot-summary.css"></head>
 <body><header><div class="shell top"><a class="brand" href="../index.html"><b>ROS</b>2 LEARN</a><a href="../index.html">← 전체 강의</a></div></header>
-<section class="hero"><div class="shell"><small>04.03 · PINKYPRO</small><h1>PinkyPro로 맵 작성하기</h1><p>실제 로봇에서 bringup과 SLAM을 실행하고, PC의 RViz로 확인하며 주행한 뒤 완성된 지도를 저장합니다.</p><div class="source-buttons"><a class="html" target="_blank" rel="noopener" href="https://drive.google.com/file/d/1qbA3so6uo0GPH8Da_cxgcAvN8A_jF7ew/view">원본 HTML 열기</a><a class="pdf" target="_blank" rel="noopener" href="https://drive.google.com/file/d/1F9wPpglLj2VWUr88l14S1BbahpI4zc_A/view">강의 PDF 열기</a></div></div></section>
-<div class="shell layout"><nav><b>목차</b><a href="#prepare">01 준비</a><a href="#launch">02 실행 순서</a><a href="#drive">03 지도 그리기</a><a href="#save">04 저장</a><a href="#quality">05 품질 가이드</a></nav><main>
-<div class="intro"><b>터미널 4개</b><span>로봇 bringup, 로봇 SLAM, PC RViz, teleop 터미널을 구분해 두면 실행 상태와 오류를 빠르게 확인할 수 있습니다.</span></div>
+<section class="hero"><div class="shell"><small>04.03 · PINKYPRO · 실제 로봇 SLAM</small><h1>PinkyPro로 맵 작성하기</h1><p>실제 로봇에서 bringup과 SLAM을 실행하고 PC의 RViz로 상태를 확인하며 주행한 뒤, Localization에 사용할 지도를 저장하고 품질을 검증합니다.</p><div class="source-buttons"><a class="html" target="_blank" rel="noopener" href="https://drive.google.com/file/d/1qbA3so6uo0GPH8Da_cxgcAvN8A_jF7ew/view">원본 HTML</a><a class="pdf" target="_blank" rel="noopener" href="https://drive.google.com/file/d/1F9wPpglLj2VWUr88l14S1BbahpI4zc_A/view">강의 PDF</a><a class="html" href="#commands">마지막 실행 순서 ↓</a></div></div></section>
+<div class="shell layout"><nav><b>목차</b><a href="#overview">전체 구조</a><a href="#prepare">기본 준비</a><a href="#terminals">01 터미널 구성</a><a href="#launch">02 실행 순서</a><a href="#rviz">03 RViz 확인</a><a href="#drive">04 지도 그리기</a><a href="#save">05 저장</a><a href="#files">06 맵 파일</a><a href="#quality">07 품질 가이드</a><a href="#trouble">08 문제 해결</a><a href="#commands">마지막 실행 순서</a></nav><main>
+<div class="intro"><b>한 줄 정리</b><span>bringup이 센서·odometry·TF를 제공하고, SLAM이 <code>map → odom</code>과 지도를 만들며, RViz에서 결과를 확인한 뒤 <code>map_saver_cli</code>로 저장합니다.</span></div>
+<section id="overview"><div class="number">MAP</div><div><h2>실제 로봇 SLAM 데이터 흐름</h2><p class="range">센서와 TF → SLAM → 지도</p><pre><code>LiDAR /scan ───────────┐
+Encoder odometry ──────┼→ SLAM Toolbox → /map + map → odom
+odom → base_footprint ─┘                      ↓
+teleop → cmd_vel → 로봇 이동              RViz 확인
+                                               ↓
+                                      map_saver_cli</code></pre><ul><li><b>필수 입력:</b> LaserScan, odometry, <code>odom → base_footprint</code> TF가 필요합니다.</li><li><b>SLAM 출력:</b> occupancy grid map과 <code>map → odom</code> 보정 TF를 제공합니다.</li><li><b>운전자 역할:</b> 공간을 중복 탐색해 scan matching과 loop closure를 돕습니다.</li></ul></div></section>
 <section id="prepare"><div class="number">01</div><div><h2>지도 그릴 준비</h2><p class="range">로봇 2개·PC 2개 터미널</p><ul><li>로봇과 PC가 같은 네트워크와 ROS 도메인에 있는지 확인합니다.</li><li>LiDAR의 <code>/scan</code>, odometry와 TF가 정상인지 먼저 점검합니다.</li><li>실습 공간의 장애물과 낙하 위험을 제거합니다.</li></ul></div></section>
+<section id="terminals"><div class="number">01</div><div><h2>터미널 4개를 역할별로 분리</h2><p class="range">로봇 2개 + PC 2개</p><ul><li><b>로봇 1:</b> 센서·모터·odometry·TF bringup</li><li><b>로봇 2:</b> SLAM Toolbox와 지도 생성</li><li><b>PC 1:</b> RViz의 Map·LaserScan·TF 확인</li><li><b>PC 2:</b> teleop 저속 주행</li></ul></div></section>
 <section id="launch"><div class="number">02</div><div><h2>bringup·SLAM·RViz 실행</h2><p class="range">실제 로봇 실행 흐름</p><ul><li>로봇에서 bringup을 시작해 센서와 구동부를 올립니다.</li><li>별도 로봇 터미널에서 map_building launch를 실행합니다.</li><li>PC에서 map_view를 열어 Map·LaserScan·TF를 확인합니다.</li></ul></div></section>
+<section id="rviz"><div class="number">03</div><div><h2>RViz에서 정상 상태 판단</h2><p class="range">Fixed Frame: map</p><ul><li>LaserScan 점이 실제 벽과 지도 벽에 일치하는지 확인합니다.</li><li>로봇 모델이 지도 위에서 이동 방향과 같은 방향으로 움직여야 합니다.</li><li>맵이 겹치거나 순간 이동하면 주행을 멈추고 TF·odometry·scan 정렬을 확인합니다.</li></ul></div></section>
 <section id="drive"><div class="number">03</div><div><h2>천천히 주행하며 지도 그리기</h2><p class="range">teleop 실습</p><ul><li>teleop_twist_keyboard를 실행해 저속으로 공간의 외곽부터 주행합니다.</li><li>급회전을 피하고 이미 지나간 위치를 다시 방문해 loop closure를 돕습니다.</li><li>RViz에서 벽이 겹치거나 지도가 비틀리지 않는지 계속 확인합니다.</li></ul></div></section>
-<section id="save"><div class="number">04</div><div><h2>완성된 지도 저장</h2><p class="range">map_saver_cli</p><ul><li><code>map_saver_cli -f my_map</code>으로 지도 이미지와 YAML을 함께 저장합니다.</li><li><code>my_map.pgm</code>과 <code>my_map.yaml</code>이 생성됐는지 확인합니다.</li><li>저장 위치와 YAML의 image 경로를 기록해 Localization 실습에서 재사용합니다.</li></ul></div></section>
-<section id="quality"><div class="number">05</div><div><h2>좋은 지도를 만드는 법</h2><p class="range">맵 생성 가이드</p><ul><li>서로 비슷한 특징이 반복되는 환경은 로봇이 위치를 잃기 쉬우므로 구분되는 특징을 확보합니다.</li><li>회전이 빠르면 지도가 틀어질 수 있으므로 낮은 속도로 움직입니다.</li><li>평평한 바닥에서 작성하고, 필요하면 이미지 편집기로 빈틈과 노이즈를 다듬습니다.</li></ul></div></section>
-<section class="commands"><h2>핵심 실행 명령</h2><pre><code># 로봇 1 — bringup
+<section id="save"><div class="number">05</div><div><h2>완성된 지도 저장</h2><p class="range">map_saver_cli</p><ul><li><code>map_saver_cli -f my_map</code>으로 지도 이미지와 YAML을 함께 저장합니다.</li><li><code>my_map.pgm</code>과 <code>my_map.yaml</code>이 생성됐는지 확인합니다.</li><li>두 파일을 같은 폴더에 보관해 Localization에서 재사용합니다.</li></ul></div></section>
+<section id="files"><div class="number">06</div><div><h2>PGM과 YAML의 역할</h2><p class="range">지도 픽셀과 실제 좌표 연결</p><ul><li><b>PGM:</b> 흰색은 이동 공간, 검정은 장애물, 회색은 미확인 영역입니다.</li><li><b>resolution:</b> 이미지 한 픽셀이 실제 몇 m인지 나타냅니다.</li><li><b>origin:</b> 이미지 기준점의 map 좌표 x, y, yaw입니다.</li><li><b>threshold:</b> 픽셀을 장애물 또는 빈 공간으로 판단하는 기준입니다.</li></ul></div></section>
+<section id="quality"><div class="number">07</div><div><h2>좋은 지도를 만드는 법</h2><p class="range">위치 추정이 쉬운 지도</p><ul><li>비슷한 구조가 반복되면 위치를 혼동하므로 구분되는 특징을 확보합니다.</li><li>고속 주행과 급회전은 scan matching 오차를 키우므로 천천히 움직입니다.</li><li>이미 지나간 곳을 다시 방문해 loop closure가 일어나게 합니다.</li><li>평평한 바닥에서 작성하고 필요하면 작은 노이즈와 빈틈을 정리합니다.</li></ul></div></section>
+<section id="trouble"><div class="number">08</div><div><h2>증상별 문제 해결</h2><p class="range">입력 → TF → 주행 → 저장 순서</p><ul><li><b>지도가 안 보임:</b> <code>/map</code>, <code>/scan</code>, Fixed Frame과 SLAM 로그를 확인합니다.</li><li><b>벽이 두 겹임:</b> 회전 속도, odometry, LaserScan frame과 시간 동기화를 확인합니다.</li><li><b>위치가 점프함:</b> TF 끊김, 센서 지연과 반복되는 환경 특징을 확인합니다.</li><li><b>저장 파일이 없음:</b> 현재 디렉터리 권한과 map saver 응답을 확인합니다.</li></ul></div></section>
+<section id="commands" class="commands"><h2>마지막 실행 순서</h2><pre><code># 로봇 1 — bringup
 ros2 launch pinky_bringup bringup_robot.launch.xml
 
 # 로봇 2 — SLAM
@@ -22,6 +32,6 @@ ros2 launch pinky_navigation map_view.launch.xml
 ros2 run teleop_twist_keyboard teleop_twist_keyboard
 
 # 지도 저장
-ros2 run nav2_map_server map_saver_cli -f my_map</code></pre></section>
+ros2 run nav2_map_server map_saver_cli -f my_map</code></pre><h2>실습 체크리스트</h2><ol><li><code>/scan</code>과 odometry·TF가 정상입니다.</li><li>RViz Fixed Frame은 <code>map</code>이고 LaserScan이 벽과 일치합니다.</li><li>낮은 속도로 외곽과 내부를 중복 탐색했습니다.</li><li>지도에 심한 겹침, 비틀림과 끊긴 벽이 없습니다.</li><li><code>my_map.pgm</code>과 <code>my_map.yaml</code>을 함께 저장했습니다.</li></ol></section>
 <div class="bottom-buttons"><a target="_blank" rel="noopener" href="https://drive.google.com/file/d/1qbA3so6uo0GPH8Da_cxgcAvN8A_jF7ew/view">원본 HTML</a><a target="_blank" rel="noopener" href="https://drive.google.com/file/d/1F9wPpglLj2VWUr88l14S1BbahpI4zc_A/view">강의 PDF</a></div></main></div>
 <script src="lesson-quiz.js" data-lessons="04-03"></script></body></html>
