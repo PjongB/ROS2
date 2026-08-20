@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PinkyPro 환경 설정 · ROS2</title><link rel="stylesheet" href="mobile-robot-summary.css"></head>
+<body><header><div class="shell top"><a class="brand" href="../index.html"><b>ROS</b>2 LEARN</a><a href="../index.html">← 전체 강의</a></div></header>
+<section class="hero"><div class="shell"><small>04.02 · PINKYPRO</small><h1>PinkyPro 환경 설정</h1><p>SD 카드 준비부터 PC 패키지 설치, SSH 접속, ROS_DOMAIN_ID 설정과 첫 주행까지 한 흐름으로 준비합니다.</p><div class="source-buttons"><a class="html" target="_blank" rel="noopener" href="https://drive.google.com/file/d/1JRmxfsdk9QxImzRv2qUp7Zp-mQBPG7b_/view">원본 HTML 열기</a><a class="pdf" target="_blank" rel="noopener" href="https://drive.google.com/file/d/1Y2ZpQyNBMPJ5wosCa9eBom62UkT6Xc06/view">강의 PDF 열기</a></div></div></section>
+<div class="shell layout"><nav><b>목차</b><a href="#sd">01 SD 카드</a><a href="#pc">02 PC 패키지</a><a href="#network">03 네트워크·SSH</a><a href="#vscode">04 VS Code</a><a href="#drive">05 첫 주행</a></nav><main>
+<div class="intro"><b>안전 먼저</b><span>첫 bringup 전에는 로봇 바퀴를 바닥에서 들어 올리고, PC와 로봇의 ROS_DOMAIN_ID가 같은지 확인하세요.</span></div>
+<section id="sd"><div class="number">01</div><div><h2>로봇용 SD 카드 준비</h2><p class="range">원본: Pinky 환경 설정</p><ul><li>제공된 이미지를 내려받고 Raspberry Pi Imager를 설치합니다.</li><li>Raspberry Pi 5와 Use custom을 선택한 뒤 이미지를 SD 카드에 기록합니다.</li><li>대상 저장장치를 다시 확인한 뒤 포맷·flashing을 진행합니다.</li></ul></div></section>
+<section id="pc"><div class="number">02</div><div><h2>PC 워크스페이스 구성</h2><p class="range">패키지 clone·의존성·빌드</p><ul><li><code>~/pinky_/src</code>에 PinkyPro 패키지를 clone합니다.</li><li><code>rosdep</code>으로 의존성을 설치하고 <code>colcon build</code>로 빌드합니다.</li><li>새 터미널마다 설치 공간의 setup 파일을 source합니다.</li></ul></div></section>
+<section id="network"><div class="number">03</div><div><h2>네트워크와 SSH</h2><p class="range">로봇 AP 접속·Wi-Fi 설정</p><ul><li>PC를 Pinky 네트워크에 연결한 뒤 <code>ssh pinky@192.168.4.1</code>로 접속합니다.</li><li><code>nmcli device wifi list</code>로 연결 가능한 네트워크를 확인합니다.</li><li>Wi-Fi 설정 후 ping으로 인터넷 연결을 검증합니다.</li></ul></div></section>
+<section id="vscode"><div class="number">04</div><div><h2>VS Code Remote SSH</h2><p class="range">원격 개발 환경</p><ul><li>Microsoft Remote - SSH 확장을 설치합니다.</li><li>호스트에 <code>pinky@192.168.4.1</code>을 입력하고 Linux를 선택합니다.</li><li>로봇의 작업 폴더를 열어 파일을 확인하고 편집합니다.</li></ul></div></section>
+<section id="drive"><div class="number">05</div><div><h2>ROS 2로 첫 주행</h2><p class="range">bringup·topic·teleop</p><ul><li>PC와 로봇의 <code>ROS_DOMAIN_ID</code>를 같은 값으로 설정합니다.</li><li>로봇에서 bringup을 실행하고 PC의 <code>ros2 topic list</code>로 연결을 확인합니다.</li><li>teleop_twist_keyboard로 저속 주행하며 방향과 정지 동작을 검증합니다.</li></ul></div></section>
+<section class="commands"><h2>핵심 실행 명령</h2><pre><code>mkdir -p ~/pinky_/src
+cd ~/pinky_/src
+git clone https://github.com/pinklab-art/pinky_pro.git
+sudo rosdep init
+rosdep update
+cd ~/pinky_
+rosdep install --from-paths src --ignore-src -r -y
+colcon build
+source ~/pinky_/install/local_setup.bash
+
+# 로봇 접속과 첫 주행
+ssh pinky@192.168.4.1
+ros2 launch pinky_bringup bringup_robot.launch.xml
+ros2 run teleop_twist_keyboard teleop_twist_keyboard</code></pre></section>
+<div class="bottom-buttons"><a target="_blank" rel="noopener" href="https://drive.google.com/file/d/1JRmxfsdk9QxImzRv2qUp7Zp-mQBPG7b_/view">원본 HTML</a><a target="_blank" rel="noopener" href="https://drive.google.com/file/d/1Y2ZpQyNBMPJ5wosCa9eBom62UkT6Xc06/view">강의 PDF</a></div></main></div>
+<script src="lesson-quiz.js" data-lessons="04-02"></script></body></html>

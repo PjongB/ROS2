@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PinkyPro로 맵 작성하기 · ROS2</title><link rel="stylesheet" href="mobile-robot-summary.css"></head>
+<body><header><div class="shell top"><a class="brand" href="../index.html"><b>ROS</b>2 LEARN</a><a href="../index.html">← 전체 강의</a></div></header>
+<section class="hero"><div class="shell"><small>04.03 · PINKYPRO</small><h1>PinkyPro로 맵 작성하기</h1><p>실제 로봇에서 bringup과 SLAM을 실행하고, PC의 RViz로 확인하며 주행한 뒤 완성된 지도를 저장합니다.</p><div class="source-buttons"><a class="html" target="_blank" rel="noopener" href="https://drive.google.com/file/d/1qbA3so6uo0GPH8Da_cxgcAvN8A_jF7ew/view">원본 HTML 열기</a><a class="pdf" target="_blank" rel="noopener" href="https://drive.google.com/file/d/1F9wPpglLj2VWUr88l14S1BbahpI4zc_A/view">강의 PDF 열기</a></div></div></section>
+<div class="shell layout"><nav><b>목차</b><a href="#prepare">01 준비</a><a href="#launch">02 실행 순서</a><a href="#drive">03 지도 그리기</a><a href="#save">04 저장</a><a href="#quality">05 품질 가이드</a></nav><main>
+<div class="intro"><b>터미널 4개</b><span>로봇 bringup, 로봇 SLAM, PC RViz, teleop 터미널을 구분해 두면 실행 상태와 오류를 빠르게 확인할 수 있습니다.</span></div>
+<section id="prepare"><div class="number">01</div><div><h2>지도 그릴 준비</h2><p class="range">로봇 2개·PC 2개 터미널</p><ul><li>로봇과 PC가 같은 네트워크와 ROS 도메인에 있는지 확인합니다.</li><li>LiDAR의 <code>/scan</code>, odometry와 TF가 정상인지 먼저 점검합니다.</li><li>실습 공간의 장애물과 낙하 위험을 제거합니다.</li></ul></div></section>
+<section id="launch"><div class="number">02</div><div><h2>bringup·SLAM·RViz 실행</h2><p class="range">실제 로봇 실행 흐름</p><ul><li>로봇에서 bringup을 시작해 센서와 구동부를 올립니다.</li><li>별도 로봇 터미널에서 map_building launch를 실행합니다.</li><li>PC에서 map_view를 열어 Map·LaserScan·TF를 확인합니다.</li></ul></div></section>
+<section id="drive"><div class="number">03</div><div><h2>천천히 주행하며 지도 그리기</h2><p class="range">teleop 실습</p><ul><li>teleop_twist_keyboard를 실행해 저속으로 공간의 외곽부터 주행합니다.</li><li>급회전을 피하고 이미 지나간 위치를 다시 방문해 loop closure를 돕습니다.</li><li>RViz에서 벽이 겹치거나 지도가 비틀리지 않는지 계속 확인합니다.</li></ul></div></section>
+<section id="save"><div class="number">04</div><div><h2>완성된 지도 저장</h2><p class="range">map_saver_cli</p><ul><li><code>map_saver_cli -f my_map</code>으로 지도 이미지와 YAML을 함께 저장합니다.</li><li><code>my_map.pgm</code>과 <code>my_map.yaml</code>이 생성됐는지 확인합니다.</li><li>저장 위치와 YAML의 image 경로를 기록해 Localization 실습에서 재사용합니다.</li></ul></div></section>
+<section id="quality"><div class="number">05</div><div><h2>좋은 지도를 만드는 법</h2><p class="range">맵 생성 가이드</p><ul><li>서로 비슷한 특징이 반복되는 환경은 로봇이 위치를 잃기 쉬우므로 구분되는 특징을 확보합니다.</li><li>회전이 빠르면 지도가 틀어질 수 있으므로 낮은 속도로 움직입니다.</li><li>평평한 바닥에서 작성하고, 필요하면 이미지 편집기로 빈틈과 노이즈를 다듬습니다.</li></ul></div></section>
+<section class="commands"><h2>핵심 실행 명령</h2><pre><code># 로봇 1 — bringup
+ros2 launch pinky_bringup bringup_robot.launch.xml
+
+# 로봇 2 — SLAM
+ros2 launch pinky_navigation map_building.launch.xml
+
+# PC 1 — RViz
+ros2 launch pinky_navigation map_view.launch.xml
+
+# PC 또는 로봇 — 주행
+ros2 run teleop_twist_keyboard teleop_twist_keyboard
+
+# 지도 저장
+ros2 run nav2_map_server map_saver_cli -f my_map</code></pre></section>
+<div class="bottom-buttons"><a target="_blank" rel="noopener" href="https://drive.google.com/file/d/1qbA3so6uo0GPH8Da_cxgcAvN8A_jF7ew/view">원본 HTML</a><a target="_blank" rel="noopener" href="https://drive.google.com/file/d/1F9wPpglLj2VWUr88l14S1BbahpI4zc_A/view">강의 PDF</a></div></main></div>
+<script src="lesson-quiz.js" data-lessons="04-03"></script></body></html>
