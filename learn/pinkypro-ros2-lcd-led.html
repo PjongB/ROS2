@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PinkyPro LCD와 LED를 ROS 2로 다루기 · ROS2</title><link rel="stylesheet" href="mobile-robot-summary.css"><style>.compare{display:grid;grid-template-columns:1fr 1fr;gap:12px}.compare>div{padding:15px;border:1px solid #dde4ec;border-radius:12px;background:#f8fafc}.compare h3{margin:0 0 7px;color:#10233d}@media(max-width:720px){.compare{grid-template-columns:1fr}}</style></head>
+<body><header><div class="shell top"><a class="brand" href="../index.html"><b>ROS</b>2 LEARN</a><a href="pinkypro-lcd.html">← 06번 강의</a></div></header>
+<section class="hero"><div class="shell"><small>04.07 · PINKYPRO · ROS 2 SERVICE</small><h1>LCD와 LED를 ROS 2로 다루기</h1><p>PinkyPro의 LCD 감정 표현과 RGB LED를 ROS 2 Service로 제어하며 서버·클라이언트, 서비스 타입과 요청 필드의 관계를 익힙니다.</p><div class="source-buttons"><a class="html" target="_blank" rel="noopener" href="../assets/pinky-07/pinkypro-ros2-lcd-led-presentation.html">원본 HTML</a><a class="pdf" target="_blank" rel="noopener" href="../assets/pinky-07/pinkypro-ros2-lcd-led.pdf">강의 PDF</a><a class="html" href="#commands">마지막 실행 순서 ↓</a></div></div></section>
+<div class="shell layout"><nav><b>목차</b><a href="#overview">전체 구조</a><a href="#service">기본 Service</a><a href="#emotion-server">01 감정 서버</a><a href="#emotion-call">02 감정 요청</a><a href="#emotions">03 감정 종류</a><a href="#led-server">04 LED 서버</a><a href="#fill">05 전체 채우기</a><a href="#pixels">06 부분 설정</a><a href="#clear">07 Clear</a><a href="#brightness">08 밝기</a><a href="#trouble">09 문제 해결</a><a href="#commands">실행 순서</a></nav><main>
+<div class="intro"><b>한 줄 정리</b><span>서버 node를 먼저 실행한 뒤 정확한 service 이름·type·request field로 call하면 LCD와 LED hardware 동작을 ROS 2 interface로 분리해 제어할 수 있습니다.</span></div>
+<section id="overview"><div class="number">MAP</div><div><h2>ROS 2 제어 구조</h2><pre><code>Terminal Client
+  └─ ros2 service call
+         ↓ request
+Emotion Server ──→ LCD 표정
+LED Server ──────→ RGB LED·밝기
+         ↓ response
+    호출 결과 반환</code></pre><div class="compare"><div><h3>LCD Emotion</h3><p>emotion 문자열을 받아 준비된 표정 이미지를 LCD에 출력합니다.</p></div><div><h3>RGB LED</h3><p>command와 RGB·pixel·brightness 값을 받아 LED strip을 제어합니다.</p></div></div></div></section>
+<section id="service"><div class="number">BASE</div><div><h2>왜 ROS 2 Service를 쓰는가</h2><ul><li>표정 변경과 LED 설정은 요청 한 번에 결과가 정해지는 단발 명령입니다.</li><li>Service는 request와 response로 구성되어 명령 수신 여부를 확인할 수 있습니다.</li><li>연속 영상이나 센서 stream은 Topic, 진행 feedback·cancel이 필요한 장시간 작업은 Action이 더 적합합니다.</li></ul><pre><code># 서버와 type 확인
+ros2 service list -t
+ros2 service type /set_emotion
+ros2 interface show pinky_interfaces/srv/Emotion</code></pre></div></section>
+<section id="emotion-server"><div class="number">01</div><div><h2>감정 표현 서버 실행</h2><pre><code>ros2 run pinky_emotion emotion_server</code></pre><p>서버 터미널을 유지한 상태로 다른 터미널에서 service call을 보냅니다. package를 찾지 못하면 Pinky workspace setup을 source했는지 확인합니다.</p></div></section>
+<section id="emotion-call"><div class="number">02</div><div><h2>LCD에 표정 출력</h2><pre><code>ros2 service call /set_emotion \
+  pinky_interfaces/srv/Emotion \
+  "{emotion: happy}"</code></pre><ul><li><code>/set_emotion</code>은 service 이름입니다.</li><li><code>pinky_interfaces/srv/Emotion</code>은 request·response 구조입니다.</li><li><code>emotion</code> field에 서버가 지원하는 감정 이름을 전달합니다.</li></ul></div></section>
+<section id="emotions"><div class="number">03</div><div><h2>8가지 감정 표현</h2><p>강의자료의 PinkyPro는 총 8가지 감정을 지원합니다. 정확한 이름은 server package의 resource와 interface 설명을 기준으로 확인합니다.</p><pre><code># 지원 코드와 resource 찾기
+ros2 pkg prefix --share pinky_emotion
+ros2 interface show pinky_interfaces/srv/Emotion</code></pre><p>잘못된 문자열을 보냈을 때의 fallback 표정과 response를 확인해 애플리케이션 오류를 안전하게 처리합니다.</p></div></section>
+<section id="led-server"><div class="number">04</div><div><h2>LED 서버 실행</h2><pre><code>ros2 run pinky_led led_server</code></pre><p>LED 명령과 밝기 service를 제공하는 node입니다. 다른 프로세스가 동일 hardware를 점유하지 않는지 확인합니다.</p></div></section>
+<section id="fill"><div class="number">05</div><div><h2>LED 전체 채우기</h2><pre><code>ros2 service call /set_led \
+  pinky_interfaces/srv/SetLed \
+  "{command: 'fill', r: 255, g: 0, b: 0}"</code></pre><p>모든 pixel을 빨간색으로 설정합니다. RGB는 보통 0~255 범위이며 밝기와 함께 최종 출력 세기가 결정됩니다.</p></div></section>
+<section id="pixels"><div class="number">06</div><div><h2>일부 Pixel만 설정</h2><pre><code>ros2 service call /set_led \
+  pinky_interfaces/srv/SetLed \
+  "{command: 'set_pixel', pixels: [4, 5, 6, 7], r: 0, g: 0, b: 255}"</code></pre><ul><li><code>pixels</code> 배열에 바꿀 LED index를 지정합니다.</li><li>예제는 4~7번 pixel을 파란색으로 바꿉니다.</li><li>범위를 벗어난 index의 처리 방식은 server response와 log로 확인합니다.</li></ul></div></section>
+<section id="clear"><div class="number">07</div><div><h2>LED 모두 끄기</h2><pre><code>ros2 service call /set_led \
+  pinky_interfaces/srv/SetLed \
+  "{command: 'clear'}"</code></pre><p>실습 종료와 오류 복구 시 clear를 호출해 LED를 알려진 상태로 되돌립니다.</p></div></section>
+<section id="brightness"><div class="number">08</div><div><h2>LED 밝기 설정</h2><pre><code>ros2 service call /set_brightness \
+  pinky_interfaces/srv/SetBrightness \
+  "{brightness: 10}"</code></pre><p>실내에서는 낮은 밝기부터 시작합니다. 허용 범위는 interface와 server 구현을 확인하고 범위를 벗어난 값은 보내지 않습니다.</p></div></section>
+<section id="trouble"><div class="number">09</div><div><h2>증상별 문제 해결</h2><ul><li><b>service 없음:</b> server process → ROS setup → domain → service list 순서로 확인합니다.</li><li><b>type 오류:</b> <code>ros2 service type</code>과 <code>ros2 interface show</code>를 확인합니다.</li><li><b>표정이 안 바뀜:</b> 감정 문자열 → LCD 상태 → server log를 확인합니다.</li><li><b>LED 색상 오류:</b> RGB 범위와 channel 순서를 확인합니다.</li><li><b>부분 LED 오류:</b> pixel index 범위와 배열 문법을 확인합니다.</li><li><b>밝기 변화 없음:</b> brightness service·허용 범위·hardware 연결을 확인합니다.</li></ul></div></section>
+<section id="commands" class="commands"><h2>마지막 실행 순서</h2><pre><code># 터미널 1 — LCD 감정 서버
+ros2 run pinky_emotion emotion_server
+
+# 터미널 2 — 표정 요청
+ros2 service call /set_emotion pinky_interfaces/srv/Emotion "{emotion: happy}"
+
+# 터미널 3 — LED 서버
+ros2 run pinky_led led_server
+
+# 터미널 4 — LED 전체·부분·밝기·종료
+ros2 service call /set_led pinky_interfaces/srv/SetLed "{command: 'fill', r: 255, g: 0, b: 0}"
+ros2 service call /set_led pinky_interfaces/srv/SetLed "{command: 'set_pixel', pixels: [4, 5, 6, 7], r: 0, g: 0, b: 255}"
+ros2 service call /set_brightness pinky_interfaces/srv/SetBrightness "{brightness: 10}"
+ros2 service call /set_led pinky_interfaces/srv/SetLed "{command: 'clear'}"</code></pre><h2>실습 체크리스트</h2><ol><li>두 server node와 service type을 확인했습니다.</li><li>LCD에 happy 표정을 출력했습니다.</li><li>LED 전체 색상을 설정했습니다.</li><li>지정 pixel만 다른 색으로 변경했습니다.</li><li>밝기를 조절했습니다.</li><li>마지막에 clear로 LED를 껐습니다.</li></ol></section>
+<div class="bottom-buttons"><a href="pinkypro-lcd.html">← 06번 강의</a><a target="_blank" rel="noopener" href="../assets/pinky-07/pinkypro-ros2-lcd-led-presentation.html">원본 HTML</a><a target="_blank" rel="noopener" href="../assets/pinky-07/pinkypro-ros2-lcd-led.pdf">강의 PDF</a></div></main></div><script src="lesson-quiz.js" data-lessons="04-07"></script></body></html>

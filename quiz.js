@@ -109,6 +109,9 @@ const LESSON03=[
 ["Notebook이 Nav2를 찾으려면 먼저 필요한 것은?","ROS 환경 source"],["Jupyter 실행 명령은?","jupyter notebook"],["전역 설치 정책 우회 옵션은?","--break-system-packages"],["각도를 Quaternion으로 바꾸기 전 단위는?","Radian"],["평면 yaw Quaternion의 qz는?","sin(yaw/2)"],["현재 위치를 얻는 토픽은?","/amcl_pose"],["주행 중 상태 정보는?","Feedback"],["최종 성공·취소·실패 정보는?","Result"],["과도한 polling을 줄이는 방법은?","Timeout 간격 사용"],["다중 목표를 담는 것은?","Waypoint Pose 목록"]]],
 ["04-06 · LCD",[
 ["LCD 화면에 보내는 기본 데이터 형태는?","Pillow Image"],["LCD 객체 클래스는?","pinky_lcd.LCD"],["이미지 출력 메서드는?","img_show"],["텍스트 크기 계산 메서드는?","textbbox"],["한글 폰트를 여는 메서드는?","ImageFont.truetype"],["밝기 조절 메서드는?","set_backlight"],["GIF 프레임 순회 도구는?","ImageSequence.Iterator"],["Picamera 배열 획득 메서드는?","capture_array"],["OpenCV 기본 색 순서는?","BGR"],["사용 후 LCD 정리 메서드는?","close"]]]
+,
+["04-07 · LCD·LED ROS 2 제어",[
+["LCD 감정 표현 서버 실행 명령은?","ros2 run pinky_emotion emotion_server"],["감정 설정 서비스 이름은?","/set_emotion"],["감정 서비스 타입은?","pinky_interfaces/srv/Emotion"],["happy 표정을 요청하는 필드는?","emotion"],["LED 서버 실행 명령은?","ros2 run pinky_led led_server"],["LED 전체 채우기 command는?","fill"],["일부 pixel만 바꾸는 command는?","set_pixel"],["LED를 모두 끄는 command는?","clear"],["RGB 빨간색 값은?","r=255, g=0, b=0"],["밝기 설정 서비스 이름은?","/set_brightness"]]]
 ];
 for(const [cat,items] of LESSON03){const answers=items.map(x=>x[1]);items.forEach(([question,answer],i)=>{const wrong=[answers[(i+3)%10],answers[(i+7)%10]];Q.push([cat,question,answer,[answer,...wrong],`${answer} — ${question.replace(/\?$/,'')}의 핵심 개념입니다.`])})}
 document.querySelector('.kicker').textContent=`${Q.length} QUESTIONS · INSTANT FEEDBACK`;

@@ -11,7 +11,8 @@
     '03-10':'SLAM','03-11':'Localization','03-12':'PID Navigation',
     '03-13':'Navigation','03-14':'Python Nav2','03-15':'Nav2 설정',
     '04-01':'PinkyPro 소개','04-02':'환경 설정','04-03':'맵 작성',
-    '04-04':'Nav2 주행','04-05':'Jupyter 내비게이션','04-06':'LCD'
+    '04-04':'Nav2 주행','04-05':'Jupyter 내비게이션','04-06':'LCD',
+    '04-07':'LCD·LED ROS 2 제어'
   };
   const box = document.createElement('section');
   box.className = 'lesson-quiz-cta';
