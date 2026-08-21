@@ -96,10 +96,23 @@ const LESSON03=[
 ["Nav2 Python 편의 API는?","BasicNavigator"],["Global Goal의 일반 frame은?","map"],["Nav2 Active 대기 메서드는?","waitUntilNav2Active"],["Goal 이동 시작 메서드는?","goToPose"],["Task 완료 확인 메서드는?","isTaskComplete"],["남은 거리는 어디에서 얻는가?","Navigation Feedback"],["Cancel 직후 UNKNOWN 이유는?","결과 미확정"],["올바른 Cancel 처리 순서는?","Cancel→완료 대기→Result"],["goal_pose Topic 방식의 단점은?","Feedback·Result 직접 수신 어려움"],["get_subscription_count 의미는?","Subscriber discovery 참고값"]]],
 ["03-15 · Nav2 설정",[
 ["bringup_launch 역할은?","Localization과 Navigation 조립"],["Lifecycle active 상태는?","실제 Service 수행 상태"],["Composable Node 장점은?","Process 수와 복사 비용 감소"],["AMCL alpha 파라미터는?","Odometry Motion Noise"],["RPP lookahead가 너무 작을 때는?","민감한 추종과 좌우 진동"],["Progress Checker 목적은?","일정 시간 이동량 판정"],["Velocity Smoother 목적은?","속도 변화 제한"],["A*와 Dijkstra 차이는?","A*는 Heuristic 추가"],["Behavior Server와 BT Navigator 차이는?","행동 제공과 실행 정책"],["권장 Tuning 순서는?","TF→Costmap→Planner→Controller"]]]
+,
+["04-01 · PinkyPro 소개",[
+["PinkyPro가 교육용으로 연결하는 핵심 기술은?","ROS 2 센서·SLAM·Nav2"],["PinkyPro의 구동 방식은?","차동 구동 모바일 로봇"],["PinkyPro의 상차 가능 무게는 약 얼마인가?","약 50g"],["PC의 주요 역할은?","개발·RViz·상위 명령"],["로봇의 주요 역할은?","센서·모터·TF 제공"],["PC와 로봇 노드 발견에 중요한 것은?","같은 DDS Domain"],["지도 작성 다음 학습 단계는?","Localization"],["Localization 다음 자율주행 단계는?","Nav2"],["여러 로봇 토픽 충돌 방지에 쓰는 것은?","Namespace와 Domain 설계"],["LLM 행동 전에 필요한 것은?","실행 가능성과 안전 검증"]]],
+["04-02 · 환경 설정",[
+["SD 이미지 기록 도구는?","Raspberry Pi Imager"],["Custom 이미지를 고르는 메뉴는?","Use custom"],["워크스페이스 소스 폴더는?","~/pinky_/src"],["ROS 의존성 설치 도구는?","rosdep"],["워크스페이스 빌드 도구는?","colcon"],["빌드 후 패키지 검색에 필요한 것은?","install setup source"],["기본 Pinky SSH 주소는?","pinky@192.168.4.1"],["주변 Wi-Fi 확인 명령은?","nmcli device wifi list"],["PC와 로봇에서 같아야 하는 값은?","ROS_DOMAIN_ID"],["첫 구동 전 안전 조치는?","바퀴를 바닥에서 들기"]]],
+["04-03 · 맵 작성",[
+["실제 로봇 SLAM 전 먼저 실행할 것은?","Robot Bringup"],["SLAM 지도 확인 도구는?","RViz"],["키보드 주행 패키지는?","teleop_twist_keyboard"],["지도 저장 명령 도구는?","map_saver_cli"],["저장되는 두 지도 파일은?","PGM과 YAML"],["PGM이 표현하는 것은?","점유 격자 이미지"],["YAML resolution 의미는?","픽셀당 실제 거리"],["급회전이 만드는 문제는?","Scan matching 오차"],["재방문이 돕는 SLAM 기능은?","Loop Closure"],["SLAM 필수 입력은?","Scan·Odometry·TF"]]],
+["04-04 · Nav2 주행",[
+["저장 지도를 지정하는 launch 인자는?","map"],["초기 위치를 맞추는 RViz 도구는?","2D Pose Estimate"],["목표 위치와 방향을 지정하는 도구는?","Nav2 Goal"],["클릭한 지도 좌표 토픽은?","/clicked_point"],["AMCL 현재 자세 토픽은?","/amcl_pose"],["Goal 화살표 방향의 의미는?","도착 후 목표 yaw"],["Nav2 경로를 만드는 서버는?","Planner"],["경로를 속도 명령으로 바꾸는 서버는?","Controller"],["여러 목표 순차 실행 기능은?","Waypoint Following"],["초기화 후 확인할 정렬은?","Map과 LaserScan 일치"]]],
+["04-05 · Jupyter 내비게이션",[
+["Notebook이 Nav2를 찾으려면 먼저 필요한 것은?","ROS 환경 source"],["Jupyter 실행 명령은?","jupyter notebook"],["전역 설치 정책 우회 옵션은?","--break-system-packages"],["각도를 Quaternion으로 바꾸기 전 단위는?","Radian"],["평면 yaw Quaternion의 qz는?","sin(yaw/2)"],["현재 위치를 얻는 토픽은?","/amcl_pose"],["주행 중 상태 정보는?","Feedback"],["최종 성공·취소·실패 정보는?","Result"],["과도한 polling을 줄이는 방법은?","Timeout 간격 사용"],["다중 목표를 담는 것은?","Waypoint Pose 목록"]]],
+["04-06 · LCD",[
+["LCD 화면에 보내는 기본 데이터 형태는?","Pillow Image"],["LCD 객체 클래스는?","pinky_lcd.LCD"],["이미지 출력 메서드는?","img_show"],["텍스트 크기 계산 메서드는?","textbbox"],["한글 폰트를 여는 메서드는?","ImageFont.truetype"],["밝기 조절 메서드는?","set_backlight"],["GIF 프레임 순회 도구는?","ImageSequence.Iterator"],["Picamera 배열 획득 메서드는?","capture_array"],["OpenCV 기본 색 순서는?","BGR"],["사용 후 LCD 정리 메서드는?","close"]]]
 ];
 for(const [cat,items] of LESSON03){const answers=items.map(x=>x[1]);items.forEach(([question,answer],i)=>{const wrong=[answers[(i+3)%10],answers[(i+7)%10]];Q.push([cat,question,answer,[answer,...wrong],`${answer} — ${question.replace(/\?$/,'')}의 핵심 개념입니다.`])})}
 document.querySelector('.kicker').textContent=`${Q.length} QUESTIONS · INSTANT FEEDBACK`;
-document.querySelector('.intro p').textContent='03 과정은 강의자료별로 10문제씩 준비했습니다. 학습한 강의 번호만 선택해서 풀 수 있습니다.';
+document.querySelector('.intro p').textContent='03·04 과정은 강의자료별로 10문제씩 준비했습니다. 학습한 강의 번호만 선택해서 풀 수 있습니다.';
 document.querySelector('#count').innerHTML='<option value="10">10문제</option><option value="20">20문제</option><option value="30">30문제</option><option value="50">50문제</option><option value="100">100문제</option><option value="9999">선택 범위 전체</option>';
 
 const categoryNames=[...new Set(Q.map(q=>q[0]))].sort((a,b)=>{

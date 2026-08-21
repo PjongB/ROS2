@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PinkyPro LCD 사용하기 · ROS2</title><link rel="stylesheet" href="mobile-robot-summary.css"></head>
+<body><header><div class="shell top"><a class="brand" href="../index.html"><b>ROS</b>2 LEARN</a><a href="pinkypro-jupyter-navigation.html">← 05번 강의</a></div></header>
+<section class="hero"><div class="shell"><small>04.06 · PINKYPRO · LCD & CAMERA</small><h1>PinkyPro LCD 사용하기</h1><p>PinkyPro LCD 예제를 준비하고 Pillow 이미지·텍스트·한글 폰트·GIF와 Picamera 영상을 화면에 출력하는 과정을 익힙니다.</p><div class="source-buttons"><a class="html" target="_blank" rel="noopener" href="../assets/pinky-06/pinkypro-lcd-presentation.html">원본 HTML</a><a class="pdf" target="_blank" rel="noopener" href="../assets/pinky-06/pinkypro-lcd.pdf">강의 PDF</a><a class="html" href="#commands">마지막 실행 순서 ↓</a></div></div></section>
+<div class="shell layout"><nav><b>목차</b><a href="#overview">전체 구조</a><a href="#prepare">01 예제 준비</a><a href="#test">02 LCD 테스트</a><a href="#image">03 이미지</a><a href="#text">04 텍스트</a><a href="#font">05 한글·밝기</a><a href="#gif">06 GIF</a><a href="#camera">07 Camera</a><a href="#cleanup">08 문제 해결</a><a href="#commands">실행 순서</a></nav><main>
+<div class="intro"><b>한 줄 정리</b><span>pinky_lcd.LCD는 Pillow 이미지를 화면으로 보내며, 텍스트·GIF·카메라 프레임도 최종적으로 Pillow Image로 변환해 출력합니다.</span></div>
+<section id="overview"><div class="number">MAP</div><div><h2>LCD 출력 파이프라인</h2><pre><code>파일 / 텍스트 / GIF / Picamera
+             ↓
+      Pillow Image 생성
+             ↓
+     회전·반전·그리기
+             ↓
+       lcd.img_show()
+             ↓
+         LCD 화면</code></pre></div></section>
+<section id="prepare"><div class="number">01</div><div><h2>예제 파일 준비</h2><ol><li>제공된 LCD example 압축 파일을 다운로드합니다.</li><li>다운로드 위치를 확인하고 압축을 풉니다.</li><li>home 위치로 pinky_lcd 폴더를 옮깁니다.</li><li>예제 스크립트와 이미지 파일을 확인합니다.</li></ol></div></section>
+<section id="test"><div class="number">02</div><div><h2>LCD 하드웨어 테스트</h2><pre><code>cd ~/pinky_lcd
+python3 lcd_test.py</code></pre><p>화면 전체가 밝게 출력되면 기본 통신과 전원 상태를 확인한 것입니다.</p></div></section>
+<section id="image"><div class="number">03</div><div><h2>이미지 출력</h2><pre><code>from pinky_lcd import LCD
+from PIL import Image
+import time
+
+lcd = LCD()
+img = Image.open("example.jpg")
+lcd.img_show(img)
+time.sleep(3)
+lcd.close()</code></pre><p>작업 디렉터리를 기준으로 이미지 경로가 맞는지 확인하고 사용 후 장치를 닫습니다.</p></div></section>
+<section id="text"><div class="number">04</div><div><h2>텍스트를 중앙에 출력</h2><ul><li>Image.new로 320×240 RGB 배경을 만듭니다.</li><li>ImageDraw.Draw로 그리기 객체를 생성합니다.</li><li>textbbox로 글자 크기를 구해 중앙 x·y를 계산합니다.</li><li>draw.text로 그린 뒤 LCD에 보냅니다.</li></ul><pre><code>bbox = draw.textbbox((0, 0), text, font=font)
+text_width = bbox[2] - bbox[0]
+text_height = bbox[3] - bbox[1]
+x = (320 - text_width) // 2
+y = (240 - text_height) // 2</code></pre></div></section>
+<section id="font"><div class="number">05</div><div><h2>한글 폰트와 밝기</h2><ul><li>기본 폰트는 한글에 제한이 있어 TTF 폰트를 로봇으로 복사합니다.</li><li>ImageFont.truetype에 파일 경로와 크기를 지정합니다.</li><li>lcd.set_backlight(1~100)으로 밝기를 설정합니다.</li></ul><pre><code>lcd.set_backlight(50)
+font = ImageFont.truetype("MaruBuri-Bold.ttf", 30)</code></pre></div></section>
+<section id="gif"><div class="number">06</div><div><h2>GIF 프레임 재생</h2><pre><code>img = Image.open("example.gif")
+for frame in ImageSequence.Iterator(img):
+    lcd.img_show(frame.rotate(180))
+lcd.close()</code></pre><p>GIF는 여러 frame의 모음입니다. 필요하면 각 frame의 duration을 sleep 간격에 반영합니다.</p></div></section>
+<section id="camera"><div class="number">07</div><div><h2>Picamera 실시간 출력</h2><pre><code>picam2 = Picamera2()
+picam2.configure(picam2.create_preview_configuration(
+    main={"format": "RGB888", "size": (640, 480)}))
+picam2.start()
+
+while True:
+    frame = picam2.capture_array()
+    rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    rotated = cv2.rotate(rgb, cv2.ROTATE_180)
+    flipped = cv2.flip(rotated, 1)
+    lcd.img_show(Image.fromarray(flipped))</code></pre><p>무한 루프는 KeyboardInterrupt를 처리하고 finally에서 camera와 LCD를 닫는 것이 안전합니다.</p></div></section>
+<section id="cleanup"><div class="number">08</div><div><h2>증상별 확인</h2><ul><li><b>검은 화면:</b> backlight, 전원과 테스트 스크립트를 확인합니다.</li><li><b>이미지 없음:</b> 현재 디렉터리와 파일 경로를 확인합니다.</li><li><b>한글 깨짐:</b> TTF 위치와 truetype 경로를 확인합니다.</li><li><b>색상이 이상함:</b> OpenCV BGR과 Pillow RGB 변환을 확인합니다.</li><li><b>방향 반대:</b> rotate 각도와 flip 축을 조정합니다.</li></ul></div></section>
+<section id="commands" class="commands"><h2>마지막 실행 순서</h2><pre><code># 1. 예제 확인
+cd ~/pinky_lcd
+find . -maxdepth 2 -type f | sort
+
+# 2. 하드웨어 테스트
+python3 lcd_test.py
+
+# 3. 기능별 실행
+python3 example/show_img.py
+python3 example/show_text.py
+python3 example/show_text_font.py
+python3 example/play_gif.py
+python3 example/play_cam.py</code></pre><h2>실습 체크리스트</h2><ol><li>LCD 테스트 화면을 확인했습니다.</li><li>이미지와 텍스트를 출력했습니다.</li><li>한글 폰트와 밝기를 적용했습니다.</li><li>GIF를 재생했습니다.</li><li>Picamera 영상을 올바른 색상과 방향으로 출력했습니다.</li><li>종료 시 camera와 LCD를 닫았습니다.</li></ol></section>
+<div class="bottom-buttons"><a href="pinkypro-jupyter-navigation.html">← 05번 강의</a><a target="_blank" rel="noopener" href="../assets/pinky-06/pinkypro-lcd-presentation.html">원본 HTML</a><a target="_blank" rel="noopener" href="../assets/pinky-06/pinkypro-lcd.pdf">강의 PDF</a></div></main></div><script src="lesson-quiz.js" data-lessons="04-06"></script></body></html>

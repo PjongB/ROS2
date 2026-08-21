@@ -9,7 +9,9 @@
     '03-04':'RViz 시각화','03-05':'Domain ID','03-06':'다중 Domain 제어',
     '03-07':'Domain Bridge','03-08':'Description','03-09':'Gazebo',
     '03-10':'SLAM','03-11':'Localization','03-12':'PID Navigation',
-    '03-13':'Navigation','03-14':'Python Nav2','03-15':'Nav2 설정'
+    '03-13':'Navigation','03-14':'Python Nav2','03-15':'Nav2 설정',
+    '04-01':'PinkyPro 소개','04-02':'환경 설정','04-03':'맵 작성',
+    '04-04':'Nav2 주행','04-05':'Jupyter 내비게이션','04-06':'LCD'
   };
   const box = document.createElement('section');
   box.className = 'lesson-quiz-cta';

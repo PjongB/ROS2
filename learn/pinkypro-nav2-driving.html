@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PinkyPro로 Nav2 주행하기 · ROS2</title><link rel="stylesheet" href="mobile-robot-summary.css"></head>
+<body><header><div class="shell top"><a class="brand" href="../index.html"><b>ROS</b>2 LEARN</a><a href="pinkypro-map-building.html">← 03번 강의</a></div></header>
+<section class="hero"><div class="shell"><small>04.04 · PINKYPRO · NAV2 실제 주행</small><h1>PinkyPro로 Nav2 주행하기</h1><p>저장한 지도를 로드하고 AMCL 초기 위치를 맞춘 뒤 단일 목표, 좌표 확인과 여러 Waypoint 주행까지 Nav2의 실제 운용 순서를 익힙니다.</p><div class="source-buttons"><a class="html" target="_blank" rel="noopener" href="../assets/pinky-04/pinkypro-nav2-driving-presentation.html">원본 HTML</a><a class="pdf" target="_blank" rel="noopener" href="../assets/pinky-04/pinkypro-nav2-driving.pdf">강의 PDF</a><a class="html" href="#commands">마지막 실행 순서 ↓</a></div></div></section>
+<div class="shell layout"><nav><b>목차</b><a href="#overview">전체 구조</a><a href="#prereq">기본 준비</a><a href="#bringup">01 Bringup</a><a href="#nav2">02 Nav2</a><a href="#rviz">03 RViz</a><a href="#initial">04 초기 위치</a><a href="#goal">05 Goal</a><a href="#coords">06 좌표 확인</a><a href="#waypoints">07 Waypoint</a><a href="#trouble">08 문제 해결</a><a href="#commands">실행 순서</a></nav><main>
+<div class="intro"><b>한 줄 정리</b><span>로봇 bringup → 저장 지도 기반 Nav2 → PC RViz → 2D Pose Estimate → Nav2 Goal 순서로 실행해야 지도와 실제 로봇이 일치한 상태에서 주행할 수 있습니다.</span></div>
+<section id="overview"><div class="number">MAP</div><div><h2>Nav2 주행 데이터 흐름</h2><pre><code>저장 Map + /scan + odometry
+          ↓
+     AMCL 현재 위치
+          ↓
+Nav2 Goal → Planner → Controller → cmd_vel → PinkyPro</code></pre><ul><li><b>Map Server:</b> 저장한 YAML과 지도 이미지를 제공합니다.</li><li><b>AMCL:</b> 지도와 LaserScan을 비교해 현재 자세를 추정합니다.</li><li><b>Planner·Controller:</b> 목표까지 경로를 만들고 주행 명령을 계산합니다.</li></ul></div></section>
+<section id="prereq"><div class="number">BASE</div><div><h2>시작 전 준비</h2><ul><li>04.03에서 만든 YAML과 지도 이미지가 같은 폴더에 있어야 합니다.</li><li>PC와 로봇의 네트워크·ROS_DOMAIN_ID가 같아야 합니다.</li><li>로봇의 실제 시작 위치가 지도 안에서 어디인지 확인합니다.</li></ul></div></section>
+<section id="bringup"><div class="number">01</div><div><h2>로봇 Bringup</h2><pre><code>ros2 launch pinky_bringup bringup_robot.launch.xml</code></pre><p>LiDAR, odometry, TF와 구동부가 정상인지 먼저 확인합니다.</p></div></section>
+<section id="nav2"><div class="number">02</div><div><h2>저장 지도로 Navigation 실행</h2><pre><code>ros2 launch pinky_navigation bringup_launch.xml map:=/home/pinky/my_map.yaml</code></pre><ul><li>상대 경로보다 절대 경로를 쓰면 실행 위치에 따른 오류를 줄일 수 있습니다.</li><li>Map Server, AMCL, Planner, Controller와 lifecycle 상태가 active인지 확인합니다.</li></ul></div></section>
+<section id="rviz"><div class="number">03</div><div><h2>PC에서 Nav2 RViz 실행</h2><pre><code>ros2 launch pinky_navigation nav2_view.launch.xml</code></pre><p>Map, LaserScan, ParticleCloud, Global/Local Costmap과 RobotModel을 구분해서 확인합니다.</p></div></section>
+<section id="initial"><div class="number">04</div><div><h2>2D Pose Estimate로 초기 위치 정렬</h2><ol><li>지도에서 로봇의 실제 위치를 클릭합니다.</li><li>실제 로봇이 바라보는 방향으로 드래그합니다.</li><li>LaserScan과 지도 벽이 겹치고 AMCL 파티클이 모이는지 확인합니다.</li></ol></div></section>
+<section id="goal"><div class="number">05</div><div><h2>Nav2 Goal 보내기</h2><ol><li>도착 위치를 클릭합니다.</li><li>도착 후 바라볼 방향으로 드래그합니다.</li><li>Global Plan과 Local Costmap을 확인하며 주행을 관찰합니다.</li></ol></div></section>
+<section id="coords"><div class="number">06</div><div><h2>지도와 로봇 좌표 확인</h2><pre><code># RViz Publish Point로 클릭한 지도 좌표
+ros2 topic echo /clicked_point
+
+# AMCL이 추정한 로봇 자세
+ros2 topic echo /amcl_pose</code></pre><p>clicked_point는 사용자가 고른 지도 좌표이고 amcl_pose는 로봇의 현재 추정 자세입니다.</p></div></section>
+<section id="waypoints"><div class="number">07</div><div><h2>여러 Waypoint 순차 주행</h2><ol><li>Waypoint 도구를 선택합니다.</li><li>위치와 방향을 하나씩 추가합니다.</li><li>순서와 장애물 여유 공간을 확인합니다.</li><li>Start Waypoint Following으로 지정 순서대로 주행합니다.</li></ol></div></section>
+<section id="trouble"><div class="number">08</div><div><h2>증상별 확인</h2><ul><li><b>지도와 scan 불일치:</b> 초기 자세와 TF를 확인합니다.</li><li><b>경로가 없음:</b> 목표 셀, Global Costmap과 footprint를 확인합니다.</li><li><b>경로는 있지만 정지:</b> Local Costmap과 controller를 확인합니다.</li><li><b>다른 방향으로 회전:</b> 초기·목표 yaw 드래그 방향을 확인합니다.</li></ul></div></section>
+<section id="commands" class="commands"><h2>마지막 실행 순서</h2><pre><code># 로봇 1
+ros2 launch pinky_bringup bringup_robot.launch.xml
+
+# 로봇 2
+ros2 launch pinky_navigation bringup_launch.xml map:=/home/pinky/my_map.yaml
+
+# PC
+ros2 launch pinky_navigation nav2_view.launch.xml
+
+# 좌표 관찰
+ros2 topic echo /clicked_point
+ros2 topic echo /amcl_pose</code></pre><h2>실습 체크리스트</h2><ol><li>Nav2 lifecycle 노드가 active입니다.</li><li>Map과 LaserScan이 겹칩니다.</li><li>단일 Goal 주행을 완료했습니다.</li><li>clicked_point와 amcl_pose를 구분합니다.</li><li>여러 Waypoint를 순서대로 주행했습니다.</li></ol></section>
+<div class="bottom-buttons"><a href="pinkypro-map-building.html">← 03번 강의</a><a target="_blank" rel="noopener" href="../assets/pinky-04/pinkypro-nav2-driving-presentation.html">원본 HTML</a><a target="_blank" rel="noopener" href="../assets/pinky-04/pinkypro-nav2-driving.pdf">강의 PDF</a></div></main></div><script src="lesson-quiz.js" data-lessons="04-04"></script></body></html>

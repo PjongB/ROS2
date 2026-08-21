@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Jupyter로 Pinky 내비게이션 · ROS2</title><link rel="stylesheet" href="mobile-robot-summary.css"></head>
+<body><header><div class="shell top"><a class="brand" href="../index.html"><b>ROS</b>2 LEARN</a><a href="pinkypro-nav2-driving.html">← 04번 강의</a></div></header>
+<section class="hero"><div class="shell"><small>04.05 · PINKYPRO · JUPYTER NAVIGATION</small><h1>Jupyter로 내비게이션</h1><p>RViz에서 검증한 Nav2 환경을 Jupyter Notebook과 Python API로 제어해 목표 생성, 피드백 확인, 결과 판정과 다중 Waypoint 주행을 실습합니다.</p><div class="source-buttons"><a class="html" target="_blank" rel="noopener" href="../assets/pinky-05/pinkypro-jupyter-navigation-presentation.html">원본 HTML</a><a class="pdf" target="_blank" rel="noopener" href="../assets/pinky-05/pinkypro-jupyter-navigation.pdf">강의 PDF</a><a class="html" href="#commands">마지막 실행 순서 ↓</a></div></div></section>
+<div class="shell layout"><nav><b>목차</b><a href="#overview">전체 구조</a><a href="#install">01 설치</a><a href="#system">02 Nav2 환경</a><a href="#notebook">03 Notebook</a><a href="#navigator">04 Navigator</a><a href="#pose">05 Pose</a><a href="#single">06 단일 Goal</a><a href="#feedback">07 피드백</a><a href="#waypoints">08 Waypoint</a><a href="#shutdown">09 종료</a><a href="#commands">실행 순서</a></nav><main>
+<div class="intro"><b>한 줄 정리</b><span>ROS 2 환경을 source한 터미널에서 Jupyter를 시작해야 Notebook이 Nav2 패키지와 현재 DDS 도메인을 그대로 사용할 수 있습니다.</span></div>
+<section id="overview"><div class="number">MAP</div><div><h2>Notebook 제어 흐름</h2><pre><code>Jupyter Kernel → Navigator → Nav2 Action
+                              ├─ Feedback
+                              └─ Result
+                                   ↓
+                                PinkyPro</code></pre><p>Notebook은 실행 중인 Nav2 시스템에 Action goal을 보내는 클라이언트입니다. 먼저 04.04의 수동 RViz 주행이 정상이어야 합니다.</p></div></section>
+<section id="install"><div class="number">01</div><div><h2>Jupyter 설치</h2><pre><code>pip3 install jupyter --break-system-packages</code></pre><p>PEP 668 정책 때문에 전역 설치에는 옵션이 필요합니다. 재현성과 시스템 보호가 중요하면 가상환경을 우선 고려합니다.</p></div></section>
+<section id="system"><div class="number">02</div><div><h2>Nav2 시스템 먼저 실행</h2><pre><code># 로봇
+ros2 launch pinky_bringup bringup_robot.launch.xml
+ros2 launch pinky_navigation bringup_launch.xml map:=/home/pinky/my_map.yaml
+
+# PC
+ros2 launch pinky_navigation nav2_view.launch.xml</code></pre><p>2D Pose Estimate로 LaserScan과 지도를 맞추고 Nav2가 active인지 확인합니다.</p></div></section>
+<section id="notebook"><div class="number">03</div><div><h2>ROS 환경에서 Notebook 시작</h2><pre><code>source /opt/ros/jazzy/setup.bash
+source ~/pinky_/install/local_setup.bash
+echo $ROS_DOMAIN_ID
+jupyter notebook</code></pre><p>커널이 오래된 환경을 사용하면 Kernel Restart 후 import부터 다시 실행합니다.</p></div></section>
+<section id="navigator"><div class="number">04</div><div><h2>Nav2 클래스와 active 확인</h2><ul><li>강의에서 제공한 Nav2 클래스를 불러옵니다.</li><li>Navigator는 goal 전송, feedback·result 조회와 task 취소를 담당합니다.</li><li>Nav2가 active가 되기 전에 goal을 보내지 않습니다.</li></ul></div></section>
+<section id="pose"><div class="number">05</div><div><h2>좌표와 방향 만들기</h2><pre><code>yaw_rad = math.radians(yaw_degree)
+qz = math.sin(yaw_rad / 2.0)
+qw = math.cos(yaw_rad / 2.0)</code></pre><ul><li>goal frame은 일반적으로 map을 사용합니다.</li><li>x·y는 지도 좌표이고 quaternion은 도착 방향입니다.</li><li>현재 위치는 /amcl_pose, 지도 좌표는 /clicked_point로 확인합니다.</li></ul></div></section>
+<section id="single"><div class="number">06</div><div><h2>단일 Goal: 회전 후 이동</h2><ol><li>현재 x·y와 다른 yaw로 goal을 만들어 제자리 회전을 확인합니다.</li><li>새 x·y와 yaw로 위치 이동을 확인합니다.</li><li>goal 전송 직후 결과를 가정하지 말고 task 완료까지 기다립니다.</li></ol></div></section>
+<section id="feedback"><div class="number">07</div><div><h2>피드백과 주행 결과</h2><ul><li>주행 중 feedback에서 남은 거리와 예상 시간을 확인합니다.</li><li>CPU 부하와 Notebook 멈춤을 줄이기 위해 timeout을 둡니다.</li><li>강의처럼 1초 간격으로 확인하면 과도한 polling을 줄일 수 있습니다.</li><li>완료 후 성공, 취소, 실패를 구분합니다.</li></ul></div></section>
+<section id="waypoints"><div class="number">08</div><div><h2>여러 좌표 Waypoint 주행</h2><ol><li>ros2 topic echo /clicked_point를 실행합니다.</li><li>RViz Publish Point로 좌표를 순서대로 기록합니다.</li><li>z는 무시하고 x·y와 yaw로 pose 목록을 만듭니다.</li><li>주행을 시작하고 feedback으로 진행 지점을 확인합니다.</li></ol></div></section>
+<section id="shutdown"><div class="number">09</div><div><h2>안전하게 종료</h2><ul><li>진행 중인 task가 있다면 취소 후 최종 상태를 확인합니다.</li><li>Navigator 노드와 ROS context를 종료합니다.</li><li>Notebook kernel과 bringup·Nav2 터미널을 순서대로 종료합니다.</li></ul></div></section>
+<section id="commands" class="commands"><h2>마지막 실행 순서</h2><pre><code># 1. 로봇 bringup
+ros2 launch pinky_bringup bringup_robot.launch.xml
+
+# 2. Nav2 + 저장 지도
+ros2 launch pinky_navigation bringup_launch.xml map:=/home/pinky/my_map.yaml
+
+# 3. PC RViz + 초기 위치
+ros2 launch pinky_navigation nav2_view.launch.xml
+
+# 4. ROS 환경을 source한 PC 터미널
+jupyter notebook
+
+# 5. 좌표 수집
+ros2 topic echo /clicked_point
+ros2 topic echo /amcl_pose</code></pre><h2>실습 체크리스트</h2><ol><li>ROS 환경에서 Jupyter를 실행했습니다.</li><li>Nav2 active 확인 후 goal을 보냈습니다.</li><li>회전과 위치 이동을 확인했습니다.</li><li>feedback과 result를 구분했습니다.</li><li>여러 Waypoint를 주행했습니다.</li><li>task와 노드를 안전하게 종료했습니다.</li></ol></section>
+<div class="bottom-buttons"><a href="pinkypro-nav2-driving.html">← 04번 강의</a><a target="_blank" rel="noopener" href="../assets/pinky-05/pinkypro-jupyter-navigation-presentation.html">원본 HTML</a><a target="_blank" rel="noopener" href="../assets/pinky-05/pinkypro-jupyter-navigation.pdf">강의 PDF</a></div></main></div><script src="lesson-quiz.js" data-lessons="04-05"></script></body></html>
