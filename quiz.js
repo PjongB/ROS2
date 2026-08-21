@@ -111,7 +111,9 @@ const LESSON03=[
 ["LCD 화면에 보내는 기본 데이터 형태는?","Pillow Image"],["LCD 객체 클래스는?","pinky_lcd.LCD"],["이미지 출력 메서드는?","img_show"],["텍스트 크기 계산 메서드는?","textbbox"],["한글 폰트를 여는 메서드는?","ImageFont.truetype"],["밝기 조절 메서드는?","set_backlight"],["GIF 프레임 순회 도구는?","ImageSequence.Iterator"],["Picamera 배열 획득 메서드는?","capture_array"],["OpenCV 기본 색 순서는?","BGR"],["사용 후 LCD 정리 메서드는?","close"]]]
 ,
 ["04-07 · LCD·LED ROS 2 제어",[
-["LCD 감정 표현 서버 실행 명령은?","ros2 run pinky_emotion emotion_server"],["감정 설정 서비스 이름은?","/set_emotion"],["감정 서비스 타입은?","pinky_interfaces/srv/Emotion"],["happy 표정을 요청하는 필드는?","emotion"],["LED 서버 실행 명령은?","ros2 run pinky_led led_server"],["LED 전체 채우기 command는?","fill"],["일부 pixel만 바꾸는 command는?","set_pixel"],["LED를 모두 끄는 command는?","clear"],["RGB 빨간색 값은?","r=255, g=0, b=0"],["밝기 설정 서비스 이름은?","/set_brightness"]]]
+["LCD 감정 표현 서버 실행 명령은?","ros2 run pinky_emotion emotion_server"],["감정 설정 서비스 이름은?","/set_emotion"],["감정 서비스 타입은?","pinky_interfaces/srv/Emotion"],["happy 표정을 요청하는 필드는?","emotion"],["LED 서버 실행 명령은?","ros2 run pinky_led led_server"],["LED 전체 채우기 command는?","fill"],["일부 pixel만 바꾸는 command는?","set_pixel"],["LED를 모두 끄는 command는?","clear"],["RGB 빨간색 값은?","r=255, g=0, b=0"],["밝기 설정 서비스 이름은?","/set_brightness"]]],
+["05-00 · GPU·CUDA·cuDNN 설정",[
+["NVIDIA GPU가 PCI 장치로 보이는지 확인하는 명령은?","lspci"],["설치된 NVIDIA 드라이버와 GPU 상태 확인 명령은?","nvidia-smi"],["Ubuntu가 권장 드라이버를 표시할 때 쓰는 명령은?","ubuntu-drivers devices"],["CUDA compiler 버전 확인 명령은?","nvcc --version"],["CUDA 설치 전에 가장 먼저 맞춰야 하는 것은?","드라이버·CUDA·cuDNN 호환 조합"],["cuda-keyring 패키지의 역할은?","NVIDIA CUDA 저장소와 인증 키 등록"],["새 저장소 등록 뒤 실행할 명령은?","sudo apt update"],["CUDA 실행 파일 경로에 추가할 환경 변수는?","PATH"],["CUDA library 경로에 사용하는 환경 변수는?","LD_LIBRARY_PATH"],["TensorFlow에서 GPU 인식을 확인하는 API는?","tf.config.list_physical_devices('GPU')"]]
 ];
 for(const [cat,items] of LESSON03){const answers=items.map(x=>x[1]);items.forEach(([question,answer],i)=>{const wrong=[answers[(i+3)%10],answers[(i+7)%10]];Q.push([cat,question,answer,[answer,...wrong],`${answer} — ${question.replace(/\?$/,'')}의 핵심 개념입니다.`])})}
 document.querySelector('.kicker').textContent=`${Q.length} QUESTIONS · INSTANT FEEDBACK`;

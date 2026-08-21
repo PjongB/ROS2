@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>GPU·NVIDIA 드라이버·CUDA·cuDNN 설정 · LLM</title><link rel="stylesheet" href="mobile-robot-summary.css"><style>.warn{padding:16px;border:1px solid #f0b429;border-radius:12px;background:#fff8df}.flow{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}.flow div{padding:14px;border-radius:12px;background:#10233d;color:#fff;text-align:center;font-weight:800}.flow span{display:block;margin-top:5px;color:#c8d5e5;font-size:12px}@media(max-width:760px){.flow{grid-template-columns:1fr 1fr}}</style></head>
+<body><header><div class="shell top"><a class="brand" href="../index.html"><b>ROS</b>2 LEARN</a><a href="pinkypro-ros2-lcd-led.html">← PinkyPro 07</a></div></header>
+<section class="hero"><div class="shell"><small>05.00 · LLM · GPU ENVIRONMENT</small><h1>GPU·NVIDIA 드라이버·CUDA·cuDNN 설정</h1><p>PinkyPro에 LLM·AI 기능을 연결하기 전, Ubuntu PC의 NVIDIA GPU를 확인하고 드라이버부터 CUDA, cuDNN, Python framework까지 순서대로 검증합니다.</p><div class="source-buttons"><a class="html" target="_blank" rel="noopener" href="../assets/llm-00/llm-gpu-cuda-cudnn-presentation.html">원본 HTML</a><a class="pdf" target="_blank" rel="noopener" href="../assets/llm-00/llm-gpu-cuda-cudnn.pdf">강의 PDF</a><a class="html" href="#order">설치 순서 ↓</a></div></div></section>
+<div class="shell layout"><nav><b>목차</b><a href="#map">전체 구조</a><a href="#inspect">01 GPU 확인</a><a href="#driver">02 드라이버</a><a href="#compat">03 호환성</a><a href="#cuda">04 CUDA</a><a href="#path">05 환경 변수</a><a href="#cudnn">06 cuDNN</a><a href="#venv">07 가상환경</a><a href="#test">08 GPU 테스트</a><a href="#trouble">09 문제 해결</a><a href="#order">실행 순서</a></nav><main>
+<div class="intro"><b>한 줄 정리</b><span>GPU stack은 <b>hardware → driver → CUDA Toolkit → cuDNN → framework</b> 순서로 쌓이며, 각 단계의 버전 호환성과 검증 결과를 확인한 뒤 다음으로 넘어가야 합니다.</span></div>
+<section id="map"><div class="number">MAP</div><div><h2>GPU 실행 환경의 층</h2><div class="flow"><div>GPU<span>NVIDIA hardware</span></div><div>Driver<span>OS와 GPU 연결</span></div><div>CUDA·cuDNN<span>연산·DNN library</span></div><div>Framework<span>TensorFlow·LLM</span></div></div><p>아래 계층이 동작하지 않으면 위 계층을 재설치해도 해결되지 않습니다. 항상 아래에서 위로 진단합니다.</p></div></section>
+<section id="inspect"><div class="number">01</div><div><h2>GPU와 PCI 장치 확인</h2><pre><code>lspci | grep -Ei 'vga|3d|display'
+lspci | grep -i nvidia
+lspci -nnk | grep -A3 -Ei 'vga|3d|display'</code></pre><p>노트북은 내장 GPU와 NVIDIA 외장 GPU가 함께 표시될 수 있습니다. 장치명과 현재 사용 중인 kernel driver를 기록합니다.</p></div></section>
+<section id="driver"><div class="number">02</div><div><h2>NVIDIA 드라이버 확인·설치</h2><pre><code># 이미 설치되어 있는지 확인
+nvidia-smi
+
+# Ubuntu가 제공하는 후보와 권장 항목 확인
+ubuntu-drivers devices
+
+# 권장 드라이버 자동 설치
+sudo ubuntu-drivers autoinstall
+sudo reboot</code></pre><p>재부팅 후 <code>nvidia-smi</code>가 GPU, driver version, process 정보를 보여주는지 확인합니다. 강의자료는 후보 중 <b>recommended</b> 항목을 권장합니다.</p><div class="warn"><b>주의:</b> 기존 NVIDIA 패키지 전체 삭제는 복구 작업입니다. 정상 설치에 먼저 실행하지 말고, 문제가 확인된 경우에만 설치 기록과 복구 방법을 확보한 뒤 진행하세요.</div></div></section>
+<section id="compat"><div class="number">03</div><div><h2>버전 호환 조합 결정</h2><p>CUDA와 cuDNN은 원하는 최신 버전을 무조건 고르는 것이 아니라 GPU driver·Ubuntu·Python framework가 함께 지원하는 조합을 선택합니다.</p><ul><li><a href="https://docs.nvidia.com/deeplearning/cudnn/backend/latest/reference/support-matrix.html" target="_blank" rel="noopener">NVIDIA cuDNN Support Matrix</a>에서 CUDA·driver·hardware 조건을 확인합니다.</li><li><a href="https://developer.nvidia.com/cuda-toolkit-archive" target="_blank" rel="noopener">CUDA Toolkit Archive</a>에서 선택한 버전의 Ubuntu 설치 명령을 생성합니다.</li><li>강의자료의 예시는 <b>CUDA Toolkit 13.1</b>이지만, 실제 설치 시점의 framework 지원 여부를 다시 확인합니다.</li></ul></div></section>
+<section id="cuda"><div class="number">04</div><div><h2>CUDA Toolkit 설치 흐름</h2><ol><li>CUDA Archive에서 OS, architecture, distribution, version, installer type을 고릅니다.</li><li>NVIDIA가 생성한 명령으로 <code>cuda-keyring</code> 패키지를 다운로드합니다.</li><li><code>sudo dpkg -i &lt;cuda-keyring.deb&gt;</code>로 저장소와 인증 키를 등록합니다.</li><li><code>sudo apt update</code>로 package 목록을 갱신합니다.</li><li>선택한 버전의 toolkit package를 설치합니다.</li></ol><pre><code># 예: 강의자료가 선택한 버전
+sudo apt install cuda-toolkit-13-1</code></pre><p>다운로드 URL과 keyring 파일명은 Ubuntu 버전·architecture에 따라 달라지므로 NVIDIA 페이지가 생성한 값을 그대로 사용합니다.</p></div></section>
+<section id="path"><div class="number">05</div><div><h2>CUDA 경로 설정</h2><pre><code>echo 'export PATH=/usr/local/cuda-13.1/bin:$PATH' &gt;&gt; ~/.bashrc
+echo 'export LD_LIBRARY_PATH=/usr/local/cuda-13.1/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}' &gt;&gt; ~/.bashrc
+source ~/.bashrc
+
+nvcc --version
+nvidia-smi</code></pre><p>다른 CUDA 버전을 골랐다면 <code>cuda-13.1</code>을 실제 설치 경로로 바꿉니다. 같은 export 줄을 반복 추가하지 않도록 <code>grep CUDA ~/.bashrc</code>로 먼저 확인합니다.</p></div></section>
+<section id="cudnn"><div class="number">06</div><div><h2>cuDNN 설치</h2><ol><li><a href="https://developer.nvidia.com/cudnn-archive" target="_blank" rel="noopener">cuDNN Archive</a>에서 CUDA와 맞는 release를 선택합니다.</li><li>Ubuntu용 local repository <code>.deb</code>를 다운로드합니다.</li><li><code>dpkg -i</code>로 local repository를 등록합니다.</li><li>repository key를 system keyring 위치에 복사합니다.</li><li><code>sudo apt update</code> 후 안내된 cuDNN package를 설치합니다.</li></ol><p>구체적인 파일명과 package 이름은 선택한 cuDNN release 화면의 명령을 기준으로 합니다.</p></div></section>
+<section id="venv"><div class="number">07</div><div><h2>Python 가상환경에서 테스트 준비</h2><pre><code>python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install tensorflow</code></pre><p>시스템 Python과 프로젝트 dependency를 분리합니다. framework가 요구하는 Python·CUDA·cuDNN 버전도 설치 전에 확인합니다.</p></div></section>
+<section id="test"><div class="number">08</div><div><h2>TensorFlow GPU 인식 확인</h2><pre><code>python -c "import tensorflow as tf; print(tf.config.list_physical_devices('GPU'))"</code></pre><ul><li>GPU device 목록이 나오면 framework까지 연결된 상태입니다.</li><li>빈 배열이면 <code>nvidia-smi</code> → <code>nvcc --version</code> → framework log 순으로 원인을 좁힙니다.</li><li>LLM package를 설치하기 전에 이 최소 테스트 결과를 기록해 기준 상태를 만듭니다.</li></ul></div></section>
+<section id="trouble"><div class="number">09</div><div><h2>증상별 문제 해결</h2><ul><li><b><code>lspci</code>에도 NVIDIA가 없음:</b> BIOS·hardware 인식부터 확인합니다.</li><li><b><code>nvidia-smi</code> 실패:</b> driver 설치 상태, kernel module, Secure Boot를 확인합니다.</li><li><b><code>nvcc</code> 없음:</b> toolkit 설치와 PATH를 확인합니다.</li><li><b>shared library 오류:</b> cuDNN package와 <code>LD_LIBRARY_PATH</code>를 확인합니다.</li><li><b>TensorFlow GPU 0개:</b> framework가 현재 CUDA·cuDNN 조합을 지원하는지 확인합니다.</li></ul></div></section>
+<section id="order" class="commands"><h2>권장 설치·검증 순서</h2><pre><code># 1. Hardware
+lspci | grep -i nvidia
+
+# 2. Driver
+ubuntu-drivers devices
+nvidia-smi
+
+# 3. Compatibility matrix에서 버전 결정
+# 4. NVIDIA 안내대로 CUDA repository와 toolkit 설치
+# 5. CUDA
+nvcc --version
+
+# 6. 호환되는 cuDNN 설치
+# 7. Python 가상환경과 framework 설치
+# 8. End-to-end 확인
+python -c "import tensorflow as tf; print(tf.config.list_physical_devices('GPU'))"</code></pre><h2>완료 체크리스트</h2><ol><li>GPU model과 Ubuntu version을 기록했습니다.</li><li><code>nvidia-smi</code>가 정상 실행됩니다.</li><li>호환표에서 driver·CUDA·cuDNN·framework 조합을 정했습니다.</li><li><code>nvcc --version</code>으로 CUDA를 확인했습니다.</li><li>가상환경에서 TensorFlow가 GPU를 인식합니다.</li><li>설치 명령과 version을 재현 가능하게 기록했습니다.</li></ol></section>
+<div class="bottom-buttons"><a href="../index.html">← 전체 목차</a><a target="_blank" rel="noopener" href="../assets/llm-00/llm-gpu-cuda-cudnn-presentation.html">원본 HTML</a><a target="_blank" rel="noopener" href="../assets/llm-00/llm-gpu-cuda-cudnn.pdf">강의 PDF</a></div></main></div><script src="lesson-quiz.js" data-lessons="05-00"></script></body></html>
