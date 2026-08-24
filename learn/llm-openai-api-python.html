@@ -1,0 +1,66 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>OpenAI API Python 실습 · LLM</title><link rel="stylesheet" href="mobile-robot-summary.css"><style>.danger{padding:16px;border:1px solid #e05252;border-radius:12px;background:#fff0f0;color:#712020}</style></head><body>
+<header><div class="shell top"><a class="brand" href="../index.html"><b>ROS</b>2 LEARN</a><a href="llm-ollama.html">← LLM 01</a></div></header>
+<section class="hero"><div class="shell"><small>05.02 · LLM · OPENAI API</small><h1>OpenAI API Python 실습</h1><p>API Key를 안전하게 관리하고 Responses API로 text·image를 처리해, 자연어를 robot command와 JSON 데이터로 변환합니다.</p><div class="source-buttons"><a class="html" target="_blank" rel="noopener" href="../assets/llm-02/openai-api-python-presentation.html">원본 HTML</a><a class="pdf" target="_blank" rel="noopener" href="../assets/llm-02/openai-api-python.pdf">강의 PDF</a><a class="html" download href="../assets/llm-02/openai-api-python.ipynb">안전한 노트북</a></div></div></section>
+<div class="shell layout"><nav><b>목차</b><a href="#security">01 Key 보안</a><a href="#setup">02 환경</a><a href="#client">03 Client</a><a href="#prompt">04 Prompt</a><a href="#command">05 명령 변환</a><a href="#vlm">06 VLM</a><a href="#json">07 JSON</a><a href="#trouble">08 문제 해결</a><a href="#order">실행 순서</a></nav><main>
+<div class="intro"><b>한 줄 정리</b><span>API Key는 환경 변수로 분리하고, model output은 검증되지 않은 입력으로 취급해 parsing·schema·robot safety 검사를 통과시킨 뒤 사용합니다.</span></div>
+<section id="security"><div class="number">01</div><div><h2>API Key 보안</h2><div class="danger"><b>절대 금지:</b> Key를 code cell, screenshot, GitHub, Notion, LMS, messenger에 올리지 않습니다. 노출된 key는 삭제만으로 안전해지지 않으므로 즉시 폐기·재발급합니다.</div><pre><code># .env
+OPENAI_API_KEY=여기에_새_API_KEY
+
+# .gitignore
+.env</code></pre></div></section>
+<section id="setup"><div class="number">02</div><div><h2>환경 준비</h2><pre><code>python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install openai python-dotenv</code></pre><pre><code>from dotenv import load_dotenv
+load_dotenv()
+
+import os
+assert os.getenv("OPENAI_API_KEY"), "API Key 없음"</code></pre><p>Key 전체를 출력하지 않습니다. 프로젝트·결제·사용 한도를 설정하고 사용량을 확인합니다.</p></div></section>
+<section id="client"><div class="number">03</div><div><h2>Responses API 기본 호출</h2><pre><code>from openai import OpenAI
+
+client = OpenAI()
+MODEL_NAME = "강의에서_사용할_모델"
+
+response = client.responses.create(
+    model=MODEL_NAME,
+    input="로봇을 처음 배우는 학생에게 ROS 2를 한 문장으로 설명해줘.",
+)
+print(response.output_text)</code></pre><p>모델 이름은 계정에서 사용 가능한 현재 모델로 지정합니다.</p></div></section>
+<section id="prompt"><div class="number">04</div><div><h2>좋은 prompt 구조</h2><ul><li><b>목적:</b> 무엇을 만들 것인가</li><li><b>대상:</b> 초등학생·고등학생·개발자</li><li><b>형식:</b> 문장·표·JSON</li><li><b>길이:</b> 문장 수·항목 수</li><li><b>조건:</b> 반드시 포함하거나 금지할 내용</li></ul></div></section>
+<section id="command"><div class="number">05</div><div><h2>자연어를 robot command로 변환</h2><pre><code>user_command = "앞으로 천천히 가다가 장애물이 보이면 멈춰."
+
+prompt = f"""다음 말을 로봇 제어 명령으로 해석해줘.
+사용자 말: {user_command}
+출력 형식:
+동작:
+속도:
+정지 조건:
+주의사항:"""</code></pre><p>생성 결과를 곧바로 모터에 보내지 않고 허용 동작·속도 상한·센서 정지 조건을 별도 코드로 검증합니다.</p></div></section>
+<section id="vlm"><div class="number">06</div><div><h2>로컬 이미지와 VLM</h2><pre><code>import base64
+from pathlib import Path
+
+image_bytes = Path("my_robot.jpg").read_bytes()
+base64_image = base64.b64encode(image_bytes).decode("utf-8")
+
+response = client.responses.create(
+    model=MODEL_NAME,
+    input=[{"role":"user","content":[
+        {"type":"input_text","text":"로봇 부품과 위험 요소를 설명해줘."},
+        {"type":"input_image","image_url":f"data:image/jpeg;base64,{base64_image}"}
+    ]}]
+)</code></pre><p>접근 권한이 없는 image URL은 모델이 가져올 수 없습니다. Base64는 암호화가 아니라 전송용 인코딩입니다.</p></div></section>
+<section id="json"><div class="number">07</div><div><h2>JSON 결과 검증</h2><pre><code>import json
+
+try:
+    data = json.loads(response.output_text)
+    risks = data.get("safety_risks", [])
+except json.JSONDecodeError:
+    data = None</code></pre><p>JSON만 출력하도록 지시해도 parsing 실패는 발생할 수 있습니다. 필수 key·type·허용값을 검사하고 실패 시 안전한 기본 동작을 사용합니다.</p></div></section>
+<section id="trouble"><div class="number">08</div><div><h2>문제 해결</h2><ul><li><b>401:</b> Key 누락·폐기·project 권한 확인</li><li><b>429:</b> rate limit·quota·billing 확인</li><li><b>모델 오류:</b> 계정에서 사용 가능한 model name 확인</li><li><b>이미지 실패:</b> MIME type·Base64·URL 접근 권한 확인</li><li><b>JSON 실패:</b> raw text 보관 후 parser와 schema validation 적용</li></ul></div></section>
+<section id="order" class="commands"><h2>안전한 실행 순서</h2><pre><code>python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install openai python-dotenv
+printf '.env\n' &gt;&gt; .gitignore
+
+# .env에 새 Key를 직접 입력한 뒤 노트북 실행
+jupyter notebook</code></pre><h2>체크리스트</h2><ol><li>노출된 기존 Key를 폐기했습니다.</li><li>.env를 .gitignore에 추가했습니다.</li><li>Responses API text 호출을 확인했습니다.</li><li>VLM에 image를 전달했습니다.</li><li>JSON parsing 실패와 robot safety 검사를 처리했습니다.</li></ol></section>
+<div class="bottom-buttons"><a href="llm-ollama.html">← 01</a><a href="llm-my-petbot.html">03 →</a></div></main></div><script src="lesson-quiz.js" data-lessons="05-02"></script></body></html>

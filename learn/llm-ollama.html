@@ -1,0 +1,38 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Ollama · LLM</title><link rel="stylesheet" href="mobile-robot-summary.css"></head><body>
+<header><div class="shell top"><a class="brand" href="../index.html"><b>ROS</b>2 LEARN</a><a href="llm-gpu-cuda-cudnn.html">← LLM 00</a></div></header>
+<section class="hero"><div class="shell"><small>05.01 · LLM · LOCAL MODEL</small><h1>Ollama로 로컬 LLM 실행하기</h1><p>내 PC에서 LLM을 설치·관리하고, GGUF·Modelfile·Python API를 이용해 소형 모델을 비교하고 활용합니다.</p><div class="source-buttons"><a class="html" target="_blank" rel="noopener" href="../assets/llm-01/ollama-presentation.html">원본 HTML</a><a class="pdf" target="_blank" rel="noopener" href="../assets/llm-01/ollama.pdf">강의 PDF</a><a class="html" href="#order">실행 순서 ↓</a></div></div></section>
+<div class="shell layout"><nav><b>목차</b><a href="#base">01 개념</a><a href="#install">02 설치</a><a href="#models">03 모델 관리</a><a href="#korean">04 한국어 모델</a><a href="#modelfile">05 Modelfile</a><a href="#python">06 Python</a><a href="#benchmark">07 비교 평가</a><a href="#use">08 활용</a><a href="#trouble">09 문제 해결</a><a href="#order">실행 순서</a></nav><main>
+<div class="intro"><b>한 줄 정리</b><span>Ollama는 로컬 LLM을 공통 명령과 API로 실행·관리하며, 양자화 모델로 메모리 사용량을 낮춰 개인 PC 실습을 쉽게 만듭니다.</span></div>
+<section id="base"><div class="number">01</div><div><h2>로컬 LLM과 Ollama</h2><ul><li>모델을 내 장비에서 실행하므로 입력 데이터가 외부 API로 전달되지 않습니다.</li><li>모델 다운로드·실행·삭제와 API 제공을 하나의 도구로 처리합니다.</li><li>속도와 품질은 GPU VRAM, RAM, 모델 크기, 양자화 수준에 좌우됩니다.</li></ul></div></section>
+<section id="install"><div class="number">02</div><div><h2>Linux 설치</h2><pre><code>curl -fsSL https://ollama.com/install.sh | sh
+ollama --version</code></pre><p>스크립트를 실행하기 전 <a href="https://ollama.com/download/linux" target="_blank" rel="noopener">Ollama 공식 설치 페이지</a>에서 현재 명령을 확인합니다.</p></div></section>
+<section id="models"><div class="number">03</div><div><h2>기본 모델 관리</h2><pre><code>ollama run &lt;model_name&gt;
+ollama pull &lt;model_name&gt;
+ollama list
+ollama rm &lt;model_name&gt;</code></pre><p><code>run</code>은 필요하면 모델을 내려받아 대화를 시작하고, 종료할 때는 <code>/bye</code>를 입력합니다.</p></div></section>
+<section id="korean"><div class="number">04</div><div><h2>한국어·대형 모델 선택</h2><pre><code>ollama run hf.co/Bllossom/llama-3.2-Korean-Bllossom-3B-gguf-Q4_K_M:Q4_K_M
+ollama run llama3.3:70b-instruct-q2_K</code></pre><p>강의 예시에는 3B 한국어 모델과 70B 양자화 모델이 나옵니다. 모델 파일 크기만 보지 말고 실제 VRAM/RAM 사용량과 응답 속도를 확인합니다.</p></div></section>
+<section id="modelfile"><div class="number">05</div><div><h2>GGUF와 Modelfile</h2><ul><li><code>FROM</code>: 기반 GGUF 또는 모델 지정</li><li><code>PARAMETER</code>: temperature 등 생성 옵션</li><li><code>SYSTEM</code>: 모델의 기본 역할</li><li><code>TEMPLATE</code>: 사용자·assistant message 형식</li></ul><pre><code>ollama create llama3.2-Korean -f Modelfile
+ollama list
+ollama run llama3.2-Korean</code></pre></div></section>
+<section id="python"><div class="number">06</div><div><h2>Python에서 호출</h2><pre><code>python -m pip install langchain-community langchain langchain-ollama ollama</code></pre><pre><code>import ollama
+
+ollama.pull("model_name")
+response = ollama.chat(
+    model="model_name",
+    messages=[{"role": "user", "content": "ROS 2를 설명해줘"}],
+)
+print(response["message"]["content"])</code></pre></div></section>
+<section id="benchmark"><div class="number">07</div><div><h2>소형 모델 비교 평가</h2><p>강의는 dataclass에 모델명·prompt·응답·응답시간·성공 여부를 저장하고, 동일 prompt를 순차 실행하는 benchmark 구조를 사용합니다.</p><ul><li>코딩·기술 개념, 번역, 요약 등 같은 과제를 사용합니다.</li><li>실패와 timeout도 결과로 기록합니다.</li><li>temperature와 prompt 조건을 고정해야 비교가 의미 있습니다.</li><li>Orchestrator가 작업에 맞는 모델을 선택하도록 확장할 수 있습니다.</li></ul></div></section>
+<section id="use"><div class="number">08</div><div><h2>소형 모델 활용</h2><ul><li>회의록 요약</li><li>자유 형식 text를 JSON으로 변환</li><li>일정·작업 계획을 Markdown으로 정리</li></ul><p>구조화 결과는 반드시 JSON parsing과 schema 검증을 거친 뒤 robot command나 외부 시스템에 전달합니다.</p></div></section>
+<section id="trouble"><div class="number">09</div><div><h2>문제 해결</h2><ul><li><b>응답이 매우 느림:</b> 모델 크기·양자화·GPU 사용 여부 확인</li><li><b>메모리 부족:</b> 더 작은 parameter 또는 강한 양자화 모델 사용</li><li><b>한국어 품질 부족:</b> 한국어 fine-tuning 모델과 SYSTEM prompt 비교</li><li><b>Python 연결 실패:</b> Ollama service와 모델 이름 확인</li><li><b>JSON 파싱 실패:</b> 출력 규칙 강화 후 parser에서 예외 처리</li></ul></div></section>
+<section id="order" class="commands"><h2>실행 순서</h2><pre><code>ollama --version
+ollama pull &lt;model_name&gt;
+ollama run &lt;model_name&gt;
+ollama list
+
+# Python 환경
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install ollama langchain-ollama</code></pre><h2>체크리스트</h2><ol><li>내 장비에 맞는 모델 크기를 선택했습니다.</li><li>run·pull·list·rm의 차이를 설명할 수 있습니다.</li><li>Modelfile로 사용자 모델을 생성했습니다.</li><li>Python에서 응답과 시간을 기록했습니다.</li><li>구조화 출력의 parsing 실패를 처리했습니다.</li></ol></section>
+<div class="bottom-buttons"><a href="llm-gpu-cuda-cudnn.html">← 00</a><a href="llm-openai-api-python.html">02 →</a></div></main></div><script src="lesson-quiz.js" data-lessons="05-01"></script></body></html>

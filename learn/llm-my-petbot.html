@@ -1,0 +1,47 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>반려로봇 my_petbot · LLM</title><link rel="stylesheet" href="mobile-robot-summary.css"></head><body>
+<header><div class="shell top"><a class="brand" href="../index.html"><b>ROS</b>2 LEARN</a><a href="llm-openai-api-python.html">← LLM 02</a></div></header>
+<section class="hero"><div class="shell"><small>05.03 · LLM · PET ROBOT</small><h1>반려로봇 my_petbot 만들기</h1><p>LLM이 추론한 감정을 PinkyPro의 LED 색상, LCD 표정, motor movement로 표현하고 camera image까지 연결합니다.</p><div class="source-buttons"><a class="html" target="_blank" rel="noopener" href="../assets/llm-03/my-petbot-presentation.html">원본 HTML</a><a class="pdf" target="_blank" rel="noopener" href="../assets/llm-03/my-petbot.pdf">강의 PDF</a><a class="html" href="#order">전체 흐름 ↓</a></div></div></section>
+<div class="shell layout"><nav><b>목차</b><a href="#architecture">전체 구조</a><a href="#emotion">01 감정 전략</a><a href="#hardware">02 초기화</a><a href="#led">03 LED</a><a href="#lcd">04 LCD</a><a href="#motor">05 Motor</a><a href="#camera">06 Camera</a><a href="#chat">07 대화</a><a href="#vision">08 Vision</a><a href="#safety">09 안전</a><a href="#order">실행 순서</a></nav><main>
+<div class="intro"><b>한 줄 정리</b><span>LLM은 감정과 답변을 구조화해 반환하고, deterministic controller가 검증된 감정만 LED·LCD·motor action에 매핑합니다.</span></div>
+<section id="architecture"><div class="number">MAP</div><div><h2>my_petbot 전체 구조</h2><pre><code>User text / Camera frame
+          ↓
+   OpenAI text·vision model
+          ↓
+ {emotion, response}
+          ↓ validation
+ LED color + LCD GIF + Motor action
+          ↓
+     PinkyPro behavior</code></pre></div></section>
+<section id="emotion"><div class="number">01</div><div><h2>6개 감정과 대응 전략</h2><p>강의는 6개 감정을 정의하고, 감정마다 색상·표정·움직임을 연결합니다. 문자열 표기를 한 곳에서 상수로 관리하고 알 수 없는 값은 neutral 같은 안전 상태로 처리합니다.</p><pre><code>ALLOWED_EMOTIONS = {
+    "happy", "sad", "angry",
+    "interest", "surprise", "neutral",
+}</code></pre></div></section>
+<section id="hardware"><div class="number">02</div><div><h2>LED·LCD·Motor 초기화</h2><ul><li>장치 객체를 한 번 생성하고 정상 연결 여부를 확인합니다.</li><li>실행 전 LED clear와 motor stop으로 초기 상태를 통일합니다.</li><li>예외·KeyboardInterrupt·종료 시 반드시 motor stop, LED clear, LCD·camera close를 실행합니다.</li></ul></div></section>
+<section id="led"><div class="number">03</div><div><h2>LED 색상으로 감정 표현</h2><p>감정→RGB 또는 색상 순환 패턴 dictionary를 만들고, 하나의 <code>show_emotion_led()</code> 함수가 장치 호출을 담당하게 합니다.</p><pre><code>EMOTION_COLORS = {
+    "happy": [(255, 180, 0), (255, 255, 0)],
+    "sad": [(0, 40, 255)],
+    "angry": [(255, 0, 0)],
+    "neutral": [(40, 40, 40)],
+}</code></pre><p>class가 지원하는 method는 <code>dir(object)</code>로 확인할 수 있으며, 실습 끝에는 clear합니다.</p></div></section>
+<section id="lcd"><div class="number">04</div><div><h2>LCD에 감정 GIF 표시</h2><ul><li>emotion resource folder에서 지원 GIF 목록을 확인합니다.</li><li>GIF frame을 순회해 LCD에 표시합니다.</li><li>재생 시간이 길면 frame 간격·반복 수·전체 duration을 제한합니다.</li><li>없는 표정 파일은 neutral image로 대체합니다.</li></ul></div></section>
+<section id="motor"><div class="number">05</div><div><h2>Motor movement로 감정 표현</h2><ul><li>좌우 흔들기</li><li>앞뒤 흔들기</li><li>앞으로 한 번 움찔</li><li>angry·interest 등 감정별 sequence</li></ul><p>속도와 duration에 상한을 두고, sequence 사이마다 정지 명령을 보냅니다. 장애물·낙하 센서 조건이 만족되지 않으면 움직이지 않습니다.</p></div></section>
+<section id="camera"><div class="number">06</div><div><h2>Camera frame 한 장 획득</h2><pre><code>def capture_one_frame(cam):
+    frame = cam.get_frame()
+    image = Image.fromarray(frame)
+    image.save("capture.jpg", format="JPEG")
+    return image</code></pre><p>실제 camera API 이름과 color format은 설치된 Pinky library를 확인합니다. frame이 없으면 API 호출을 중단합니다.</p></div></section>
+<section id="chat"><div class="number">07</div><div><h2>대화와 감정 추론</h2><p>system prompt에 “감정을 반드시 6개 중 하나로 추론”하도록 요구하고, 사용자 text와 history를 함께 전달합니다. 응답은 최소한 <code>emotion</code>과 <code>reply</code>로 분리합니다.</p><pre><code>{
+  "emotion": "happy",
+  "reply": "오늘 만나서 정말 반가워!"
+}</code></pre><p>emotion을 허용 목록과 대조한 뒤 LED·LCD·motor 함수를 호출합니다.</p></div></section>
+<section id="vision"><div class="number">08</div><div><h2>사진을 보고 감정 표현</h2><ol><li>camera frame을 JPEG로 변환합니다.</li><li>binary를 Base64 data URL로 변환합니다.</li><li>Vision model에 image와 감정 분류 prompt를 보냅니다.</li><li>JSON을 parsing하고 emotion 허용값을 검사합니다.</li><li>검증된 감정에 맞춰 행동합니다.</li></ol><p>사진 속 사람의 감정 추론은 부정확할 수 있으므로 확정적 판단이나 민감한 의사결정에 사용하지 않습니다.</p></div></section>
+<section id="safety"><div class="number">09</div><div><h2>Robot safety boundary</h2><ul><li>LLM은 직접 motor command를 만들지 않고 허용된 emotion code만 선택합니다.</li><li>controller가 속도·duration·sensor stop 조건을 강제합니다.</li><li>API timeout·JSON 실패·unknown emotion이면 motor를 정지합니다.</li><li>대화 history에 API Key와 개인 image metadata를 넣지 않습니다.</li><li>종료 handler에서 모든 actuator를 안전 상태로 되돌립니다.</li></ul></div></section>
+<section id="order" class="commands"><h2>전체 실행 순서</h2><pre><code>1. API Key와 dependency 준비
+2. LED·LCD·motor·camera 개별 test
+3. 6개 emotion mapping 정의
+4. text → {emotion, reply} API test
+5. emotion validation
+6. LED → LCD → motor 순차 동작
+7. camera → Base64 → vision 감정 추론
+8. 오류 시 stop·clear·close</code></pre><h2>체크리스트</h2><ol><li>각 hardware를 독립적으로 검증했습니다.</li><li>6개 감정과 fallback을 정의했습니다.</li><li>LLM JSON 결과를 검증합니다.</li><li>motor safety limit와 sensor stop을 적용했습니다.</li><li>API 오류 시 안전 종료됩니다.</li></ol></section>
+<div class="bottom-buttons"><a href="llm-openai-api-python.html">← 02</a><a href="../index.html">전체 목차</a></div></main></div><script src="lesson-quiz.js" data-lessons="05-03"></script></body></html>
