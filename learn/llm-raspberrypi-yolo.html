@@ -1,72 +1,59 @@
-<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>라즈베리파이로 YOLO 사용해보기 · LLM</title><link rel="stylesheet" href="mobile-robot-summary.css"><style>.tree{white-space:pre;overflow:auto}.warn{padding:15px;border:1px solid #e0a52e;border-radius:12px;background:#fff8df}.safe{padding:15px;border:1px solid #55a87b;border-radius:12px;background:#effbf4}.practice{margin:22px 0;padding:22px;border:1px solid #d9dfea;border-radius:16px;background:#fff}.practice h3{margin-top:0}.practice .goal{margin:-5px 0 15px;color:#586174}.practice .check{padding:12px 15px;border-left:4px solid #55a87b;background:#effbf4}.practice pre{margin:12px 0}</style></head><body>
-<header><div class="shell top"><a class="brand" href="../index.html"><b>ROS</b>2 LEARN</a><a href="llm-gazebo-nav2-agent.html">← LLM 05</a></div></header>
-<section class="hero"><div class="shell"><small>05.06 · LLM · RASPBERRY PI YOLO11</small><h1>라즈베리파이로 YOLO 사용해보기</h1><p>PinkyPro 카메라의 한 프레임을 YOLO11n에 입력해 객체 이름·신뢰도·박스를 읽고, 짧은 실시간 탐지와 속도 비교까지 진행합니다.</p><div class="source-buttons"><a class="html" target="_blank" rel="noopener" href="../assets/llm-06/raspberrypi-yolo-presentation.html">원본 HTML</a><a class="pdf" target="_blank" rel="noopener" href="../assets/llm-06/raspberrypi-yolo.pdf">강의 PDF</a><a class="html" href="#terminal-order">터미널 순서 ↓</a></div></div></section>
-<div class="shell layout"><nav><b>목차</b><a href="#terminal-order">터미널 입력 순서</a><a href="#downloads">실습 전 다운로드</a><a href="#concept">YOLO 개념</a><a href="#environment">01 환경·설치</a><a href="#camera">02 Camera frame</a><a href="#inference">03 YOLO 추론</a><a href="#result">04 결과 해석</a><a href="#realtime">05 실시간·성능</a><a href="#save">06 결과 저장</a><a href="#safety">07 운영 주의</a><a href="#trouble">08 문제 해결</a><a href="#practice">실습별 순서</a></nav><main>
-<div class="intro"><b>한 줄 정리</b><span>Camera의 <code>BGR numpy array</code>를 YOLO11n에 넣고, <code>boxes.cls/conf/xyxy</code>를 읽거나 <code>plot()</code> 결과를 RGB로 바꿔 표시·저장합니다.</span></div>
-<section id="terminal-order" class="commands"><h2>터미널 입력 순서</h2><p>아래 순서대로 준비한 뒤 Jupyter 화면으로 이동합니다. 이미 Raspberry Pi terminal에 접속했다면 1단계 SSH는 건너뜁니다.</p>
-<div class="practice"><h3>터미널 1 · Raspberry Pi 접속</h3><p class="goal">PC에서 PinkyPro Raspberry Pi terminal로 접속합니다.</p><pre><code># 사용자 환경에 등록한 alias가 있다면
-kp_start
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>라즈베리파이로 YOLO 사용해보기 · LLM</title><link rel="stylesheet" href="mobile-robot-summary.css">
+<style>.warn,.safe{padding:15px;border-radius:12px}.warn{border:1px solid #e0a52e;background:#fff8df}.safe{border:1px solid #55a87b;background:#effbf4}.cell{margin:22px 0;padding:22px;border:1px solid #d9dfea;border-radius:16px;background:#fff}.cell h3{margin-top:0}.goal{color:#586174}.check{padding:12px 15px;border-left:4px solid #55a87b;background:#effbf4}.step-tag{display:inline-block;padding:4px 9px;border-radius:999px;background:#eaf0ff;color:#3357a4;font-size:.82rem;font-weight:700}</style></head>
+<body><header><div class="shell top"><a class="brand" href="../index.html"><b>ROS</b>2 LEARN</a><a href="llm-gazebo-nav2-agent.html">← LLM 05</a></div></header>
+<section class="hero"><div class="shell"><small>05.06 · LLM · RASPBERRY PI YOLO11</small><h1>라즈베리파이로 YOLO 사용해보기</h1><p>터미널에서 한 번 준비한 뒤, Jupyter Notebook 셀 1~10을 위에서 아래로 복사·실행하며 카메라 확인부터 객체 탐지, 속도 비교, 결과 저장까지 진행합니다.</p><div class="source-buttons"><a class="html" target="_blank" rel="noopener" href="../assets/llm-06/raspberrypi-yolo-presentation.html">원본 HTML</a><a class="pdf" target="_blank" rel="noopener" href="../assets/llm-06/raspberrypi-yolo.pdf">강의 PDF</a><a class="html" href="#terminal">터미널 준비 ↓</a></div></div></section>
+<div class="shell layout"><nav><b>목차</b><a href="#terminal">터미널 준비 1회</a><a href="#notebook">Notebook 셀 1~10</a><a href="#result-guide">결과 구조</a><a href="#performance">성능·안전</a><a href="#trouble">문제 해결</a><a href="#checklist">완료 체크</a></nav><main>
+<div class="intro"><b>실행 원칙</b><span><code>터미널 명령</code>은 Raspberry Pi에서 한 번 실행하고, <code>셀 1~10</code>은 같은 Notebook에서 순서대로 실행합니다. 셀을 건너뛰면 앞 셀에서 만든 변수나 함수가 없어 오류가 납니다.</span></div>
+<section id="terminal" class="commands"><h2>터미널 준비 · 한 번만 실행</h2><p>이미 Raspberry Pi에 접속했다면 SSH 부분은 건너뜁니다.</p>
+<div class="cell"><span class="step-tag">PC 터미널</span><h3>1. Raspberry Pi 접속</h3><pre><code>kp_start
 
 # alias가 없다면 실제 robot IP 사용
-ssh pinky@&lt;ROBOT_IP&gt;</code></pre><p class="check"><b>확인:</b> Prompt의 사용자가 <code>pinky</code>이고 hostname이 Raspberry Pi로 표시됩니다.</p></div>
-<div class="practice"><h3>터미널 1 · 작업 폴더와 Python 확인</h3><pre><code>cd ~/my_petbot
-pwd
-python3 --version
-python3 -c "import sys; print(sys.executable)"</code></pre><p class="check"><b>확인:</b> 작업 경로가 <code>/home/pinky/my_petbot</code>이고 강의와 같은 Python 3.12 계열입니다.</p></div>
-<div class="practice"><h3>터미널 1 · package 설치</h3><pre><code>python3 -m pip install -U pip
-python3 -m pip install ultralytics pillow opencv-python</code></pre><p class="check"><b>확인:</b> 마지막에 설치 오류가 없고 세 package가 현재 Python 환경에 설치됩니다.</p></div>
-<div class="practice"><h3>터미널 1 · Camera와 model 사전 확인</h3><pre><code>python3 -c "from pinkylib import Camera; print('pinkylib OK')"
-python3 -c "from ultralytics import YOLO; YOLO('yolo11n.pt'); print('YOLO11n OK')"
-python3 -m pip show ultralytics pillow opencv-python
-ls -lh yolo11n.pt</code></pre><p class="check"><b>확인:</b> <code>pinkylib OK</code>와 <code>YOLO11n OK</code>가 출력되고 model file이 보입니다.</p></div>
-<div class="practice"><h3>터미널 1 · Jupyter 실행</h3><pre><code># Jupyter가 설치되지 않은 경우에만
-python3 -m pip install jupyter
-
-# Notebook server 시작
-python3 -m jupyter notebook --ip=0.0.0.0 --no-browser</code></pre><p class="check"><b>확인:</b> Terminal에 접속 URL과 token이 출력됩니다. 이 terminal은 끄지 않고 유지합니다.</p></div>
-<div class="safe"><b>이후 실행 위치:</b> 카메라 한 장 테스트, YOLO 추론, 실시간 탐지, 이미지 저장 Python 코드는 terminal이 아니라 Browser에서 연 Jupyter Notebook 셀에 위에서 아래 순서대로 입력합니다.</div></section>
-<section id="downloads"><div class="number">GET</div><div><h2>실습 전에 다운로드·준비할 것</h2><p>실습 중 model 다운로드나 package 설치로 흐름이 끊기지 않도록 Internet이 연결된 상태에서 먼저 준비합니다.</p><table><thead><tr><th>항목</th><th>용도</th><th>준비 방법</th></tr></thead><tbody><tr><td><code>ultralytics</code></td><td>YOLO11 model 실행</td><td><code>python3 -m pip install ultralytics</code></td></tr><tr><td><code>pillow</code></td><td>RGB 이미지 표시·JPEG 저장</td><td><code>python3 -m pip install pillow</code></td></tr><tr><td><code>opencv-python</code></td><td>영상 배열·이미지 처리 dependency</td><td><code>python3 -m pip install opencv-python</code></td></tr><tr><td><code>yolo11n.pt</code></td><td>Raspberry Pi용 경량 pretrained model</td><td>첫 <code>YOLO("yolo11n.pt")</code> 실행 시 자동 다운로드</td></tr><tr><td><code>pinkylib.Camera</code></td><td>PinkyPro camera frame 획득</td><td>PinkyPro Raspberry Pi 환경에 설치되어 있는지 import 확인</td></tr><tr><td>Jupyter 환경</td><td>강의 Notebook 실행·이미지 표시</td><td>강의에서 사용하는 kernel과 package 설치 Python 일치 확인</td></tr></tbody></table><pre><code># 1. 현재 Notebook/terminal Python 확인
+ssh pinky@&lt;ROBOT_IP&gt;</code></pre><p class="check"><b>확인:</b> Raspberry Pi의 <code>pinky</code> prompt로 바뀝니다.</p></div>
+<div class="cell"><span class="step-tag">Raspberry Pi 터미널</span><h3>2. Package와 model 준비</h3><pre><code>cd ~/my_petbot
 python3 --version
 python3 -c "import sys; print(sys.executable)"
-
-# 2. 필요한 package 한 번에 설치
 python3 -m pip install -U pip
 python3 -m pip install ultralytics pillow opencv-python
-
-# 3. PinkyPro camera library 확인
 python3 -c "from pinkylib import Camera; print('pinkylib OK')"
-
-# 4. YOLO11n model 미리 다운로드·로딩 확인
 python3 -c "from ultralytics import YOLO; YOLO('yolo11n.pt'); print('YOLO11n OK')"
-
-# 5. 설치 결과 확인
 python3 -m pip show ultralytics pillow opencv-python
-ls -lh yolo11n.pt</code></pre><div class="warn"><b>주의:</b> <code>yolo11n.pt</code> 첫 다운로드와 PyTorch dependency 설치에는 Internet과 충분한 저장 공간이 필요합니다. <code>pinkylib</code>는 일반 YOLO package가 아니라 PinkyPro camera 환경에 포함되는 library이므로 import 실패 시 임의의 동명 package를 설치하지 말고 PinkyPro 설치 상태를 먼저 확인하세요.</div><p class="safe"><b>준비 완료 기준:</b> 세 package가 조회되고, <code>pinkylib OK</code>·<code>YOLO11n OK</code>가 출력되며 현재 폴더에 <code>yolo11n.pt</code>가 보입니다.</p></div></section>
-<section id="concept"><div class="number">YOLO</div><div><h2>You Only Look Once</h2><p>YOLO는 한 번의 추론으로 이미지 안의 여러 객체를 분류하고 위치를 bounding box로 찾는 객체 탐지 모델입니다.</p><pre><code>Camera frame (BGR)
-        ↓
-YOLO11n predict(imgsz, conf)
-        ↓
-class + confidence + xyxy box
-        ↓
-text result / annotated image / realtime loop</code></pre><ul><li><b>class:</b> 어떤 물체인지 나타내는 번호와 이름</li><li><b>confidence:</b> 예측 신뢰도</li><li><b>xyxy:</b> 왼쪽 위와 오른쪽 아래의 box 좌표</li></ul></div></section>
-<section id="environment"><div class="number">01</div><div><h2>환경 확인과 package 설치</h2><pre><code>import sys, platform, os
+ls -lh yolo11n.pt</code></pre><p class="check"><b>확인:</b> <code>pinkylib OK</code>, <code>YOLO11n OK</code>와 model file이 보입니다.</p></div>
+<div class="cell"><span class="step-tag">Raspberry Pi 터미널</span><h3>3. Jupyter 시작</h3><pre><code># Jupyter가 없을 때만
+python3 -m pip install jupyter
 
-print("Python:", sys.version)
-print("Platform:", platform.platform())
-print("Working directory:", os.getcwd())</code></pre><pre><code>python3 -m pip install -U pip
-python3 -m pip install ultralytics pillow opencv-python</code></pre><p>강의 환경은 Raspberry Pi의 Python 3.12와 <code>~/my_petbot</code> 작업 폴더입니다. 설치 로그에 user installation 경고가 나올 수 있으므로 실행 중인 Jupyter kernel과 설치 대상 Python이 같은지 확인합니다.</p><pre><code>import sys
-print(sys.executable)
-!{sys.executable} -m pip show ultralytics</code></pre></div></section>
-<section id="camera"><div class="number">02</div><div><h2>PinkyPro Camera 사용</h2><pre><code>from ultralytics import YOLO
+python3 -m jupyter notebook --ip=0.0.0.0 --no-browser</code></pre><p class="check"><b>확인:</b> URL과 token이 출력됩니다. 이 터미널은 끄지 않습니다.</p></div>
+<div class="warn"><b>주의:</b> 첫 model 다운로드와 PyTorch 설치에는 Internet과 저장 공간이 필요합니다. <code>pinkylib</code> 오류가 나면 임의의 동명 package를 설치하지 말고 PinkyPro 설치 상태를 확인하세요.</div></section>
+
+<section id="notebook" class="commands"><h2>Jupyter Notebook · 셀 1~10</h2><p>새 Python Notebook에서 코드 블록 하나를 셀 하나로 복사하고 순서대로 실행합니다.</p>
+<div class="cell"><span class="step-tag">셀 1 / 10</span><h3>Library와 환경 확인</h3><pre><code>import sys, platform, os, time, io
+from ultralytics import YOLO
 from PIL import Image
 from IPython.display import display, clear_output
-import time, io, os
 from pinkylib import Camera
 
-def capture_one_frame(cam):
+print("Python:", sys.version)
+print("Executable:", sys.executable)
+print("Platform:", platform.platform())
+print("Working directory:", os.getcwd())</code></pre><p class="check"><b>완료:</b> Import 오류 없이 환경 정보가 출력됩니다.</p></div>
+
+<div class="cell"><span class="step-tag">셀 2 / 10</span><h3>카메라 frame 변환 함수</h3><pre><code>def capture_one_frame(cam):
+    """BGR frame과 표시용 RGB Image를 반환합니다."""
     frame_bgr = cam.get_frame()
+    if frame_bgr is None:
+        raise RuntimeError("카메라 frame을 가져오지 못했습니다.")
     image_rgb = Image.fromarray(frame_bgr[:, :, ::-1])
-    return frame_bgr, image_rgb</code></pre><p><code>Camera.get_frame()</code>은 BGR 배열을 반환합니다. OpenCV·YOLO에는 원본 BGR을 쓰고, Pillow/Jupyter 표시에는 channel을 뒤집어 RGB로 변환합니다.</p><pre><code>def test_camera_once():
+    return frame_bgr, image_rgb
+
+def capture_one_frame_bytes(cam):
+    """RGB frame을 JPEG bytes로 반환합니다."""
+    _, image_rgb = capture_one_frame(cam)
+    buf = io.BytesIO()
+    image_rgb.save(buf, format="JPEG")
+    return buf.getvalue()</code></pre><p class="check"><b>완료:</b> 출력 없이 셀이 끝납니다.</p></div>
+
+<div class="cell"><span class="step-tag">셀 3 / 10</span><h3>카메라 한 장 확인</h3><pre><code>def test_camera_once():
     cam = Camera()
     cam.start()
     try:
@@ -74,30 +61,37 @@ def capture_one_frame(cam):
         display(image_rgb)
         return frame_bgr
     finally:
-        cam.close()</code></pre></div></section>
-<section id="inference"><div class="number">03</div><div><h2>YOLO11n model과 한 장 추론</h2><pre><code>model = YOLO("yolo11n.pt")
-print("Model loaded:", model.model_name)
+        cam.close()
 
-def detect_once_from_camera(imgsz=640, conf=0.25):
+last_frame_bgr = test_camera_once()
+print("frame shape:", last_frame_bgr.shape)</code></pre><p class="check"><b>완료:</b> 정상 색상의 사진과 frame shape가 보입니다.</p></div>
+
+<div class="cell"><span class="step-tag">셀 4 / 10</span><h3>YOLO11n model 불러오기</h3><pre><code>model = YOLO("yolo11n.pt")
+model_name = getattr(model, "model_name", "yolo11n.pt")
+print("Model loaded:", model_name)</code></pre><p class="check"><b>완료:</b> <code>Model loaded</code>가 출력됩니다.</p></div>
+
+<div class="cell"><span class="step-tag">셀 5 / 10</span><h3>카메라 한 장 객체 탐지</h3><pre><code>def detect_once_from_camera(imgsz=640, conf=0.25):
     cam = Camera()
     cam.start()
     try:
         frame_bgr, image_rgb = capture_one_frame(cam)
         display(image_rgb)
-
-        results = model.predict(
-            source=frame_bgr,
-            imgsz=imgsz,
-            conf=conf,
-            verbose=False,
-        )
-        annotated_bgr = results[0].plot()
-        annotated_rgb = Image.fromarray(annotated_bgr[:, :, ::-1])
-        display(annotated_rgb)
-        return results[0], annotated_bgr
+        result = model.predict(
+            source=frame_bgr, imgsz=imgsz,
+            conf=conf, verbose=False,
+        )[0]
+        annotated_bgr = result.plot()
+        display(Image.fromarray(annotated_bgr[:, :, ::-1]))
+        return result, annotated_bgr
     finally:
-        cam.close()</code></pre><div class="warn"><b>첫 실행:</b> <code>yolo11n.pt</code>가 없으면 자동 다운로드하므로 Internet 연결과 저장 공간이 필요합니다. 이후에는 local model file을 재사용합니다.</div></div></section>
-<section id="result"><div class="number">04</div><div><h2>탐지 결과 읽기</h2><pre><code>def print_detection_result(result):
+        cam.close()
+
+last_result, last_annotated_bgr = detect_once_from_camera(
+    imgsz=640,
+    conf=0.25,
+)</code></pre><p class="check"><b>완료:</b> 원본과 bounding box가 그려진 결과가 표시됩니다.</p></div>
+
+<div class="cell"><span class="step-tag">셀 6 / 10</span><h3>이름·신뢰도·좌표 출력</h3><pre><code>def print_detection_result(result):
     if result.boxes is None or len(result.boxes) == 0:
         print("탐지된 물체가 없습니다.")
         return
@@ -105,57 +99,91 @@ def detect_once_from_camera(imgsz=640, conf=0.25):
     for i, box in enumerate(result.boxes, start=1):
         cls_id = int(box.cls[0])
         name = model.names[cls_id]
-        conf = float(box.conf[0])
+        confidence = float(box.conf[0])
         x1, y1, x2, y2 = [float(v) for v in box.xyxy[0]]
-        print(f"{i}. {name} / confidence={conf:.2f} "
-              f"/ box=({x1:.0f}, {y1:.0f}, {x2:.0f}, {y2:.0f})")</code></pre><p><code>result.boxes</code>가 없거나 길이가 0인 경우를 먼저 처리해야 빈 탐지 결과에서도 오류가 나지 않습니다.</p></div></section>
-<section id="realtime"><div class="number">05</div><div><h2>짧은 실시간 탐지와 성능 조절</h2><pre><code>def run_short_realtime_detection(
-        num_frames=30, imgsz=320, conf=0.25, delay=0.03):
+        print(
+            f"{i}. {name} / confidence={confidence:.2f} "
+            f"/ box=({x1:.0f}, {y1:.0f}, {x2:.0f}, {y2:.0f})"
+        )
+
+print_detection_result(last_result)</code></pre><p class="check"><b>완료:</b> 객체 정보 또는 탐지 없음 메시지가 출력됩니다.</p></div>
+
+<div class="cell"><span class="step-tag">셀 7 / 10</span><h3>짧은 실시간 탐지 함수</h3><pre><code>def run_short_realtime_detection(
+    num_frames=30, imgsz=320, conf=0.25, delay=0.03,
+):
     cam = Camera()
     cam.start()
+    last_result = None
+    last_annotated_bgr = None
     try:
         for i in range(num_frames):
             frame_bgr, _ = capture_one_frame(cam)
-            result = model.predict(
+            last_result = model.predict(
                 source=frame_bgr, imgsz=imgsz,
-                conf=conf, verbose=False)[0]
-            annotated_bgr = result.plot()
-            annotated_rgb = Image.fromarray(annotated_bgr[:, :, ::-1])
+                conf=conf, verbose=False,
+            )[0]
+            last_annotated_bgr = last_result.plot()
+            annotated_rgb = Image.fromarray(
+                last_annotated_bgr[:, :, ::-1]
+            )
             clear_output(wait=True)
-            print(f"frame {i + 1}/{num_frames} | imgsz={imgsz}")
+            print(
+                f"frame {i + 1}/{num_frames} "
+                f"| imgsz={imgsz} | conf={conf}"
+            )
             display(annotated_rgb)
             time.sleep(delay)
     finally:
-        cam.close()</code></pre><p><code>imgsz</code>를 640 → 480 → 320으로 줄이면 Raspberry Pi에서 추론이 빨라질 수 있지만 작은 물체를 놓칠 가능성이 커집니다. 같은 frame을 사용해 <code>time.perf_counter()</code>로 시간을 비교해야 공정합니다.</p><pre><code>for size in [320, 480, 640]:
-    t0 = time.perf_counter()
-    result = model.predict(source=frame_bgr,
-                           imgsz=size, conf=0.25,
-                           verbose=False)[0]
-    elapsed = time.perf_counter() - t0
-    fps = 1 / elapsed if elapsed &gt; 0 else 0
-    print(size, elapsed, fps)</code></pre></div></section>
-<section id="save"><div class="number">06</div><div><h2>탐지 결과 이미지 저장</h2><pre><code>if last_annotated_bgr is not None:
-    save_img = Image.fromarray(last_annotated_bgr[:, :, ::-1])
-    save_path = "yolo11_result.jpg"
-    save_img.save(save_path)
-    print("Saved:", os.path.abspath(save_path))</code></pre><p>YOLO의 annotation 결과도 BGR이므로 Pillow로 저장하기 전에 RGB로 변환합니다. 절대 경로를 출력하면 Notebook의 현재 작업 폴더가 달라도 파일 위치를 바로 찾을 수 있습니다.</p></div></section>
-<section id="safety"><div class="number">07</div><div><h2>카메라·모델 운영 주의</h2><div class="safe"><ul><li>모든 카메라 함수에 <code>try/finally</code>를 사용해 예외가 나도 <code>cam.close()</code>를 실행합니다.</li><li>카메라가 이미 사용 중이면 중복 instance를 만들지 않고 이전 process를 종료합니다.</li><li>신뢰도가 낮은 결과를 로봇 행동으로 바로 연결하지 않습니다.</li><li>탐지 class allowlist, confidence threshold, 연속 frame 확인을 거친 뒤 행동합니다.</li><li>촬영·저장 이미지에 사람이나 민감 정보가 포함될 수 있으므로 보관·공유 범위를 제한합니다.</li><li>CPU 온도와 memory 사용량을 확인하고 장시간 loop에는 종료 조건을 둡니다.</li></ul></div></div></section>
-<section id="trouble"><div class="number">08</div><div><h2>문제 해결</h2><ul><li><b>ModuleNotFoundError:</b> Notebook의 <code>sys.executable</code>과 package 설치 Python 확인</li><li><b>Camera frame 없음:</b> camera cable·권한·다른 사용 process 확인</li><li><b>색상이 이상함:</b> BGR↔RGB 변환이 한 번만 적용됐는지 확인</li><li><b>Model 다운로드 실패:</b> Internet·DNS·저장 공간 확인 또는 model file 직접 배치</li><li><b>탐지가 너무 느림:</b> <code>imgsz=320</code>, frame 수·표시 빈도 감소</li><li><b>작은 물체를 놓침:</b> 조명·거리 개선, <code>imgsz</code> 증가, confidence 조정</li><li><b>카메라 재실행 실패:</b> 모든 경로에서 <code>cam.close()</code>가 호출됐는지 확인</li></ul></div></section>
-<section id="practice" class="commands"><h2>실습별 실행 순서</h2><p>각 실습의 완료 확인을 통과한 뒤 다음 단계로 이동합니다.</p>
-<div class="practice"><h3>실습 1 · 환경과 카메라 확인</h3><p class="goal">목표: 같은 Python 환경에 package를 설치하고 RGB 카메라 사진 한 장을 표시합니다.</p><pre><code># 1. Python·working directory 확인
-# 2. ultralytics, pillow, opencv-python 설치
-# 3. library import
-# 4. test_camera_once() 실행</code></pre><p class="check"><b>완료 확인:</b> 오류 없이 한 장의 이미지가 정상 색상으로 보이고 실행 뒤 camera가 반환됩니다.</p></div>
-<div class="practice"><h3>실습 2 · 한 장 객체 탐지</h3><p class="goal">목표: YOLO11n을 내려받아 카메라 한 장의 annotation과 탐지 값을 확인합니다.</p><pre><code>model = YOLO("yolo11n.pt")
-last_result, last_annotated_bgr = \
-    detect_once_from_camera(imgsz=640, conf=0.25)
-print_detection_result(last_result)</code></pre><p class="check"><b>완료 확인:</b> 원본·annotation 이미지가 표시되고 탐지된 각 객체의 이름, confidence, box 좌표가 출력됩니다.</p></div>
-<div class="practice"><h3>실습 3 · 짧은 실시간 탐지</h3><p class="goal">목표: 30 frame을 반복 추론하며 Raspberry Pi에서 동작 가능한 설정을 찾습니다.</p><pre><code>run_short_realtime_detection(
-    num_frames=30, imgsz=320, conf=0.25)</code></pre><p class="check"><b>완료 확인:</b> frame 번호가 증가하며 화면이 갱신되고, 완료·중단·예외 뒤에도 camera가 정상 종료됩니다.</p></div>
-<div class="practice"><h3>실습 4 · 속도 비교와 결과 저장</h3><p class="goal">목표: 같은 frame에서 320·480·640 입력 크기의 시간을 비교하고 마지막 결과를 JPEG로 저장합니다.</p><pre><code>compare_imgsz_once()
-# 결과: time, approximate FPS 비교
+        cam.close()
+    return last_result, last_annotated_bgr</code></pre><p class="check"><b>완료:</b> 출력 없이 함수가 만들어집니다.</p></div>
 
-# 마지막 annotation 저장
-# yolo11_result.jpg</code></pre><p class="check"><b>완료 확인:</b> 입력 크기별 시간이 출력되고 현재 폴더에 <code>yolo11_result.jpg</code>가 생성됩니다.</p></div>
-<h2>전체 완료 체크리스트</h2><ol><li>실행 Python과 package 설치 위치가 같습니다.</li><li>BGR 원본과 RGB 표시를 구분했습니다.</li><li>YOLO11n model을 정상적으로 불러왔습니다.</li><li>빈 탐지 결과를 안전하게 처리합니다.</li><li><code>imgsz</code>에 따른 속도·정확도 trade-off를 확인했습니다.</li><li>모든 camera 함수가 <code>finally</code>에서 닫힙니다.</li><li>저장 이미지의 절대 경로를 확인했습니다.</li></ol></section>
-<div class="bottom-buttons"><a href="llm-gazebo-nav2-agent.html">← 05</a><a href="../index.html">전체 목차</a></div></main></div><script src="lesson-quiz.js" data-lessons="05-06"></script></body></html>
+<div class="cell"><span class="step-tag">셀 8 / 10</span><h3>30 frame 실시간 탐지 실행</h3><pre><code>last_result, last_annotated_bgr = run_short_realtime_detection(
+    num_frames=30,
+    imgsz=320,
+    conf=0.25,
+)</code></pre><p class="check"><b>완료:</b> frame 번호가 1부터 30까지 증가합니다.</p></div>
+
+<div class="cell"><span class="step-tag">셀 9 / 10</span><h3>입력 크기별 속도 비교</h3><pre><code>def compare_imgsz_once():
+    cam = Camera()
+    cam.start()
+    try:
+        frame_bgr, image_rgb = capture_one_frame(cam)
+        display(image_rgb)
+    finally:
+        cam.close()
+
+    rows = []
+    for size in [320, 480, 640]:
+        t0 = time.perf_counter()
+        result = model.predict(
+            source=frame_bgr, imgsz=size,
+            conf=0.25, verbose=False,
+        )[0]
+        elapsed = time.perf_counter() - t0
+        fps = 1 / elapsed if elapsed &gt; 0 else 0
+        count = 0 if result.boxes is None else len(result.boxes)
+        rows.append((size, elapsed, fps, count))
+        print(
+            f"imgsz={size} | time={elapsed:.3f} sec "
+            f"| approx FPS={fps:.2f} | detections={count}"
+        )
+    return rows
+
+speed_results = compare_imgsz_once()</code></pre><p class="check"><b>완료:</b> 각 크기의 시간, FPS, 탐지 개수가 출력됩니다.</p></div>
+
+<div class="cell"><span class="step-tag">셀 10 / 10</span><h3>마지막 결과 저장</h3><pre><code>if last_annotated_bgr is None:
+    raise RuntimeError("먼저 셀 5 또는 셀 8을 실행하세요.")
+
+save_img = Image.fromarray(last_annotated_bgr[:, :, ::-1])
+save_path = "yolo11_result.jpg"
+save_img.save(save_path)
+
+print("Saved:", os.path.abspath(save_path))
+display(save_img)</code></pre><p class="check"><b>완료:</b> 절대 경로와 저장 이미지가 표시됩니다.</p></div></section>
+
+<section id="result-guide"><div class="number">결과</div><div><h2>YOLO 결과 구조</h2><table><thead><tr><th>값</th><th>의미</th><th>사용</th></tr></thead><tbody><tr><td><code>box.cls</code></td><td>class 번호</td><td><code>model.names</code>로 이름 변환</td></tr><tr><td><code>box.conf</code></td><td>예측 신뢰도</td><td>낮은 결과 필터링</td></tr><tr><td><code>box.xyxy</code></td><td>좌상단·우하단 좌표</td><td>위치와 영역 계산</td></tr><tr><td><code>result.plot()</code></td><td>annotation BGR 이미지</td><td>RGB 변환 후 표시·저장</td></tr></tbody></table><p>카메라와 YOLO에는 BGR을 쓰고 Pillow/Jupyter 표시·저장 직전에만 RGB로 변환합니다.</p></div></section>
+<section id="performance"><div class="number">운영</div><div><h2>성능 조절과 안전</h2><ul><li><code>imgsz</code> 640 → 480 → 320은 대체로 빨라지지만 작은 물체를 놓칠 수 있습니다.</li><li><code>conf</code>를 높이면 애매한 탐지는 줄지만 실제 물체도 놓칠 수 있습니다.</li><li>카메라는 항상 <code>try/finally</code>에서 닫습니다.</li><li>로봇 행동 연결 전 class allowlist, confidence threshold, 연속 frame 확인을 적용합니다.</li><li>장시간 실행 전 CPU 온도와 memory를 확인하고 종료 조건을 둡니다.</li></ul></div></section>
+<section id="trouble"><div class="number">해결</div><div><h2>문제 해결</h2><ul><li><b>ModuleNotFoundError:</b> 셀 1의 <code>sys.executable</code>과 package 설치 Python을 맞춥니다.</li><li><b>Camera frame 없음:</b> cable·권한·다른 camera 사용 process를 확인합니다.</li><li><b>색상이 이상함:</b> BGR→RGB 변환이 한 번만 적용됐는지 확인합니다.</li><li><b>Model 다운로드 실패:</b> Internet·DNS·저장 공간을 확인합니다.</li><li><b>탐지가 느림:</b> <code>imgsz=320</code>으로 낮추고 frame 수를 줄입니다.</li><li><b>재실행 후 camera 오류:</b> Kernel을 재시작하고 셀 1부터 다시 실행합니다.</li></ul></div></section>
+<section id="checklist" class="commands"><h2>전체 완료 체크리스트</h2><ol><li>터미널 준비를 한 번 완료했습니다.</li><li>같은 Notebook에서 셀 1~10을 순서대로 실행했습니다.</li><li>원본과 annotation이 정상 색상으로 보입니다.</li><li>이름·confidence·좌표를 확인했습니다.</li><li><code>imgsz</code>별 속도를 비교했습니다.</li><li>카메라가 정상 종료됩니다.</li><li><code>yolo11_result.jpg</code> 저장 경로를 확인했습니다.</li></ol></section>
+<div class="bottom-buttons"><a href="llm-gazebo-nav2-agent.html">← 05</a><a href="../index.html">전체 목차</a></div></main></div>
+<script src="lesson-quiz.js" data-lessons="05-06"></script></body></html>
