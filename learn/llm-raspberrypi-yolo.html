@@ -1,8 +1,25 @@
 <!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>라즈베리파이로 YOLO 사용해보기 · LLM</title><link rel="stylesheet" href="mobile-robot-summary.css"><style>.tree{white-space:pre;overflow:auto}.warn{padding:15px;border:1px solid #e0a52e;border-radius:12px;background:#fff8df}.safe{padding:15px;border:1px solid #55a87b;border-radius:12px;background:#effbf4}.practice{margin:22px 0;padding:22px;border:1px solid #d9dfea;border-radius:16px;background:#fff}.practice h3{margin-top:0}.practice .goal{margin:-5px 0 15px;color:#586174}.practice .check{padding:12px 15px;border-left:4px solid #55a87b;background:#effbf4}.practice pre{margin:12px 0}</style></head><body>
 <header><div class="shell top"><a class="brand" href="../index.html"><b>ROS</b>2 LEARN</a><a href="llm-gazebo-nav2-agent.html">← LLM 05</a></div></header>
 <section class="hero"><div class="shell"><small>05.06 · LLM · RASPBERRY PI YOLO11</small><h1>라즈베리파이로 YOLO 사용해보기</h1><p>PinkyPro 카메라의 한 프레임을 YOLO11n에 입력해 객체 이름·신뢰도·박스를 읽고, 짧은 실시간 탐지와 속도 비교까지 진행합니다.</p><div class="source-buttons"><a class="html" target="_blank" rel="noopener" href="../assets/llm-06/raspberrypi-yolo-presentation.html">원본 HTML</a><a class="pdf" target="_blank" rel="noopener" href="../assets/llm-06/raspberrypi-yolo.pdf">강의 PDF</a><a class="html" href="#practice">실습 순서 ↓</a></div></div></section>
-<div class="shell layout"><nav><b>목차</b><a href="#concept">YOLO 개념</a><a href="#environment">01 환경·설치</a><a href="#camera">02 Camera frame</a><a href="#inference">03 YOLO 추론</a><a href="#result">04 결과 해석</a><a href="#realtime">05 실시간·성능</a><a href="#save">06 결과 저장</a><a href="#safety">07 운영 주의</a><a href="#trouble">08 문제 해결</a><a href="#practice">실습별 순서</a></nav><main>
+<div class="shell layout"><nav><b>목차</b><a href="#downloads">실습 전 다운로드</a><a href="#concept">YOLO 개념</a><a href="#environment">01 환경·설치</a><a href="#camera">02 Camera frame</a><a href="#inference">03 YOLO 추론</a><a href="#result">04 결과 해석</a><a href="#realtime">05 실시간·성능</a><a href="#save">06 결과 저장</a><a href="#safety">07 운영 주의</a><a href="#trouble">08 문제 해결</a><a href="#practice">실습별 순서</a></nav><main>
 <div class="intro"><b>한 줄 정리</b><span>Camera의 <code>BGR numpy array</code>를 YOLO11n에 넣고, <code>boxes.cls/conf/xyxy</code>를 읽거나 <code>plot()</code> 결과를 RGB로 바꿔 표시·저장합니다.</span></div>
+<section id="downloads"><div class="number">GET</div><div><h2>실습 전에 다운로드·준비할 것</h2><p>실습 중 model 다운로드나 package 설치로 흐름이 끊기지 않도록 Internet이 연결된 상태에서 먼저 준비합니다.</p><table><thead><tr><th>항목</th><th>용도</th><th>준비 방법</th></tr></thead><tbody><tr><td><code>ultralytics</code></td><td>YOLO11 model 실행</td><td><code>python3 -m pip install ultralytics</code></td></tr><tr><td><code>pillow</code></td><td>RGB 이미지 표시·JPEG 저장</td><td><code>python3 -m pip install pillow</code></td></tr><tr><td><code>opencv-python</code></td><td>영상 배열·이미지 처리 dependency</td><td><code>python3 -m pip install opencv-python</code></td></tr><tr><td><code>yolo11n.pt</code></td><td>Raspberry Pi용 경량 pretrained model</td><td>첫 <code>YOLO("yolo11n.pt")</code> 실행 시 자동 다운로드</td></tr><tr><td><code>pinkylib.Camera</code></td><td>PinkyPro camera frame 획득</td><td>PinkyPro Raspberry Pi 환경에 설치되어 있는지 import 확인</td></tr><tr><td>Jupyter 환경</td><td>강의 Notebook 실행·이미지 표시</td><td>강의에서 사용하는 kernel과 package 설치 Python 일치 확인</td></tr></tbody></table><pre><code># 1. 현재 Notebook/terminal Python 확인
+python3 --version
+python3 -c "import sys; print(sys.executable)"
+
+# 2. 필요한 package 한 번에 설치
+python3 -m pip install -U pip
+python3 -m pip install ultralytics pillow opencv-python
+
+# 3. PinkyPro camera library 확인
+python3 -c "from pinkylib import Camera; print('pinkylib OK')"
+
+# 4. YOLO11n model 미리 다운로드·로딩 확인
+python3 -c "from ultralytics import YOLO; YOLO('yolo11n.pt'); print('YOLO11n OK')"
+
+# 5. 설치 결과 확인
+python3 -m pip show ultralytics pillow opencv-python
+ls -lh yolo11n.pt</code></pre><div class="warn"><b>주의:</b> <code>yolo11n.pt</code> 첫 다운로드와 PyTorch dependency 설치에는 Internet과 충분한 저장 공간이 필요합니다. <code>pinkylib</code>는 일반 YOLO package가 아니라 PinkyPro camera 환경에 포함되는 library이므로 import 실패 시 임의의 동명 package를 설치하지 말고 PinkyPro 설치 상태를 먼저 확인하세요.</div><p class="safe"><b>준비 완료 기준:</b> 세 package가 조회되고, <code>pinkylib OK</code>·<code>YOLO11n OK</code>가 출력되며 현재 폴더에 <code>yolo11n.pt</code>가 보입니다.</p></div></section>
 <section id="concept"><div class="number">YOLO</div><div><h2>You Only Look Once</h2><p>YOLO는 한 번의 추론으로 이미지 안의 여러 객체를 분류하고 위치를 bounding box로 찾는 객체 탐지 모델입니다.</p><pre><code>Camera frame (BGR)
         ↓
 YOLO11n predict(imgsz, conf)
