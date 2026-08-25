@@ -128,6 +128,9 @@ const LESSON03=[
 ,
 ["05-06 · Raspberry Pi YOLO",[
 ["YOLO의 전체 이름은?","You Only Look Once"],["YOLO11 실행에 사용하는 Python package는?","ultralytics"],["강의에서 불러오는 경량 모델 파일은?","yolo11n.pt"],["PinkyPro 카메라 frame의 기본 색상 순서는?","BGR"],["Pillow로 표시하기 위해 바꾸는 색상 순서는?","RGB"],["탐지 신뢰도 기준을 지정하는 인자는?","conf"],["추론 입력 크기를 지정하는 인자는?","imgsz"],["탐지 class 번호가 들어 있는 값은?","box.cls"],["탐지된 bounding box 좌표가 들어 있는 값은?","box.xyxy"],["결과 이미지를 저장하는 파일 이름은?","yolo11_result.jpg"]]
+,
+["05-07 · ChatGPT 자율주행",[
+["자연어 명령을 Python 함수 호출로 바꾸는 기능은?","OpenAI Tool Calling"],["목표 위치 주행에 사용하는 Nav2 Python 클래스는?","BasicNavigator"],["실제 로봇 주행에서 use_sim_time의 권장 값은?","false"],["map 좌표의 방향을 넣는 메시지 표현은?","Quaternion"],["짧은 직접 주행 명령을 보내는 토픽은?","/cmd_vel"],["강의 코드가 직접 주행 시간을 제한한 최대값은?","3초"],["여러 목표 좌표를 순서대로 주행하는 메서드는?","followWaypoints"],["YOLO 결과를 LLM에 보내기 전에 바꾸는 형태는?","객체·신뢰도·위치 텍스트"],["YOLO 상황 설명이 자동 주행을 실행하지 않는 이유는?","안전 판단과 실행을 분리하기 위해"],["실습 종료 직전 반드시 보낼 속도 명령은?","0 속도 명령"]]
 ];
 for(const [cat,items] of LESSON03){const answers=items.map(x=>x[1]);items.forEach(([question,answer],i)=>{const wrong=[answers[(i+3)%10],answers[(i+7)%10]];Q.push([cat,question,answer,[answer,...wrong],`${answer} — ${question.replace(/\?$/,'')}의 핵심 개념입니다.`])})}
 document.querySelector('.kicker').textContent=`${Q.length} QUESTIONS · INSTANT FEEDBACK`;
