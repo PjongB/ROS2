@@ -13,7 +13,8 @@
     '04-01':'PinkyPro 소개','04-02':'환경 설정','04-03':'맵 작성',
     '04-04':'Nav2 주행','04-05':'Jupyter 내비게이션','04-06':'LCD',
     '04-07':'LCD·LED ROS 2 제어','05-00':'GPU·CUDA·cuDNN 설정',
-    '05-01':'Ollama','05-02':'OpenAI API Python','05-03':'my_petbot'
+    '05-01':'Ollama','05-02':'OpenAI API Python','05-03':'my_petbot',
+    '05-04':'웹 채팅 petbot'
   };
   const box = document.createElement('section');
   box.className = 'lesson-quiz-cta';

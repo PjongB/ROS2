@@ -19,7 +19,7 @@
 </head>
 <body>
 <header class="shell top"><div class="brand"><b>ROS</b> FIELD NOTES</div><div class="source">Google Drive 원본 기반 · 로컬 아카이브</div></header>
-<section class="hero"><div class="shell"><div class="eyebrow">FROM SETUP TO NAVIGATION</div><h1>ROS2</h1><p>개발 환경을 준비하고, ROS 2 통신 구조와 TF 좌표계부터 모바일 로봇 내비게이션·LLM 실행 환경까지 직접 배우는 실습형 학습 아카이브입니다.</p><div class="hero-actions"><a class="quiz-start" href="quiz.html?v=llm03">문제 풀기 →</a></div><div class="statbar"><div class="stat"><b>41</b><span>전체 강의</span></div><div class="stat"><b>325</b><span>연습 문제</span></div><div class="stat"><b id="doneCount">0</b><span>완료한 강의</span></div></div></div></section>
+<section class="hero"><div class="shell"><div class="eyebrow">FROM SETUP TO NAVIGATION</div><h1>ROS2</h1><p>개발 환경을 준비하고, ROS 2 통신 구조와 TF 좌표계부터 모바일 로봇 내비게이션·LLM 실행 환경까지 직접 배우는 실습형 학습 아카이브입니다.</p><div class="hero-actions"><a class="quiz-start" href="quiz.html?v=llm04">문제 풀기 →</a></div><div class="statbar"><div class="stat"><b>42</b><span>전체 강의</span></div><div class="stat"><b>335</b><span>연습 문제</span></div><div class="stat"><b id="doneCount">0</b><span>완료한 강의</span></div></div></div></section>
 <div class="tools"><div class="shell"><div class="toolrow"><input id="search" class="search" type="search" placeholder="강의 검색 — TF, 토픽, Jupyter…"><button id="reset" class="reset">진도 초기화</button></div><div class="progress"><i id="bar"></i></div></div></div>
 <section class="shell glossary-card"><div class="num">ABC</div><div><h2>ROS2·로봇 용어 정리</h2><p>Node와 TF부터 SLAM, Nav2, A*, Dijkstra, DWB, RPP, PID까지 분야별로 찾아보는 용어 사전</p></div><a class="open" href="learn/glossary.html">용어 보기 →</a></section>
 <main class="shell" id="content"></main>
@@ -78,12 +78,13 @@ const modules=[
   ["00","GPU·NVIDIA 드라이버·CUDA·cuDNN 설정","GPU 확인부터 호환 버전 선택, 설치 검증과 TensorFlow 테스트까지","learn/llm-gpu-cuda-cudnn.html","assets/llm-00/llm-gpu-cuda-cudnn.pdf"],
   ["01","Ollama로 로컬 LLM 실행하기","모델 설치·관리·Modelfile·Python 호출·소형 모델 평가","learn/llm-ollama.html","assets/llm-01/ollama.pdf"],
   ["02","OpenAI API Python 실습","API Key 보안·Responses API·VLM 이미지 분석·JSON 출력","learn/llm-openai-api-python.html","assets/llm-02/openai-api-python.pdf"],
-  ["03","반려로봇 my_petbot 만들기","감정 추론을 LED·LCD·모터·카메라 행동으로 연결하는 프로젝트","learn/llm-my-petbot.html","assets/llm-03/my-petbot.pdf"]
+  ["03","반려로봇 my_petbot 만들기","감정 추론을 LED·LCD·모터·카메라 행동으로 연결하는 프로젝트","learn/llm-my-petbot.html","assets/llm-03/my-petbot.pdf"],
+  ["04","웹에서 반려로봇과 대화하기","Flask 채팅 UI와 OpenAI 감정 추론을 PinkyPro 행동에 연결","learn/llm-web-chat-petbot.html","assets/llm-04/web-chat-petbot.pdf"]
  ]}
 ];
 const key="ros-field-notes-progress-v1";let done=new Set(JSON.parse(localStorage.getItem(key)||"[]"));
 function render(q=""){const root=document.querySelector("#content");root.innerHTML="";let shown=0;modules.forEach((m,mi)=>{const hits=m.lessons.filter(x=>(x[1]+" "+x[2]+" "+m.title).toLowerCase().includes(q.toLowerCase()));if(!hits.length)return;const sec=document.createElement("section");sec.className="module";sec.innerHTML='<div class="module-head"><div><h2>'+m.title+'</h2><small>'+m.desc+'</small></div><small>'+hits.length+' lessons</small></div><div class="grid"></div>';const grid=sec.querySelector(".grid");hits.forEach(x=>{shown++;const id=x[3];const el=document.createElement("article");el.className="card"+(done.has(id)?" completed":"");const pdf=x[4]?'<a class="pdf" title="강의 PDF 열기" target="_blank" rel="noopener" href="'+(x[4].endsWith('.pdf')?x[4]:'https://drive.google.com/file/d/'+x[4]+'/view')+'">PDF</a>':'';el.innerHTML='<input class="done" type="checkbox" aria-label="완료 표시" '+(done.has(id)?"checked":"")+'><div class="num">'+x[0]+'</div><div class="copy"><h3>'+x[1]+'</h3><p>'+x[2]+'</p></div><div class="links"><a class="open" href="'+x[3]+'">강의 열기</a>'+pdf+'</div>';el.querySelector(".done").onchange=e=>{e.target.checked?done.add(id):done.delete(id);localStorage.setItem(key,JSON.stringify([...done]));update();render(document.querySelector("#search").value)};grid.append(el)});root.append(sec)});document.querySelector("#empty").style.display=shown?"none":"block";update()}
-function update(){document.querySelector("#doneCount").textContent=done.size;document.querySelector("#bar").style.width=(done.size/41*100)+"%"}
+function update(){document.querySelector("#doneCount").textContent=done.size;document.querySelector("#bar").style.width=(done.size/42*100)+"%"}
 document.querySelector("#search").addEventListener("input",e=>render(e.target.value));document.querySelector("#reset").onclick=()=>{if(confirm("저장된 학습 진도를 초기화할까요?")){done.clear();localStorage.removeItem(key);render(document.querySelector("#search").value)}};render();
 </script>
 </body>

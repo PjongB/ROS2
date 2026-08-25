@@ -119,7 +119,9 @@ const LESSON03=[
 ["05-02 · OpenAI API Python",[
 ["API Key를 코드에 직접 쓰면 안 되는 이유는?","개인 인증 정보 노출 위험"],["비밀값을 보관하는 파일은?",".env"],[".env를 Git에서 제외하는 파일은?",".gitignore"],["환경 변수를 불러오는 패키지는?","python-dotenv"],["OpenAI Python client 생성 클래스는?","OpenAI"],["Responses API 호출 메서드는?","client.responses.create"],["생성된 텍스트를 읽는 속성은?","response.output_text"],["VLM의 뜻은?","Vision-Language Model"],["로컬 이미지를 data URL로 보낼 때 쓰는 인코딩은?","Base64"],["모델의 JSON 문자열을 Python 객체로 바꾸는 함수는?","json.loads"]],
 ["05-03 · my_petbot",[
-["프로젝트가 다루는 핵심 시스템은?","감정 기반 대화 시스템"],["다루는 감정 수는?","6개"],["LED가 표현하는 것은?","감정별 색상"],["LCD가 표현하는 것은?","감정별 표정 GIF"],["모터 행동의 예시는?","좌우·앞뒤 흔들기와 움찔"],["카메라 한 frame을 얻는 목적은?","VLM 이미지 입력"],["대화 함수가 함께 관리하는 것은?","사용자 text와 대화 history"],["LLM 응답에서 반드시 추론할 값은?","감정"],["Vision API에 이미지 binary를 직접 넣지 않고 쓰는 것은?","Base64 문자열"],["로봇 행동 전 검증할 것은?","감정 값과 안전 조건"]]
+["프로젝트가 다루는 핵심 시스템은?","감정 기반 대화 시스템"],["다루는 감정 수는?","6개"],["LED가 표현하는 것은?","감정별 색상"],["LCD가 표현하는 것은?","감정별 표정 GIF"],["모터 행동의 예시는?","좌우·앞뒤 흔들기와 움찔"],["카메라 한 frame을 얻는 목적은?","VLM 이미지 입력"],["대화 함수가 함께 관리하는 것은?","사용자 text와 대화 history"],["LLM 응답에서 반드시 추론할 값은?","감정"],["Vision API에 이미지 binary를 직접 넣지 않고 쓰는 것은?","Base64 문자열"],["로봇 행동 전 검증할 것은?","감정 값과 안전 조건"]]],
+["05-04 · 웹 채팅 petbot",[
+["웹 서버에 사용하는 Python framework는?","Flask"],["Flask template 기본 폴더는?","templates"],["CSS 같은 정적 파일 기본 폴더는?","static"],["첫 화면을 제공하는 route는?","/"],["Browser message를 받는 API route는?","/chat"],["/chat에서 사용하는 HTTP method는?","POST"],["사용자 text를 담는 JSON field는?","text"],["GPT 결과와 함께 관리하는 것은?","대화 history"],["검증되지 않은 emotion의 fallback은?","basic"],["사용자 문자열을 화면에 안전하게 넣는 방법은?","textContent 사용"]]
 ];
 for(const [cat,items] of LESSON03){const answers=items.map(x=>x[1]);items.forEach(([question,answer],i)=>{const wrong=[answers[(i+3)%10],answers[(i+7)%10]];Q.push([cat,question,answer,[answer,...wrong],`${answer} — ${question.replace(/\?$/,'')}의 핵심 개념입니다.`])})}
 document.querySelector('.kicker').textContent=`${Q.length} QUESTIONS · INSTANT FEEDBACK`;

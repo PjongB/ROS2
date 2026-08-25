@@ -1,0 +1,107 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>웹에서 반려로봇과 대화하기 · LLM</title><link rel="stylesheet" href="mobile-robot-summary.css"><style>.tree{white-space:pre;overflow:auto}.warn{padding:15px;border:1px solid #e0a52e;border-radius:12px;background:#fff8df}</style></head><body>
+<header><div class="shell top"><a class="brand" href="../index.html"><b>ROS</b>2 LEARN</a><a href="llm-my-petbot.html">← LLM 03</a></div></header>
+<section class="hero"><div class="shell"><small>05.04 · LLM · FLASK WEB CHAT</small><h1>웹에서 반려로봇과 대화하기</h1><p>Flask 채팅 UI에서 사용자 메시지를 받아 OpenAI가 답변과 감정을 추론하고, PinkyPro의 LED·LCD·motor 행동으로 연결합니다.</p><div class="source-buttons"><a class="html" target="_blank" rel="noopener" href="../assets/llm-04/web-chat-petbot-presentation.html">원본 HTML</a><a class="pdf" target="_blank" rel="noopener" href="../assets/llm-04/web-chat-petbot.pdf">강의 PDF</a><a class="html" href="#order">실행 순서 ↓</a></div></div></section>
+<div class="shell layout"><nav><b>목차</b><a href="#architecture">전체 구조</a><a href="#files">01 파일 구조</a><a href="#emotion">02 Robot emotion</a><a href="#client">03 OpenAI client</a><a href="#flask">04 Flask server</a><a href="#browser">05 Browser UI</a><a href="#security">06 안전·보안</a><a href="#trouble">07 문제 해결</a><a href="#order">실행 순서</a></nav><main>
+<div class="intro"><b>한 줄 정리</b><span>Browser는 <code>/chat</code>에 text를 보내고, Flask는 GPT의 <code>reply + emotion</code>을 검증해 robot 행동을 실행한 뒤 JSON response를 반환합니다.</span></div>
+<section id="architecture"><div class="number">MAP</div><div><h2>요청부터 로봇 행동까지</h2><pre><code>Browser index.html
+  └─ POST /chat {"text": "..."}
+           ↓
+       Flask app.py
+           ↓
+ openai_client.ask_gpt(text, history)
+           ↓
+ {"assistant_message": "...", "emotion": "..."}
+           ↓ validation
+ robot_emotion.run_emotion(emotion)
+           ↓
+ LED + LCD + Motor
+           ↓
+ Browser ← {"reply": "...", "emotion": "..."}</code></pre></div></section>
+<section id="files"><div class="number">01</div><div><h2>프로젝트 파일 구조</h2><pre class="tree"><code>robot_app/
+├── app.py              # Flask server·대화/감정 처리
+├── robot_emotion.py    # LED·LCD·Motor 감정 표현
+├── openai_client.py    # OpenAI API·감정 분석
+├── .env                # API Key, Git 제외
+├── static/
+│   └── style.css       # 채팅 UI style
+└── templates/
+    └── index.html      # browser chat UI</code></pre><pre><code>python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install flask openai python-dotenv</code></pre></div></section>
+<section id="emotion"><div class="number">02</div><div><h2>robot_emotion.py</h2><p>강의는 <code>LCD</code>, <code>LED</code>, <code>Motor</code>를 초기화한 뒤 감정별 함수를 통합합니다.</p><pre><code>RED=(255,0,0); YELLOW=(255,255,0)
+BLUE=(0,0,255); GREEN=(0,255,0)
+INDIGO=(75,0,130); WHITE=(255,255,255)
+RAINBOW=[RED,YELLOW,GREEN,BLUE,INDIGO]
+
+def play_rainbow(dt=0.08):
+    for color in RAINBOW:
+        led.fill(color)
+        time.sleep(dt)</code></pre><ul><li><b>LED:</b> 감정별 단색·rainbow</li><li><b>LCD:</b> 감정 resource GIF</li><li><b>Motor:</b> 감정별 흔들기·움찔</li><li><b>통합:</b> <code>run_emotion(emotion)</code>이 세 장치를 조정</li></ul></div></section>
+<section id="client"><div class="number">03</div><div><h2>openai_client.py</h2><pre><code>load_dotenv()
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+EMOTIONS = ["angry","basic","bored","fun",
+            "happy","hello","interest","sad"]</code></pre><p>System prompt는 오직 JSON으로 답하고, <code>assistant_message</code>와 허용된 <code>emotion</code>을 반환하도록 요구합니다. 강의 예제는 Chat Completions API와 <code>gpt-4.1-mini</code>를 사용합니다.</p><pre><code>res = client.chat.completions.create(
+    model="gpt-4.1-mini",
+    messages=msgs,
+    temperature=0.4,
+)
+raw = res.choices[0].message.content
+
+try:
+    data = json.loads(raw)
+    reply = data["assistant_message"]
+    emotion = data["emotion"]
+except (json.JSONDecodeError, KeyError, TypeError):
+    reply, emotion = raw, "basic"
+
+if emotion not in EMOTIONS:
+    emotion = "basic"</code></pre><p>실제 model name은 계정에서 사용할 수 있는 현재 모델로 바꿀 수 있습니다.</p></div></section>
+<section id="flask"><div class="number">04</div><div><h2>app.py route</h2><pre><code>from flask import Flask, render_template, request, jsonify
+
+app = Flask(__name__)
+history = []
+
+@app.get("/")
+def index():
+    return render_template("index.html")
+
+@app.post("/chat")
+def chat():
+    user_text = (request.get_json() or {}).get("text", "").strip()
+    if not user_text:
+        return jsonify({"error": "text is required"}), 400
+
+    reply, emotion, updated = ask_gpt(user_text, history)
+    history[:] = updated
+    run_emotion(emotion)
+    return jsonify({"reply": reply, "emotion": emotion})</code></pre><p>공용 global history는 여러 사용자의 대화가 섞일 수 있습니다. 실제 service에서는 session별 저장소와 history 길이 제한을 사용합니다.</p></div></section>
+<section id="browser"><div class="number">05</div><div><h2>index.html의 sendMsg()</h2><pre><code>async function sendMsg() {
+  const input = document.getElementById("user-input");
+  const text = input.value.trim();
+  if (!text) return;
+
+  addMessage("user", text);
+  const res = await fetch("/chat", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({text})
+  });
+  const data = await res.json();
+  addMessage("bot", data.reply, data.emotion);
+}</code></pre><div class="warn"><b>XSS 주의:</b> 강의 화면처럼 사용자 입력을 template literal과 <code>innerHTML</code>로 직접 넣지 않습니다. DOM element를 만들고 <code>textContent</code>로 넣어 HTML을 실행하지 못하게 합니다.</div></div></section>
+<section id="security"><div class="number">06</div><div><h2>안전·보안 경계</h2><ul><li><code>.env</code>는 <code>.gitignore</code>에 넣고 노출된 Key는 즉시 폐기합니다.</li><li>Flask development server를 Internet에 직접 공개하지 않습니다.</li><li>입력 길이·request rate·timeout을 제한합니다.</li><li>GPT emotion은 allowlist로 검증하고 실패 시 <code>basic</code>을 사용합니다.</li><li>LLM이 직접 motor speed를 정하지 않게 하고 controller에서 상한을 강제합니다.</li><li>API 오류·browser disconnect·종료 시 motor stop, LED clear, LCD close를 실행합니다.</li></ul></div></section>
+<section id="trouble"><div class="number">07</div><div><h2>문제 해결</h2><ul><li><b>페이지가 안 열림:</b> Flask 주소·port·robot IP·firewall 확인</li><li><b>POST 400:</b> JSON header와 <code>text</code> field 확인</li><li><b>API 인증 오류:</b> Key·project·quota 확인</li><li><b>JSON parsing 실패:</b> raw response 기록, fallback 적용</li><li><b>감정은 나오지만 robot이 정지:</b> allowlist·hardware log 확인</li><li><b>여러 사용자 history 혼합:</b> session별 history로 분리</li></ul></div></section>
+<section id="order" class="commands"><h2>권장 실행 순서</h2><pre><code># 1. 가상환경과 package
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install flask openai python-dotenv
+
+# 2. .env와 .gitignore 설정
+# 3. LED·LCD·Motor 개별 test
+# 4. openai_client JSON test
+# 5. Flask 실행
+python3 app.py
+
+# 6. Browser에서 robot-ip:port 접속
+# 7. 종료: Ctrl+C 후 stop·clear·close 확인</code></pre><h2>체크리스트</h2><ol><li>4개 영역의 책임을 분리했습니다.</li><li><code>/</code>와 <code>/chat</code> route가 동작합니다.</li><li>reply·emotion JSON을 검증합니다.</li><li>Browser 문자열을 <code>textContent</code>로 출력합니다.</li><li>Session별 history와 길이 제한을 적용했습니다.</li><li>종료 시 모든 hardware가 안전 상태입니다.</li></ol></section>
+<div class="bottom-buttons"><a href="llm-my-petbot.html">← 03</a><a href="../index.html">전체 목차</a></div></main></div><script src="lesson-quiz.js" data-lessons="05-04"></script></body></html>
