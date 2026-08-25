@@ -1,4 +1,4 @@
-<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Gazebo에서 LLM으로 주행해보기 · LLM</title><link rel="stylesheet" href="mobile-robot-summary.css"><style>.tree{white-space:pre;overflow:auto}.warn{padding:15px;border:1px solid #e0a52e;border-radius:12px;background:#fff8df}.safe{padding:15px;border:1px solid #55a87b;border-radius:12px;background:#effbf4}</style></head><body>
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Gazebo에서 LLM으로 주행해보기 · LLM</title><link rel="stylesheet" href="mobile-robot-summary.css"><style>.tree{white-space:pre;overflow:auto}.warn{padding:15px;border:1px solid #e0a52e;border-radius:12px;background:#fff8df}.safe{padding:15px;border:1px solid #55a87b;border-radius:12px;background:#effbf4}.practice{margin:22px 0;padding:22px;border:1px solid #d9dfea;border-radius:16px;background:#fff}.practice h3{margin-top:0}.practice .goal{margin:-5px 0 15px;color:#586174}.practice .check{padding:12px 15px;border-left:4px solid #55a87b;background:#effbf4}.practice pre{margin:12px 0}</style></head><body>
 <header><div class="shell top"><a class="brand" href="../index.html"><b>ROS</b>2 LEARN</a><a href="llm-web-chat-petbot.html">← LLM 04</a></div></header>
 <section class="hero"><div class="shell"><small>05.05 · LLM · GAZEBO &amp; NAV2 AGENT</small><h1>Gazebo에서 LLM으로 주행해보기</h1><p>자연어 장소 명령을 검증된 LLM tool로 해석하고, ROS 2 Service와 Nav2 goal을 거쳐 Gazebo 로봇의 안전한 주행으로 연결합니다.</p><div class="source-buttons"><a class="html" target="_blank" rel="noopener" href="../assets/llm-05/gazebo-llm-navigation-presentation.html">원본 HTML</a><a class="pdf" target="_blank" rel="noopener" href="../assets/llm-05/gazebo-llm-navigation.pdf">강의 PDF</a><a class="html" href="#order">실행 순서 ↓</a></div></div></section>
 <div class="shell layout"><nav><b>목차</b><a href="#architecture">전체 구조</a><a href="#install">01 설치·빌드</a><a href="#simulation">02 Gazebo·Nav2</a><a href="#data">03 장소·Prompt</a><a href="#service">04 ROS 2 Service</a><a href="#agent">05 Agent node</a><a href="#tests">06 질문 실험</a><a href="#safety">07 안전 설계</a><a href="#trouble">08 문제 해결</a><a href="#order">실행 순서</a></nav><main>
@@ -52,25 +52,54 @@ source install/setup.bash</code></pre><p>Interface를 추가하거나 수정한 
 <section id="tests"><div class="number">06</div><div><h2>질문으로 tool 선택 확인</h2><table><thead><tr><th>질문</th><th>기대 동작</th></tr></thead><tbody><tr><td>너가 갈 수 있는 곳은 어디어디야?</td><td><code>list_locations</code>로 등록 장소 반환</td></tr><tr><td>지금 어디니?</td><td><code>get_current_location</code>으로 현재 pose와 가까운 장소 판단</td></tr><tr><td>회의실로 가</td><td>등록 좌표 확인 후 Nav2 goal 전송</td></tr></tbody></table><p>답변 문장만 보지 말고 service log, 선택된 tool, goal 좌표, Nav2 result까지 함께 확인해야 성공 여부를 판단할 수 있습니다.</p></div></section>
 <section id="safety"><div class="number">07</div><div><h2>LLM과 실제 이동 사이의 안전 경계</h2><div class="safe"><ul><li>이동 대상은 <code>points.yaml</code> allowlist 안에서만 선택합니다.</li><li>좌표 범위·frame ID·Quaternion을 controller 앞에서 검증합니다.</li><li>LLM이 직접 속도를 생성하거나 <code>/cmd_vel</code>을 publish하지 않게 합니다.</li><li>Nav2 feedback, timeout, cancel, result를 기록합니다.</li><li>LiDAR가 보지 못하는 낮거나 투명한 장애물을 별도로 확인합니다.</li><li>시뮬레이션에서도 충돌할 수 있으므로 초기 시험은 낮은 속도와 넓은 공간에서 합니다.</li></ul></div></div></section>
 <section id="trouble"><div class="number">08</div><div><h2>문제 해결</h2><ul><li><b>Package를 못 찾음:</b> build 성공 여부와 <code>source ~/pinky_pro/install/setup.bash</code> 확인</li><li><b>Service type 없음:</b> <code>Agent.srv</code>와 CMake interface 목록 확인 후 rebuild</li><li><b>Robot이 움직이지 않음:</b> Nav2 lifecycle, map/TF, initial pose, goal frame 확인</li><li><b>시간·TF 오류:</b> 관련 node의 <code>use_sim_time</code> 값 통일</li><li><b>장소를 모름:</b> <code>points.yaml</code> 이름·들여쓰기와 Prompt의 tool 설명 확인</li><li><b>벽에 가까이 감:</b> footprint·inflation과 실제 sensor blind spot 확인</li><li><b>API 인증 실패:</b> `.env` 위치·변수 이름·계정 사용 권한 확인</li></ul></div></section>
-<section id="order" class="commands"><h2>권장 실행 순서</h2><pre><code># 최초 1회: clone → rosdep → pip → build
+<section id="order" class="commands"><h2>실습별 실행 순서</h2><p>각 실습의 완료 확인을 통과한 뒤 다음 실습으로 넘어갑니다. Terminal 번호가 다르면 새 terminal을 열고 환경을 다시 source합니다.</p>
+<div class="practice"><h3>실습 1 · 패키지 설치와 빌드</h3><p class="goal">목표: Small House World와 LLM package를 설치하고 ROS 2 interface까지 build합니다.</p><pre><code>cd ~/pinky_pro/src
+git clone -b ros2-jazzy \
+  https://github.com/Juancams/aws-robomaker-small-house-world.git
+git clone https://github.com/PinkWink/mobile_robot_llm.git
 
-# Terminal 1: Gazebo
+cd ~/pinky_pro
+rosdep update
+rosdep install --from-paths . --ignore-src -r -y
+
+pip install \
+  "langchain==0.1.20" \
+  "langchain-core==0.1.52" \
+  "langchain-community==0.0.38" \
+  "langchain-openai==0.1.7" --break-system-packages
+
+colcon build
+source ~/pinky_pro/install/setup.bash</code></pre><p class="check"><b>완료 확인:</b> <code>ros2 pkg list | grep pinky_llm</code>에서 package가 보이고 <code>ros2 interface show pinky_interfaces/srv/Agent</code>에 <code>question / answer</code>가 표시됩니다.</p></div>
+<div class="practice"><h3>실습 2 · Gazebo와 Nav2 실행</h3><p class="goal">목표: Gazebo에 로봇을 소환하고 Nav2와 RViz를 simulation clock으로 연결합니다.</p><pre><code># Terminal 1 · Gazebo
 source ~/pinky_pro/install/setup.bash
 ros2 launch pinky_llm launch_sim.launch.xml
 
-# Terminal 2: Robot/Nav2 bringup
+# Terminal 2 · Nav2 bringup
 source ~/pinky_pro/install/setup.bash
 ros2 launch pinky_llm bringup_launch.xml use_sim_time:=true
 
-# Terminal 3: RViz
+# Terminal 3 · RViz
 source ~/pinky_pro/install/setup.bash
-ros2 launch pinky_navigation nav2_view.launch.xml
+ros2 launch pinky_navigation nav2_view.launch.xml</code></pre><div class="warn"><b>강의자료 표기 차이:</b> 마지막 실행 요약은 <code>use_sim_time:=true</code>를 <code>launch_sim</code>에 붙이지만, 앞쪽 실습과 <code>bringup_launch.xml</code> 내부에는 Nav2용 <code>use_sim_time</code> 인자가 있고 기본값이 <code>False</code>로 나옵니다. 따라서 여기서는 Nav2 bringup에 명시합니다.</div><p class="check"><b>완료 확인:</b> Gazebo에 로봇이 보이고, RViz의 map·LaserScan·robot pose가 겹치며 Navigation lifecycle이 active입니다.</p></div>
+<div class="practice"><h3>실습 3 · 장소·Prompt·LLM Agent 실행</h3><p class="goal">목표: 장소 좌표와 API 환경을 준비하고 Agent Service를 실행합니다.</p><pre><code># 실행 전 확인
+# pinky_llm/params/points.yaml
+# pinky_llm/params/prompt.yaml
+# pinky_llm/pinky_llm/.env
 
-# Terminal 4: LLM Agent service
+# Terminal 4 · Agent Service
 source ~/pinky_pro/install/setup.bash
-ros2 run pinky_llm agent_service
+ros2 run pinky_llm agent_service</code></pre><p class="check"><b>완료 확인:</b> Service가 오류 없이 시작되고 <code>ros2 service list | grep llm_agent</code>에서 <code>/llm_agent</code>가 확인됩니다.</p></div>
+<div class="practice"><h3>실습 4 · Agent Client와 질문 테스트</h3><p class="goal">목표: 질문에 따라 올바른 tool이 선택되고, 장소 명령이 Nav2 goal로 변환되는지 검증합니다.</p><pre><code># Terminal 5 · Agent Client
+source ~/pinky_pro/install/setup.bash
+ros2 run pinky_llm agent_client
 
-# Terminal 5: 질문 client
-source ~/pinky_pro/install/setup.bash
-ros2 run pinky_llm agent_client</code></pre><h2>완료 체크리스트</h2><ol><li>Gazebo world, robot, map, LaserScan이 정상입니다.</li><li>모든 simulation node의 clock 설정이 일치합니다.</li><li><code>points.yaml</code>의 장소 좌표를 RViz에서 확인했습니다.</li><li>장소 목록·현재 위치 질문이 올바른 tool을 선택합니다.</li><li>이동 명령의 goal과 Nav2 result를 확인했습니다.</li><li>API Key를 Git에서 제외했습니다.</li><li>충돌 시 즉시 cancel·정지할 수 있습니다.</li></ol></section>
+# 질문 1: 너가 갈 수 있는 곳은 어디어디야?
+# 기대: list_locations
+
+# 질문 2: 지금 어디니?
+# 기대: get_current_location
+
+# 질문 3: 회의실로 가
+# 기대: points.yaml 좌표 → Nav2 goal</code></pre><p class="check"><b>완료 확인:</b> Agent 답변뿐 아니라 Terminal 4의 tool log, RViz의 goal·path, Nav2 feedback/result까지 확인합니다.</p></div>
+<h2>전체 완료 체크리스트</h2><ol><li>Gazebo world, robot, map, LaserScan이 정상입니다.</li><li>모든 simulation node의 clock 설정이 일치합니다.</li><li><code>points.yaml</code>의 장소 좌표를 RViz에서 확인했습니다.</li><li>장소 목록·현재 위치 질문이 올바른 tool을 선택합니다.</li><li>이동 명령의 goal과 Nav2 result를 확인했습니다.</li><li>API Key를 Git에서 제외했습니다.</li><li>충돌 시 즉시 cancel·정지할 수 있습니다.</li></ol></section>
 <div class="bottom-buttons"><a href="llm-web-chat-petbot.html">← 04</a><a href="../index.html">전체 목차</a></div></main></div><script src="lesson-quiz.js" data-lessons="05-05"></script></body></html>
