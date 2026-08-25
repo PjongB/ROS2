@@ -122,6 +122,9 @@ const LESSON03=[
 ["프로젝트가 다루는 핵심 시스템은?","감정 기반 대화 시스템"],["다루는 감정 수는?","6개"],["LED가 표현하는 것은?","감정별 색상"],["LCD가 표현하는 것은?","감정별 표정 GIF"],["모터 행동의 예시는?","좌우·앞뒤 흔들기와 움찔"],["카메라 한 frame을 얻는 목적은?","VLM 이미지 입력"],["대화 함수가 함께 관리하는 것은?","사용자 text와 대화 history"],["LLM 응답에서 반드시 추론할 값은?","감정"],["Vision API에 이미지 binary를 직접 넣지 않고 쓰는 것은?","Base64 문자열"],["로봇 행동 전 검증할 것은?","감정 값과 안전 조건"]]],
 ["05-04 · 웹 채팅 petbot",[
 ["웹 서버에 사용하는 Python framework는?","Flask"],["Flask template 기본 폴더는?","templates"],["CSS 같은 정적 파일 기본 폴더는?","static"],["첫 화면을 제공하는 route는?","/"],["Browser message를 받는 API route는?","/chat"],["/chat에서 사용하는 HTTP method는?","POST"],["사용자 text를 담는 JSON field는?","text"],["GPT 결과와 함께 관리하는 것은?","대화 history"],["검증되지 않은 emotion의 fallback은?","basic"],["사용자 문자열을 화면에 안전하게 넣는 방법은?","textContent 사용"]]
+,
+["05-05 · Gazebo LLM Nav2",[
+["Small House World 저장소에서 사용하는 ROS 2 branch는?","ros2-jazzy"],["Gazebo simulation을 시작하는 launch 명령은?","ros2 launch pinky_llm launch_sim.launch.xml"],["Simulation Nav2에서 일관되게 설정할 시간 인자는?","use_sim_time:=true"],["장소 이름과 좌표를 관리하는 파일은?","points.yaml"],["Agent의 역할과 tool 사용 규칙을 관리하는 파일은?","prompt.yaml"],["Agent service request의 문자열 field는?","question"],["Agent service response의 문자열 field는?","answer"],["이동 가능한 장소 목록을 묻는 tool은?","list_locations"],["현재 위치를 확인하는 tool은?","get_current_location"],["회의실 같은 장소 이름을 실제 주행으로 바꿀 때 필요한 것은?","장소 좌표와 Nav2 goal"]]
 ];
 for(const [cat,items] of LESSON03){const answers=items.map(x=>x[1]);items.forEach(([question,answer],i)=>{const wrong=[answers[(i+3)%10],answers[(i+7)%10]];Q.push([cat,question,answer,[answer,...wrong],`${answer} — ${question.replace(/\?$/,'')}의 핵심 개념입니다.`])})}
 document.querySelector('.kicker').textContent=`${Q.length} QUESTIONS · INSTANT FEEDBACK`;
