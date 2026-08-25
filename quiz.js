@@ -125,6 +125,9 @@ const LESSON03=[
 ,
 ["05-05 · Gazebo LLM Nav2",[
 ["Small House World 저장소에서 사용하는 ROS 2 branch는?","ros2-jazzy"],["Gazebo simulation을 시작하는 launch 명령은?","ros2 launch pinky_llm launch_sim.launch.xml"],["Simulation Nav2에서 일관되게 설정할 시간 인자는?","use_sim_time:=true"],["장소 이름과 좌표를 관리하는 파일은?","points.yaml"],["Agent의 역할과 tool 사용 규칙을 관리하는 파일은?","prompt.yaml"],["Agent service request의 문자열 field는?","question"],["Agent service response의 문자열 field는?","answer"],["이동 가능한 장소 목록을 묻는 tool은?","list_locations"],["현재 위치를 확인하는 tool은?","get_current_location"],["회의실 같은 장소 이름을 실제 주행으로 바꿀 때 필요한 것은?","장소 좌표와 Nav2 goal"]]
+,
+["05-06 · Raspberry Pi YOLO",[
+["YOLO의 전체 이름은?","You Only Look Once"],["YOLO11 실행에 사용하는 Python package는?","ultralytics"],["강의에서 불러오는 경량 모델 파일은?","yolo11n.pt"],["PinkyPro 카메라 frame의 기본 색상 순서는?","BGR"],["Pillow로 표시하기 위해 바꾸는 색상 순서는?","RGB"],["탐지 신뢰도 기준을 지정하는 인자는?","conf"],["추론 입력 크기를 지정하는 인자는?","imgsz"],["탐지 class 번호가 들어 있는 값은?","box.cls"],["탐지된 bounding box 좌표가 들어 있는 값은?","box.xyxy"],["결과 이미지를 저장하는 파일 이름은?","yolo11_result.jpg"]]
 ];
 for(const [cat,items] of LESSON03){const answers=items.map(x=>x[1]);items.forEach(([question,answer],i)=>{const wrong=[answers[(i+3)%10],answers[(i+7)%10]];Q.push([cat,question,answer,[answer,...wrong],`${answer} — ${question.replace(/\?$/,'')}의 핵심 개념입니다.`])})}
 document.querySelector('.kicker').textContent=`${Q.length} QUESTIONS · INSTANT FEEDBACK`;
