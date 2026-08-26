@@ -15,7 +15,7 @@
     '04-07':'LCD·LED ROS 2 제어','05-00':'GPU·CUDA·cuDNN 설정',
     '05-01':'Ollama','05-02':'OpenAI API Python','05-03':'my_petbot',
     '05-04':'웹 채팅 petbot','05-05':'Gazebo LLM Nav2','05-06':'Raspberry Pi YOLO',
-    '05-07':'ChatGPT 자율주행'
+    '05-07':'ChatGPT 자율주행','05-08':'LLM RAG'
   };
   const box = document.createElement('section');
   box.className = 'lesson-quiz-cta';

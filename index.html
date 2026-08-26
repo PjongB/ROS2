@@ -19,7 +19,7 @@
 </head>
 <body>
 <header class="shell top"><div class="brand"><b>ROS</b> FIELD NOTES</div><div class="source">Google Drive 원본 기반 · 로컬 아카이브</div></header>
-<section class="hero"><div class="shell"><div class="eyebrow">FROM SETUP TO NAVIGATION</div><h1>ROS2</h1><p>개발 환경을 준비하고, ROS 2 통신 구조와 TF 좌표계부터 모바일 로봇 내비게이션·LLM 실행 환경까지 직접 배우는 실습형 학습 아카이브입니다.</p><div class="hero-actions"><a class="quiz-start" href="quiz.html?v=llm07">문제 풀기 →</a></div><div class="statbar"><div class="stat"><b>45</b><span>전체 강의</span></div><div class="stat"><b>365</b><span>연습 문제</span></div><div class="stat"><b id="doneCount">0</b><span>완료한 강의</span></div></div></div></section>
+<section class="hero"><div class="shell"><div class="eyebrow">FROM SETUP TO NAVIGATION</div><h1>ROS2</h1><p>개발 환경을 준비하고, ROS 2 통신 구조와 TF 좌표계부터 모바일 로봇 내비게이션·LLM 실행 환경까지 직접 배우는 실습형 학습 아카이브입니다.</p><div class="hero-actions"><a class="quiz-start" href="quiz.html?v=llm08">문제 풀기 →</a></div><div class="statbar"><div class="stat"><b>46</b><span>전체 강의</span></div><div class="stat"><b>375</b><span>연습 문제</span></div><div class="stat"><b id="doneCount">0</b><span>완료한 강의</span></div></div></div></section>
 <div class="tools"><div class="shell"><div class="toolrow"><input id="search" class="search" type="search" placeholder="강의 검색 — TF, 토픽, Jupyter…"><button id="reset" class="reset">진도 초기화</button></div><div class="progress"><i id="bar"></i></div></div></div>
 <section class="shell glossary-card"><div class="num">ABC</div><div><h2>ROS2·로봇 용어 정리</h2><p>Node와 TF부터 SLAM, Nav2, A*, Dijkstra, DWB, RPP, PID까지 분야별로 찾아보는 용어 사전</p></div><a class="open" href="learn/glossary.html">용어 보기 →</a></section>
 <main class="shell" id="content"></main>
@@ -82,12 +82,13 @@ const modules=[
   ["04","웹에서 반려로봇과 대화하기","Flask 채팅 UI와 OpenAI 감정 추론을 PinkyPro 행동에 연결","learn/llm-web-chat-petbot.html","assets/llm-04/web-chat-petbot.pdf"],
   ["05","Gazebo에서 LLM으로 주행해보기","장소 이름·LLM tools·ROS 2 Service를 Nav2 목표 주행으로 연결","learn/llm-gazebo-nav2-agent.html","assets/llm-05/gazebo-llm-navigation.pdf"],
   ["06","라즈베리파이로 YOLO 사용해보기","PinkyPro 카메라와 YOLO11n으로 이미지·실시간 객체 탐지","learn/llm-raspberrypi-yolo.html","assets/llm-06/raspberrypi-yolo.pdf"],
-  ["07","ChatGPT로 자율주행하기","자연어 Tool Calling을 Nav2·cmd_vel·YOLO 상황 설명과 연결","learn/llm-chatgpt-autonomous-driving.html","assets/llm-07/chatgpt-autonomous-driving.pdf"]
+  ["07","ChatGPT로 자율주행하기","자연어 Tool Calling을 Nav2·cmd_vel·YOLO 상황 설명과 연결","learn/llm-chatgpt-autonomous-driving.html","assets/llm-07/chatgpt-autonomous-driving.pdf"],
+  ["08","LLM에 RAG 추가하기","PinkyPro 문서를 ChromaDB로 검색해 로컬 LLM 답변의 근거와 정확도 개선","learn/llm-rag.html","assets/llm-08/rag.pdf"]
  ]}
 ];
 const key="ros-field-notes-progress-v1";let done=new Set(JSON.parse(localStorage.getItem(key)||"[]"));
 function render(q=""){const root=document.querySelector("#content");root.innerHTML="";let shown=0;modules.forEach((m,mi)=>{const hits=m.lessons.filter(x=>(x[1]+" "+x[2]+" "+m.title).toLowerCase().includes(q.toLowerCase()));if(!hits.length)return;const sec=document.createElement("section");sec.className="module";sec.innerHTML='<div class="module-head"><div><h2>'+m.title+'</h2><small>'+m.desc+'</small></div><small>'+hits.length+' lessons</small></div><div class="grid"></div>';const grid=sec.querySelector(".grid");hits.forEach(x=>{shown++;const id=x[3];const el=document.createElement("article");el.className="card"+(done.has(id)?" completed":"");const pdf=x[4]?'<a class="pdf" title="강의 PDF 열기" target="_blank" rel="noopener" href="'+(x[4].endsWith('.pdf')?x[4]:'https://drive.google.com/file/d/'+x[4]+'/view')+'">PDF</a>':'';el.innerHTML='<input class="done" type="checkbox" aria-label="완료 표시" '+(done.has(id)?"checked":"")+'><div class="num">'+x[0]+'</div><div class="copy"><h3>'+x[1]+'</h3><p>'+x[2]+'</p></div><div class="links"><a class="open" href="'+x[3]+'">강의 열기</a>'+pdf+'</div>';el.querySelector(".done").onchange=e=>{e.target.checked?done.add(id):done.delete(id);localStorage.setItem(key,JSON.stringify([...done]));update();render(document.querySelector("#search").value)};grid.append(el)});root.append(sec)});document.querySelector("#empty").style.display=shown?"none":"block";update()}
-function update(){document.querySelector("#doneCount").textContent=done.size;document.querySelector("#bar").style.width=(done.size/45*100)+"%"}
+function update(){document.querySelector("#doneCount").textContent=done.size;document.querySelector("#bar").style.width=(done.size/46*100)+"%"}
 document.querySelector("#search").addEventListener("input",e=>render(e.target.value));document.querySelector("#reset").onclick=()=>{if(confirm("저장된 학습 진도를 초기화할까요?")){done.clear();localStorage.removeItem(key);render(document.querySelector("#search").value)}};render();
 </script>
 </body>

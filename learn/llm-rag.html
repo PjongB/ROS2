@@ -1,0 +1,61 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>LLM에 RAG 추가하기 · LLM</title><link rel="stylesheet" href="mobile-robot-summary.css"><style>.warn{padding:15px;border:1px solid #e0a52e;border-radius:12px;background:#fff8df}.flow{white-space:pre-wrap}.practice{margin:18px 0;padding:20px;border:1px solid #d9dfea;border-radius:15px}.practice h3{margin-top:0}.practice pre{overflow:auto;padding:18px;border-radius:12px;color:#deebf6;background:#0e1726;font:13px/1.7 ui-monospace,monospace;white-space:pre-wrap}</style></head><body>
+<header><div class="shell top"><a class="brand" href="../index.html"><b>ROS</b>2 LEARN</a><a href="llm-chatgpt-autonomous-driving.html">← LLM 07</a></div></header>
+<section class="hero"><div class="shell"><small>05.08 · LLM · RAG + OLLAMA + CHROMADB</small><h1>LLM에 RAG 추가하기</h1><p>PinkyPro 전용 문서를 검색해 관련 부분만 prompt에 넣고, 작은 로컬 LLM의 답변을 문서에 근거하도록 개선합니다.</p><div class="source-buttons"><a class="html" target="_blank" rel="noopener" href="../assets/llm-08/rag-presentation.html">원본 HTML</a><a class="pdf" target="_blank" rel="noopener" href="../assets/llm-08/rag.pdf">강의 PDF</a><a class="html" download href="../assets/llm-08/ask-llm-rag.py">완성 코드</a><a class="html" href="#order">실행 순서 ↓</a></div></div></section>
+<div class="shell layout"><nav><b>강의 목차</b><a href="#concept">RAG 개념</a><a href="#prepare">실습 전 준비</a><a href="#order">터미널 순서</a><a href="#practice">실습별 구성</a><a href="#tuning">튜닝·검증</a><a href="#trouble">문제 해결</a></nav><main>
+<div class="intro"><b>한 줄 정리</b><span>질문 → embedding 검색 → 관련 문서 chunk → prompt 보강 → LLM 답변 순서이며, RAG는 환각을 줄이지만 정답을 보장하지는 않습니다.</span></div>
+<section id="concept"><div class="number">01</div><div><h2>왜 RAG가 필요한가</h2><p class="flow">사용자 질문
+  ↓ embedding
+ChromaDB에서 유사 chunk top 3 검색
+  ↓ context 결합
+Ollama LLM에 질문
+  ↓
+PinkyPro 문서 기반 답변</p><ul><li>기본 LLM은 학습하지 않은 Pinky library API를 알기 어렵습니다.</li><li>RAG는 모델을 재학습하지 않고 외부 문서를 매 질문마다 제공합니다.</li><li><code>mxbai-embed-large</code>는 text를 vector로 바꾸고, ChromaDB는 비슷한 vector를 찾습니다.</li></ul></div></section>
+<section id="prepare"><div class="number">02</div><div><h2>실습 전 다운로드·파일 준비</h2><div class="warn"><b>현재 다운로드 폴더에는 <code>pinky_library.md</code>가 없습니다.</b> 강의에서 제공하는 파일을 받아 아래 작업 폴더에 넣어야 RAG 실습이 시작됩니다.</div><pre><code>~/llm_rag/
+├── ask_llm_rag.py
+├── pinky_library.md       # 필수 강의 문서
+└── pinky_rag_db/          # 첫 실행 때 자동 생성</code></pre></div></section>
+<section id="order" class="commands"><h2>터미널에 입력하는 전체 순서</h2><pre><code># 1. Ollama가 설치·실행 중인지 확인
+ollama --version
+curl http://localhost:11434/api/tags
+
+# 2. 작업 폴더 생성
+mkdir -p ~/llm_rag
+cd ~/llm_rag
+
+# 3. 생성된 완성 코드와 강의의 pinky_library.md를 이 폴더에 복사
+# 브라우저에서 ask-llm-rag.py를 받은 경우 예시
+cp ~/Downloads/ask-llm-rag.py ./ask_llm_rag.py
+
+# 4. 생성 모델과 embedding 모델 다운로드
+ollama pull hf.co/rippertnt/HyperCLOVAX-SEED-Text-Instruct-1.5B-Q4_K_M-GGUF:Q4_K_M
+ollama pull mxbai-embed-large
+
+# 5. Python package 설치
+python3 -m pip install chromadb langchain-text-splitters requests
+
+# 6. 파일 확인 후 실행
+ls -l ask_llm_rag.py pinky_library.md
+python3 ask_llm_rag.py</code></pre></section>
+<section id="practice"><div class="number">03</div><div><h2>실습별 실행 순서</h2>
+<div class="practice"><h3>실습 1 · 기본 LLM의 한계 확인</h3><p>RAG 없이 Pinky 전용 질문을 던져 모르는 API를 추측하는지 기록합니다.</p><pre><code>ollama run hf.co/rippertnt/HyperCLOVAX-SEED-Text-Instruct-1.5B-Q4_K_M-GGUF:Q4_K_M
+
+Pinky 라이브러리로 모터를 앞으로 움직이는 방법을 알려줘.
+/bye</code></pre></div>
+<div class="practice"><h3>실습 2 · 문서 인덱싱과 RAG 실행</h3><pre><code>cd ~/llm_rag
+python3 ask_llm_rag.py</code></pre><p>첫 실행은 Markdown을 500자, 50자 overlap으로 나눠 embedding DB를 만듭니다. 같은 질문을 넣고 <b>[검색 문서]</b>와 답변이 일치하는지 확인합니다.</p></div>
+<div class="practice"><h3>실습 3 · 더 큰 모델 비교</h3><pre><code>ollama pull qwen3:4b
+# ask_llm_rag.py의 MODEL_NAME을 qwen3:4b로 바꾼 뒤
+python3 ask_llm_rag.py</code></pre><p>1.5B와 4B에서 근거 충실도·정확도·응답 시간을 같은 질문으로 비교합니다.</p></div></div></section>
+<section id="tuning"><div class="number">04</div><div><h2>검색 품질을 조절하는 값</h2><ul><li><code>chunk_size=500</code>: 너무 작으면 문맥이 끊기고, 너무 크면 무관한 내용이 섞입니다.</li><li><code>chunk_overlap=50</code>: 경계에서 잘린 의미를 이어 줍니다.</li><li><code>top_k=3</code>: 관련 문서 수입니다. 늘리면 정보와 prompt 길이가 함께 증가합니다.</li><li>답변만 보지 말고 코드가 출력하는 검색 chunk가 실제 질문과 관련 있는지 먼저 확인합니다.</li><li>문서 밖 내용은 추측하지 말라는 prompt가 있어도 결과를 검증해야 합니다.</li></ul></div></section>
+<section id="trouble" class="commands"><h2>DB 갱신·문제 해결</h2><pre><code># Markdown을 수정했다면 기존 DB를 보관하고 새로 생성
+cd ~/llm_rag
+mv pinky_rag_db pinky_rag_db_backup
+python3 ask_llm_rag.py
+
+# Ollama 상태와 모델 확인
+curl http://localhost:11434/api/tags
+ollama list
+
+# package import 확인
+python3 -c "import chromadb, requests; from langchain_text_splitters import RecursiveCharacterTextSplitter; print('OK')"</code></pre><ul><li><b>MD 파일 없음:</b> 파일명·현재 폴더·확장자를 확인합니다.</li><li><b>Connection refused:</b> Ollama service를 먼저 실행합니다.</li><li><b>모델 not found:</b> 두 모델을 <code>ollama pull</code>했는지 확인합니다.</li><li><b>수정 내용이 반영 안 됨:</b> 기존 DB를 backup으로 옮긴 뒤 다시 실행합니다.</li><li><b>답변이 틀림:</b> 검색 chunk, 문서 원문, chunk 크기, top_k를 순서대로 점검합니다.</li></ul></section>
+<div class="bottom-buttons"><a href="llm-chatgpt-autonomous-driving.html">← 07</a><a href="../index.html">전체 목차</a></div></main></div><script src="lesson-quiz.js" data-lessons="05-08"></script></body></html>

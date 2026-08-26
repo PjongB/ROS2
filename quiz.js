@@ -131,6 +131,9 @@ const LESSON03=[
 ,
 ["05-07 · ChatGPT 자율주행",[
 ["자연어 명령을 Python 함수 호출로 바꾸는 기능은?","OpenAI Tool Calling"],["목표 위치 주행에 사용하는 Nav2 Python 클래스는?","BasicNavigator"],["실제 로봇 주행에서 use_sim_time의 권장 값은?","false"],["map 좌표의 방향을 넣는 메시지 표현은?","Quaternion"],["짧은 직접 주행 명령을 보내는 토픽은?","/cmd_vel"],["강의 코드가 직접 주행 시간을 제한한 최대값은?","3초"],["여러 목표 좌표를 순서대로 주행하는 메서드는?","followWaypoints"],["YOLO 결과를 LLM에 보내기 전에 바꾸는 형태는?","객체·신뢰도·위치 텍스트"],["YOLO 상황 설명이 자동 주행을 실행하지 않는 이유는?","안전 판단과 실행을 분리하기 위해"],["실습 종료 직전 반드시 보낼 속도 명령은?","0 속도 명령"]]]
+,
+["05-08 · LLM RAG",[
+["RAG의 주된 목적은?","검색한 외부 문서를 LLM 답변 근거로 제공"],["강의에서 vector DB로 사용하는 것은?","ChromaDB"],["문장을 vector로 바꾸는 모델은?","mxbai-embed-large"],["강의의 필수 지식 문서 파일은?","pinky_library.md"],["문서를 나눌 때 사용하는 splitter는?","RecursiveCharacterTextSplitter"],["강의의 chunk 크기는?","500자"],["강의의 chunk overlap은?","50자"],["검색하는 기본 문서 개수 top_k는?","3개"],["문서를 수정한 뒤 필요한 작업은?","기존 vector DB 재생성"],["RAG를 적용해도 반드시 필요한 것은?","검색 근거와 답변 검증"]]]
 ];
 for(const [cat,items] of LESSON03){const answers=items.map(x=>x[1]);items.forEach(([question,answer],i)=>{const wrong=[answers[(i+3)%10],answers[(i+7)%10]];Q.push([cat,question,answer,[answer,...wrong],`${answer} — ${question.replace(/\?$/,'')}의 핵심 개념입니다.`])})}
 document.querySelector('.kicker').textContent=`${Q.length} QUESTIONS · INSTANT FEEDBACK`;
