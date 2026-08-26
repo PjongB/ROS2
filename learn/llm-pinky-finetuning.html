@@ -27,18 +27,26 @@ mkdir -p ~/dev_ws/ollama/FineTuning
 cd ~/dev_ws/ollama/FineTuning
 cp ~/Downloads/pinky_library.md .
 
-# 3. 웹페이지에서 train_pinky.py와 Modelfile을 받아 이 폴더에 저장
-# pinky_finetune_data.json도 준비
-ls -l pinky_library.md pinky_finetune_data.json train_pinky.py
+# 3. 강의 코드 파일 실제 다운로드
+curl -fL https://pjongb.github.io/ROS2/assets/llm-09/train_pinky.py -o train_pinky.py
+curl -fL https://pjongb.github.io/ROS2/assets/llm-09/Modelfile -o Modelfile
+ls -l pinky_library.md train_pinky.py Modelfile
 
-# 4. 가상환경 활성화 후 학습 package 설치
+# 4. 학습 JSON 만들기
+# 위의 '학습 데이터 만들기' 형식으로 검증한 내용을 붙여넣고 저장
+nano pinky_finetune_data.json
+python3 -m json.tool pinky_finetune_data.json &gt; /dev/null
+
+# 5. 가상환경 활성화 후 학습 package 설치
 python3 -m venv .venv
 source .venv/bin/activate
 python3 -m pip install --upgrade pip
 pip3 install unsloth trl peft accelerate bitsandbytes
 
-# 5. JSON 확인 후 학습
-python3 -m json.tool pinky_finetune_data.json &gt; /dev/null
+# 6. 네 파일이 모두 있는지 최종 확인
+ls -l pinky_library.md pinky_finetune_data.json train_pinky.py Modelfile
+
+# 7. 학습 시작
 python3 train_pinky.py
 
 # W&amp;B 선택 화면이 나오고 기록하지 않으려면 3 입력</code></pre></section>
