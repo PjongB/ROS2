@@ -19,7 +19,7 @@
       <section id="xacro"><div class="number">04</div><div><h2>pinky_gz.launch.xacro</h2><p class="range">원본 목차 4</p><ul><li>Differential drive에는 좌우 바퀴 joint, 바퀴 간 거리와 반지름 설정이 필요합니다.</li><li><code>gz_ros2_control</code>을 쓰면 ROS 2 controller가 구동을 맡고, 쓰지 않으면 Gazebo diff-drive plugin을 사용할 수 있습니다.</li><li>마찰 계수와 바퀴의 물리 특성이 잘못되면 미끄러지거나 움직임이 불안정해집니다.</li></ul></div></section>
       <section id="bridge"><div class="number">05</div><div><h2>센서와 ROS–Gazebo Bridge</h2><p class="range">원본 목차 3.8–3.9·4.7–4.9</p><ul><li>Gazebo transport와 ROS 2 topic은 별개이므로 <code>ros_gz_bridge</code>가 메시지를 변환합니다.</li><li>LiDAR, 두 대의 카메라, IMU마다 topic 이름·메시지 형식·방향을 맞춰야 합니다.</li><li>RViz에서 데이터가 보이지 않으면 bridge 실행 여부, topic, QoS와 <code>frame_id</code>를 확인합니다.</li></ul></div></section>
       <section id="practice"><div class="number">06</div><div><h2>실행하고 RViz에서 확인</h2><p class="range">원본 목차 5</p><ul><li>시뮬레이션을 실행한 뒤 RViz Fixed Frame과 RobotModel을 먼저 확인합니다.</li><li>LaserScan과 Image display를 추가해 LiDAR 및 두 카메라 영상을 확인합니다.</li><li>키보드 teleop으로 <code>/cmd_vel</code>을 발행하고 로봇이 정상적으로 이동하는지 시험합니다.</li></ul></div></section>
-      <section class="commands"><h2>핵심 실행 명령</h2><pre><code>source /opt/ros/jazzy/setup.bash
+      <section class="commands"><h2>터미널 실행 순서</h2><pre><code>source /opt/ros/jazzy/setup.bash
 source ~/pinky/install/local_setup.bash
 
 # Gazebo 시뮬레이션 실행

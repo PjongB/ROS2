@@ -44,7 +44,7 @@ marker.color.a = 0.8</code></pre><div class="note">두 Marker가 같은 토픽�
     <section id="setup"><h2>setup.py에 실행 이름 등록</h2><p class="lead"><code>entry_points → console_scripts</code> 목록에 새 실행 파일을 연결합니다.</p><pre><code>'frame_trail_publisher_marker_3 = my_tf.frame_trail_publisher_marker_3:main',</code></pre><p>등록을 바꾼 뒤에는 반드시 다시 빌드하고 현재 셸에 설치 환경을 적용합니다.</p><pre><code>cd ~/dev_ws/my_tf_tutorials
 colcon build --symlink-install --packages-select my_tf
 source install/setup.bash</code></pre></section>
-    <section id="run"><h2>노드를 나눠 실행하고 검증</h2><div class="step" data-n="1"><h3>TF 브로드캐스터</h3><pre><code>ros2study
+    <section id="run"><h2>터미널 실행 순서와 검증</h2><div class="step" data-n="1"><h3>TF 브로드캐스터</h3><pre><code>ros2study
 ros2 run my_tf combined_frame</code></pre></div><div class="step" data-n="2"><h3>기존 빨간 궤적</h3><pre><code>ros2study
 ros2 run my_tf frame_trail_publisher_marker_2</code></pre></div><div class="step" data-n="3"><h3>새 파란 궤적</h3><pre><code>ros2study
 ros2 run my_tf frame_trail_publisher_marker_3</code></pre></div><div class="step" data-n="4"><h3>RViz</h3><pre><code>ros2study

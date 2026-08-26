@@ -36,7 +36,7 @@ ros2 interface show pinky_interfaces/srv/Emotion</code></pre><p>잘못된 문자
   pinky_interfaces/srv/SetBrightness \
   "{brightness: 10}"</code></pre><p>실내에서는 낮은 밝기부터 시작합니다. 허용 범위는 interface와 server 구현을 확인하고 범위를 벗어난 값은 보내지 않습니다.</p></div></section>
 <section id="trouble"><div class="number">09</div><div><h2>증상별 문제 해결</h2><ul><li><b>service 없음:</b> server process → ROS setup → domain → service list 순서로 확인합니다.</li><li><b>type 오류:</b> <code>ros2 service type</code>과 <code>ros2 interface show</code>를 확인합니다.</li><li><b>표정이 안 바뀜:</b> 감정 문자열 → LCD 상태 → server log를 확인합니다.</li><li><b>LED 색상 오류:</b> RGB 범위와 channel 순서를 확인합니다.</li><li><b>부분 LED 오류:</b> pixel index 범위와 배열 문법을 확인합니다.</li><li><b>밝기 변화 없음:</b> brightness service·허용 범위·hardware 연결을 확인합니다.</li></ul></div></section>
-<section id="commands" class="commands"><h2>마지막 실행 순서</h2><pre><code># 터미널 1 — LCD 감정 서버
+<section id="commands" class="commands"><h2>실습별 실행 순서</h2><pre><code># 터미널 1 — LCD 감정 서버
 ros2 run pinky_emotion emotion_server
 
 # 터미널 2 — 표정 요청

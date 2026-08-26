@@ -21,7 +21,7 @@
       <section id="physics"><div class="number">06</div><div><h2>Visual·Collision·Inertial</h2><p class="range">원본 HTML 40–44·49–52</p><ul><li><code>visual</code>은 보이는 형상, <code>collision</code>은 충돌 계산 형상입니다.</li><li><code>inertial</code>에는 질량, 무게중심, 관성 텐서를 정의합니다.</li><li>잘못된 관성값은 Gazebo에서 떨림이나 발산을 만들 수 있습니다.</li></ul></div></section>
       <section id="sensors"><div class="number">07</div><div><h2>센서 Frame과 TF</h2><p class="range">원본 HTML 65–75</p><ul><li>LiDAR·카메라·IMU·초음파 link는 센서 데이터의 좌표 기준입니다.</li><li>형상이 없는 빈 link도 <code>header.frame_id</code>와 TF를 위한 프레임으로 필요할 수 있습니다.</li><li>물리적인 mount와 실제 측정 기준 sensor frame을 분리하면 관리하기 쉽습니다.</li></ul></div></section>
       <section id="rviz"><div class="number">08</div><div><h2>Upload·RViz·Gazebo</h2><p class="range">원본 HTML 76–90</p><ul><li><code>view_robot</code>은 바로 확인하는 용도이고 <code>upload_robot</code>은 다른 시스템에 모델을 제공하는 용도입니다.</li><li>RViz RobotModel에서 Description Topic을 <code>/robot_description</code>으로 설정합니다.</li><li>RViz 설정은 <code>.rviz</code>로 저장하고 <code>rviz2 -d 파일명.rviz</code>로 재사용합니다.</li></ul></div></section>
-      <section class="commands"><h2>핵심 실행 명령</h2><pre><code>source /opt/ros/jazzy/setup.bash
+      <section class="commands"><h2>터미널 실행 순서</h2><pre><code>source /opt/ros/jazzy/setup.bash
 source ~/pinky/install/local_setup.bash
 ros2 launch pinky_description view_robot.launch.py
 

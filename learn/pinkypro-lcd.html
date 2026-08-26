@@ -48,7 +48,7 @@ while True:
     flipped = cv2.flip(rotated, 1)
     lcd.img_show(Image.fromarray(flipped))</code></pre><p>무한 루프는 KeyboardInterrupt를 처리하고 finally에서 camera와 LCD를 닫는 것이 안전합니다.</p></div></section>
 <section id="cleanup"><div class="number">08</div><div><h2>증상별 확인</h2><ul><li><b>검은 화면:</b> backlight, 전원과 테스트 스크립트를 확인합니다.</li><li><b>이미지 없음:</b> 현재 디렉터리와 파일 경로를 확인합니다.</li><li><b>한글 깨짐:</b> TTF 위치와 truetype 경로를 확인합니다.</li><li><b>색상이 이상함:</b> OpenCV BGR과 Pillow RGB 변환을 확인합니다.</li><li><b>방향 반대:</b> rotate 각도와 flip 축을 조정합니다.</li></ul></div></section>
-<section id="commands" class="commands"><h2>마지막 실행 순서</h2><pre><code># 1. 예제 확인
+<section id="commands" class="commands"><h2>실습별 실행 순서</h2><pre><code># 1. 예제 확인
 cd ~/pinky_lcd
 find . -maxdepth 2 -type f | sort
 

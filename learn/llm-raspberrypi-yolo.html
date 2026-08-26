@@ -6,7 +6,7 @@
 <section class="hero"><div class="shell"><small>05.06 · LLM · RASPBERRY PI YOLO11</small><h1>라즈베리파이로 YOLO 사용해보기</h1><p>터미널에서 한 번 준비한 뒤, Jupyter Notebook 셀 1~10을 위에서 아래로 복사·실행하며 카메라 확인부터 객체 탐지, 속도 비교, 결과 저장까지 진행합니다.</p><div class="source-buttons"><a class="html" target="_blank" rel="noopener" href="../assets/llm-06/raspberrypi-yolo-presentation.html">원본 HTML</a><a class="pdf" target="_blank" rel="noopener" href="../assets/llm-06/raspberrypi-yolo.pdf">강의 PDF</a><a class="html" download href="../assets/llm-06/raspberrypi-yolo11.ipynb">Notebook 다운로드</a><a class="html" href="#terminal">터미널 준비 ↓</a></div></div></section>
 <div class="shell layout"><nav><b>목차</b><a href="#terminal">터미널 준비 1회</a><a href="#notebook">Notebook 셀 1~10</a><a href="#result-guide">결과 구조</a><a href="#performance">성능·안전</a><a href="#trouble">문제 해결</a><a href="#checklist">완료 체크</a></nav><main>
 <div class="intro"><b>실행 원칙</b><span><code>터미널 명령</code>은 Raspberry Pi에서 한 번 실행하고, <code>셀 1~10</code>은 같은 Notebook에서 순서대로 실행합니다. 셀을 건너뛰면 앞 셀에서 만든 변수나 함수가 없어 오류가 납니다.</span></div>
-<section id="terminal" class="commands"><h2>터미널 준비 · 한 번만 실행</h2><p>이미 Raspberry Pi에 접속했다면 SSH 부분은 건너뜁니다.</p>
+<section id="terminal" class="commands"><h2>실습 전 다운로드·설치 및 터미널 실행 순서</h2><p>이미 Raspberry Pi에 접속했다면 SSH 부분은 건너뜁니다.</p>
 <div class="cell"><span class="step-tag">PC 터미널</span><h3>1. Raspberry Pi 접속</h3><pre><code>kp_start
 
 # alias가 없다면 실제 robot IP 사용

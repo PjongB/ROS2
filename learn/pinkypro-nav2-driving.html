@@ -22,7 +22,7 @@ ros2 topic echo /clicked_point
 ros2 topic echo /amcl_pose</code></pre><p>clicked_point는 사용자가 고른 지도 좌표이고 amcl_pose는 로봇의 현재 추정 자세입니다.</p></div></section>
 <section id="waypoints"><div class="number">07</div><div><h2>여러 Waypoint 순차 주행</h2><ol><li>Waypoint 도구를 선택합니다.</li><li>위치와 방향을 하나씩 추가합니다.</li><li>순서와 장애물 여유 공간을 확인합니다.</li><li>Start Waypoint Following으로 지정 순서대로 주행합니다.</li></ol></div></section>
 <section id="trouble"><div class="number">08</div><div><h2>증상별 확인</h2><ul><li><b>지도와 scan 불일치:</b> 초기 자세와 TF를 확인합니다.</li><li><b>경로가 없음:</b> 목표 셀, Global Costmap과 footprint를 확인합니다.</li><li><b>경로는 있지만 정지:</b> Local Costmap과 controller를 확인합니다.</li><li><b>다른 방향으로 회전:</b> 초기·목표 yaw 드래그 방향을 확인합니다.</li></ul></div></section>
-<section id="commands" class="commands"><h2>마지막 실행 순서</h2><pre><code># 로봇 1
+<section id="commands" class="commands"><h2>실습별 실행 순서</h2><pre><code># 로봇 1
 ros2 launch pinky_bringup bringup_robot.launch.xml
 
 # 로봇 2

@@ -33,7 +33,7 @@ python -m pip install --upgrade pip
 python -m pip install tensorflow</code></pre><p>시스템 Python과 프로젝트 dependency를 분리합니다. framework가 요구하는 Python·CUDA·cuDNN 버전도 설치 전에 확인합니다.</p></div></section>
 <section id="test"><div class="number">08</div><div><h2>TensorFlow GPU 인식 확인</h2><pre><code>python -c "import tensorflow as tf; print(tf.config.list_physical_devices('GPU'))"</code></pre><ul><li>GPU device 목록이 나오면 framework까지 연결된 상태입니다.</li><li>빈 배열이면 <code>nvidia-smi</code> → <code>nvcc --version</code> → framework log 순으로 원인을 좁힙니다.</li><li>LLM package를 설치하기 전에 이 최소 테스트 결과를 기록해 기준 상태를 만듭니다.</li></ul></div></section>
 <section id="trouble"><div class="number">09</div><div><h2>증상별 문제 해결</h2><ul><li><b><code>lspci</code>에도 NVIDIA가 없음:</b> BIOS·hardware 인식부터 확인합니다.</li><li><b><code>nvidia-smi</code> 실패:</b> driver 설치 상태, kernel module, Secure Boot를 확인합니다.</li><li><b><code>nvcc</code> 없음:</b> toolkit 설치와 PATH를 확인합니다.</li><li><b>shared library 오류:</b> cuDNN package와 <code>LD_LIBRARY_PATH</code>를 확인합니다.</li><li><b>TensorFlow GPU 0개:</b> framework가 현재 CUDA·cuDNN 조합을 지원하는지 확인합니다.</li></ul></div></section>
-<section id="order" class="commands"><h2>권장 설치·검증 순서</h2><pre><code># 1. Hardware
+<section id="order" class="commands"><h2>실습별 다운로드·설치·검증 순서</h2><pre><code># 1. Hardware
 lspci | grep -i nvidia
 
 # 2. Driver

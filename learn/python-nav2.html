@@ -11,7 +11,7 @@
   <header><div class="shell top"><a class="brand" href="../index.html"><b>ROS</b>2 LEARN</a><a href="navigation-package.html">← 13번 강의</a></div></header>
   <section class="hero"><div class="shell"><small>03.14 · ROS 2 JAZZY · 상세 해설</small><h1>Python으로 Nav2 다뤄보기</h1><p>RViz에서 목표를 찍는 대신 Python으로 Nav2 목표를 전달하고, 진행 상황·결과·취소를 처리하는 액션 방식과 간단한 토픽 방식을 비교합니다.</p><div class="source-buttons"><a class="html" target="_blank" rel="noopener" href="../assets/lesson-14/python-nav2-presentation.html">원본 HTML</a><a class="pdf" target="_blank" rel="noopener" href="../assets/lesson-14/python-nav2.pdf">강의 PDF</a><a class="html" href="#commands">마지막 실행 순서 ↓</a></div></div></section>
   <div class="shell layout">
-    <nav><b>목차</b><a href="#goals">학습 목표</a><a href="#pose-concept">기본 1 Pose·Frame</a><a href="#action-concept">기본 2 Action</a><a href="#lifecycle-concept">기본 3 Lifecycle</a><a href="#runtime-concept">기본 4 실행·시간</a><a href="#prepare">01 사전 준비</a><a href="#action">02 BasicNavigator</a><a href="#pose">03 목표 Pose</a><a href="#feedback">04 피드백·결과</a><a href="#timeout">05 Timeout·취소</a><a href="#topic">06 goal_pose 토픽</a><a href="#subscription">07 구독자 확인</a><a href="#compare">08 액션·토픽 비교</a><a href="#commands">마지막 실행 순서</a></nav>
+    <nav><b>목차</b><a href="#goals">학습 목표</a><a href="#pose-concept">기본 1 Pose·Frame</a><a href="#action-concept">기본 2 Action</a><a href="#lifecycle-concept">기본 3 Lifecycle</a><a href="#runtime-concept">기본 4 실행·시간</a><a href="#prepare">01 사전 준비</a><a href="#action">02 BasicNavigator</a><a href="#pose">03 목표 Pose</a><a href="#feedback">04 피드백·결과</a><a href="#timeout">05 Timeout·취소</a><a href="#topic">06 goal_pose 토픽</a><a href="#subscription">07 구독자 확인</a><a href="#compare">08 액션·토픽 비교</a><a href="#commands">실습별 실행 순서</a></nav>
     <main>
       <div class="intro"><b>한 줄 정리</b><span>프로그램에서 주행 성공·실패·진행률·취소까지 관리하려면 <code>BasicNavigator</code> 액션 방식을, 결과 확인이 필요 없는 단순 목표 전달에는 <code>/goal_pose</code> 토픽 방식을 사용할 수 있습니다.</span></div>
       <section id="goals"><div class="number">KEY</div><div><h2>오늘의 목표</h2><p class="range">강의자료 15쪽 핵심</p><ul><li><b>액션 제어:</b> <code>BasicNavigator.goToPose()</code>로 정확한 목표 자세를 전송합니다.</li><li><b>상태 확인:</b> 남은 거리와 경과 시간을 feedback으로 읽고 최종 결과를 확인합니다.</li><li><b>Timeout:</b> 제한 시간을 넘기면 <code>cancelTask()</code>로 안전하게 정지시킵니다.</li><li><b>토픽 제어:</b> <code>PoseStamped</code>를 <code>/goal_pose</code>에 직접 발행합니다.</li><li><b>방식 선택:</b> 액션과 토픽의 장단점을 이해하고 목적에 맞게 선택합니다.</li></ul></div></section>
@@ -114,7 +114,7 @@ if count == 0:
 
       <section id="compare"><div class="number">08</div><div><h2>액션과 토픽, 무엇을 선택할까?</h2><p class="range">양방향 작업 관리 vs 단순 명령 전달</p><figure class="lecture-figure"><img src="../assets/lesson-14/images/action-topic-comparison.jpg" alt="Nav2 액션 방식과 goal pose 토픽 방식의 비교"><figcaption>원본 강의자료의 액션·토픽 비교. 목표를 보내는 점은 같지만 작업 상태를 관리할 수 있는지가 핵심 차이입니다.</figcaption></figure><div class="compare"><div><h3>액션 방식</h3><ul><li>목표 수락 여부 확인</li><li>남은 거리·시간 feedback</li><li>성공·실패·취소 결과</li><li><code>cancelTask()</code>로 취소</li><li>자율주행 프로그램에 적합</li></ul></div><div><h3>토픽 방식</h3><ul><li>코드가 짧고 즉시 발행</li><li>단방향 Fire-and-Forget</li><li>완료·실패 결과 없음</li><li>별도 상태 관리 필요</li><li>테스트·단순 명령에 적합</li></ul></div></div></div></section>
 
-      <section id="commands" class="commands"><h2>핵심 실행 명령</h2><p>13번과 동일하게 Gazebo → Nav2 → RViz2 순서로 실행한 뒤 네 번째 터미널에서 Python 코드를 실행합니다.</p><pre><code># 터미널 1 — Gazebo
+      <section id="commands" class="commands"><h2>터미널 실행 순서</h2><p>13번과 동일하게 Gazebo → Nav2 → RViz2 순서로 실행한 뒤 네 번째 터미널에서 Python 코드를 실행합니다.</p><pre><code># 터미널 1 — Gazebo
 pk_gz
 
 # 터미널 2 — Nav2 전체 실행

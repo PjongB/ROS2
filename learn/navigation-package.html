@@ -11,7 +11,7 @@
   <header><div class="shell top"><a class="brand" href="../index.html"><b>ROS</b>2 LEARN</a><a href="../index.html">← 전체 강의</a></div></header>
   <section class="hero"><div class="shell"><small>03.13 · ROS 2 JAZZY · 상세 해설</small><h1>Navigation PKG 다뤄보기</h1><p>Gazebo에서 Pinky Pro를 실행하고 Nav2에 저장 지도를 연결한 뒤, RViz2에서 초기 자세와 목표를 지정해 경로 계획·장애물 회피 주행을 수행합니다.</p><div class="source-buttons"><a class="pdf" target="_blank" rel="noopener" href="../assets/lesson-13/navigation-package.pdf">강의 PDF 바로 열기</a><a class="html" href="#quick-start">터미널 실행 순서 ↓</a></div></div></section>
   <div class="shell layout">
-    <nav><b>목차</b><a href="#key-points">핵심 포인트</a><a href="#architecture">전체 구조</a><a href="#launch">01 명령 해설</a><a href="#initial-pose">02 초기 자세</a><a href="#goal">03 목표 주행</a><a href="#nav2">04 Nav2 내부 동작</a><a href="#plans">Global·Local Plan</a><a href="#costmap">05 Costmap</a><a href="#inflation">06 Inflation</a><a href="#tuning">07 튜닝 개념</a><a href="#troubleshoot">08 문제 해결</a><a href="#quick-start">마지막 실행 순서</a><a href="#tuning-lab">마지막 튜닝 실습</a><a href="#rqt-guide">RQt 값 조정표</a></nav>
+    <nav><b>목차</b><a href="#key-points">핵심 포인트</a><a href="#architecture">전체 구조</a><a href="#launch">01 명령 해설</a><a href="#initial-pose">02 초기 자세</a><a href="#goal">03 목표 주행</a><a href="#nav2">04 Nav2 내부 동작</a><a href="#plans">Global·Local Plan</a><a href="#costmap">05 Costmap</a><a href="#inflation">06 Inflation</a><a href="#tuning">07 튜닝 개념</a><a href="#troubleshoot">08 문제 해결</a><a href="#quick-start">실습별 실행 순서</a><a href="#tuning-lab">마지막 튜닝 실습</a><a href="#rqt-guide">RQt 값 조정표</a></nav>
     <main>
       <div class="intro"><b>한 줄 정리</b><span>Nav2는 현재 위치와 목표 위치를 받아 안전한 경로를 만들고, 로봇이 그 경로를 따라가도록 <code>/cmd_vel</code>을 계산하는 내비게이션 프레임워크입니다.</span></div>
       <div class="intro"><b>12번과 차이</b><span>12번의 Simple Navigator는 목표까지 직선으로 이동하지만, 13번의 Nav2는 지도·costmap·planner·controller를 이용해 장애물을 고려한 경로를 생성합니다.</span></div>
@@ -74,7 +74,7 @@ ros2 topic echo /cmd_vel
 ros2 run tf2_ros tf2_echo map base_footprint
 ros2 lifecycle nodes</code></pre></div></section>
 
-      <section id="quick-start" class="commands"><h2>핵심 실행 명령</h2><p>아래 순서대로 새 터미널을 열어 하나씩 실행합니다. 앞 터미널의 프로그램은 종료하지 않습니다.</p><pre><code># 터미널 1 — Gazebo
+      <section id="quick-start" class="commands"><h2>터미널 실행 순서</h2><p>아래 순서대로 새 터미널을 열어 하나씩 실행합니다. 앞 터미널의 프로그램은 종료하지 않습니다.</p><pre><code># 터미널 1 — Gazebo
 cd ~/pinky
 source /opt/ros/jazzy/setup.bash
 source install/setup.bash

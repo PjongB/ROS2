@@ -20,7 +20,7 @@
       <section id="params"><div class="number">04</div><div><h2>mapper_params.yaml 핵심 설정</h2><p class="range">원본: TF·topic·해상도·스캔 매책</p><ul><li><code>map_frame: map</code>, <code>odom_frame: odom</code>, <code>base_frame: base_footprint</code>, <code>scan_topic: /scan</code>을 로봇 구성과 일치시킵니다.</li><li><code>resolution: 0.05</code>는 지도 한 셀을 5cm로 사용하고, <code>max_laser_range: 10.0</code>은 매핑에 사용할 LiDAR 범위를 정합니다.</li><li>최소 이동 거리·각도, scan buffer, loop closure 검색 범위와 응답 임계값으로 속도와 정확도를 조절합니다.</li></ul></div></section>
       <section id="mapping"><div class="number">05</div><div><h2>Gazebo에서 지도 만들기</h2><p class="range">원본: 실제 지도 만들기</p><ul><li>Gazebo 시뮬레이션을 실행한 뒤 <code>gz_map_building.launch.xml</code>로 SLAM을 시작합니다.</li><li><code>gz_map_view.launch.xml</code>로 RViz2를 열고 Map·LaserScan·TF를 확인한 뒤, 키보드로 로봇을 천천히 조작하며 공간을 중복 탐색합니다.</li><li>지도가 틀어지면 <code>/scan</code>, TF 연결, odometry, 시간 설정과 loop closure 성공 여부를 확인합니다.</li></ul></div></section>
       <section id="save"><div class="number">06</div><div><h2>생성한 지도 저장</h2><p class="range">원본: 지도 저장·맵 파일</p><ul><li>Nav2 map saver CLI로 occupancy grid를 이미지와 YAML 설정 파일로 저장합니다.</li><li>YAML의 <code>image</code>, <code>resolution</code>, <code>origin</code>, 점유·비점유 임계값을 확인합니다.</li><li>도면이나 기존 그림을 사용할 때도 맵 이미지와 YAML의 좌표·해상도를 맞춰야 합니다.</li></ul></div></section>
-      <section class="commands"><h2>핵심 실행 명령</h2><pre><code>source /opt/ros/jazzy/setup.bash
+      <section class="commands"><h2>터미널 실행 순서</h2><pre><code>source /opt/ros/jazzy/setup.bash
 source ~/pinky/install/setup.bash
 
 # Gazebo 시뮬레이션

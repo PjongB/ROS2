@@ -91,7 +91,7 @@ def chat():
 }</code></pre><div class="warn"><b>XSS 주의:</b> 강의 화면처럼 사용자 입력을 template literal과 <code>innerHTML</code>로 직접 넣지 않습니다. DOM element를 만들고 <code>textContent</code>로 넣어 HTML을 실행하지 못하게 합니다.</div></div></section>
 <section id="security"><div class="number">06</div><div><h2>안전·보안 경계</h2><ul><li><code>.env</code>는 <code>.gitignore</code>에 넣고 노출된 Key는 즉시 폐기합니다.</li><li>Flask development server를 Internet에 직접 공개하지 않습니다.</li><li>입력 길이·request rate·timeout을 제한합니다.</li><li>GPT emotion은 allowlist로 검증하고 실패 시 <code>basic</code>을 사용합니다.</li><li>LLM이 직접 motor speed를 정하지 않게 하고 controller에서 상한을 강제합니다.</li><li>API 오류·browser disconnect·종료 시 motor stop, LED clear, LCD close를 실행합니다.</li></ul></div></section>
 <section id="trouble"><div class="number">07</div><div><h2>문제 해결</h2><ul><li><b>페이지가 안 열림:</b> Flask 주소·port·robot IP·firewall 확인</li><li><b>POST 400:</b> JSON header와 <code>text</code> field 확인</li><li><b>API 인증 오류:</b> Key·project·quota 확인</li><li><b>JSON parsing 실패:</b> raw response 기록, fallback 적용</li><li><b>감정은 나오지만 robot이 정지:</b> allowlist·hardware log 확인</li><li><b>여러 사용자 history 혼합:</b> session별 history로 분리</li></ul></div></section>
-<section id="order" class="commands"><h2>권장 실행 순서</h2><pre><code># 1. 가상환경과 package
+<section id="order" class="commands"><h2>실습별 실행 순서</h2><pre><code># 1. 가상환경과 package
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install flask openai python-dotenv

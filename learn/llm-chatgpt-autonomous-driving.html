@@ -15,11 +15,11 @@
                                   ↓
                          OpenAI 한국어 설명</code></pre><p>목적지 주행은 <code>BasicNavigator</code>, 여러 좌표는 <code>followWaypoints()</code>, 3초 이하의 짧은 움직임만 <code>/cmd_vel</code>을 사용합니다.</p></div></section>
 
-<section id="prepare"><div class="number">GET</div><div><h2>실습 전에 준비할 것</h2><table><thead><tr><th>항목</th><th>확인</th></tr></thead><tbody><tr><td>저장한 map YAML</td><td>실제 경로와 파일 이름 확인</td></tr><tr><td>OpenAI API Key</td><td><code>.env</code>의 <code>OPENAI_API_KEY</code>로 저장, Notebook에 직접 기록하지 않기</td></tr><tr><td>Python package</td><td><code>openai python-dotenv ultralytics pillow</code></td></tr><tr><td>ROS 2</td><td><code>nav2_simple_commander</code>, <code>tf_transformations</code></td></tr><tr><td>Wi-Fi</td><td>PC가 <code>pinky_****</code>에 연결</td></tr><tr><td>안전 공간</td><td>바퀴 주변을 비우고 즉시 정지할 준비</td></tr></tbody></table><pre><code>python3 -m pip install openai python-dotenv ultralytics pillow
+<section id="prepare"><div class="number">GET</div><div><h2>실습 전 다운로드·설치 순서</h2><table><thead><tr><th>항목</th><th>확인</th></tr></thead><tbody><tr><td>저장한 map YAML</td><td>실제 경로와 파일 이름 확인</td></tr><tr><td>OpenAI API Key</td><td><code>.env</code>의 <code>OPENAI_API_KEY</code>로 저장, Notebook에 직접 기록하지 않기</td></tr><tr><td>Python package</td><td><code>openai python-dotenv ultralytics pillow</code></td></tr><tr><td>ROS 2</td><td><code>nav2_simple_commander</code>, <code>tf_transformations</code></td></tr><tr><td>Wi-Fi</td><td>PC가 <code>pinky_****</code>에 연결</td></tr><tr><td>안전 공간</td><td>바퀴 주변을 비우고 즉시 정지할 준비</td></tr></tbody></table><pre><code>python3 -m pip install openai python-dotenv ultralytics pillow
 python3 -c "import rclpy, tf_transformations; print('ROS Python OK')"
 python3 -c "from pinkylib import Camera; print('Camera OK')"</code></pre></div></section>
 
-<section id="terminal" class="commands"><h2>먼저 실행할 터미널 4개</h2><div class="warn"><b><code>use_sim_time</code>:</b> 이번 강의는 실제 PinkyPro 주행이므로 기본값 <code>false</code>를 사용합니다. Gazebo 실습처럼 <code>true</code>를 붙이면 실제 시계와 맞지 않아 TF·Nav2 timeout 문제가 생길 수 있습니다.</div>
+<section id="terminal" class="commands"><h2>터미널 실행 순서</h2><div class="warn"><b><code>use_sim_time</code>:</b> 이번 강의는 실제 PinkyPro 주행이므로 기본값 <code>false</code>를 사용합니다. Gazebo 실습처럼 <code>true</code>를 붙이면 실제 시계와 맞지 않아 TF·Nav2 timeout 문제가 생길 수 있습니다.</div>
 <div class="practice"><h3>터미널 1 · 로봇 bringup</h3><pre><code>kp_start
 ros2 launch pinky_bringup bringup_robot.launch.xml</code></pre><p class="check"><b>확인:</b> LiDAR·motor·TF 관련 오류 없이 실행이 유지됩니다.</p></div>
 <div class="practice"><h3>터미널 2 · 실제 로봇 Nav2</h3><pre><code>kp_nav

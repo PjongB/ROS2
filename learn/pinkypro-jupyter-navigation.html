@@ -28,7 +28,7 @@ qw = math.cos(yaw_rad / 2.0)</code></pre><ul><li>goal frame은 일반적으로 m
 <section id="feedback"><div class="number">07</div><div><h2>피드백과 주행 결과</h2><ul><li>주행 중 feedback에서 남은 거리와 예상 시간을 확인합니다.</li><li>CPU 부하와 Notebook 멈춤을 줄이기 위해 timeout을 둡니다.</li><li>강의처럼 1초 간격으로 확인하면 과도한 polling을 줄일 수 있습니다.</li><li>완료 후 성공, 취소, 실패를 구분합니다.</li></ul></div></section>
 <section id="waypoints"><div class="number">08</div><div><h2>여러 좌표 Waypoint 주행</h2><ol><li>ros2 topic echo /clicked_point를 실행합니다.</li><li>RViz Publish Point로 좌표를 순서대로 기록합니다.</li><li>z는 무시하고 x·y와 yaw로 pose 목록을 만듭니다.</li><li>주행을 시작하고 feedback으로 진행 지점을 확인합니다.</li></ol></div></section>
 <section id="shutdown"><div class="number">09</div><div><h2>안전하게 종료</h2><ul><li>진행 중인 task가 있다면 취소 후 최종 상태를 확인합니다.</li><li>Navigator 노드와 ROS context를 종료합니다.</li><li>Notebook kernel과 bringup·Nav2 터미널을 순서대로 종료합니다.</li></ul></div></section>
-<section id="commands" class="commands"><h2>마지막 실행 순서</h2><pre><code># 1. 로봇 bringup
+<section id="commands" class="commands"><h2>실습별 실행 순서</h2><pre><code># 1. 로봇 bringup
 ros2 launch pinky_bringup bringup_robot.launch.xml
 
 # 2. Nav2 + 저장 지도

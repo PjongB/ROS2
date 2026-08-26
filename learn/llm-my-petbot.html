@@ -36,7 +36,7 @@
 }</code></pre><p>emotion을 허용 목록과 대조한 뒤 LED·LCD·motor 함수를 호출합니다.</p></div></section>
 <section id="vision"><div class="number">08</div><div><h2>사진을 보고 감정 표현</h2><ol><li>camera frame을 JPEG로 변환합니다.</li><li>binary를 Base64 data URL로 변환합니다.</li><li>Vision model에 image와 감정 분류 prompt를 보냅니다.</li><li>JSON을 parsing하고 emotion 허용값을 검사합니다.</li><li>검증된 감정에 맞춰 행동합니다.</li></ol><p>사진 속 사람의 감정 추론은 부정확할 수 있으므로 확정적 판단이나 민감한 의사결정에 사용하지 않습니다.</p></div></section>
 <section id="safety"><div class="number">09</div><div><h2>Robot safety boundary</h2><ul><li>LLM은 직접 motor command를 만들지 않고 허용된 emotion code만 선택합니다.</li><li>controller가 속도·duration·sensor stop 조건을 강제합니다.</li><li>API timeout·JSON 실패·unknown emotion이면 motor를 정지합니다.</li><li>대화 history에 API Key와 개인 image metadata를 넣지 않습니다.</li><li>종료 handler에서 모든 actuator를 안전 상태로 되돌립니다.</li></ul></div></section>
-<section id="order" class="commands"><h2>전체 실행 순서</h2><pre><code>1. API Key와 dependency 준비
+<section id="order" class="commands"><h2>실습별 실행 순서</h2><pre><code>1. API Key와 dependency 준비
 2. LED·LCD·motor·camera 개별 test
 3. 6개 emotion mapping 정의
 4. text → {emotion, reply} API test
