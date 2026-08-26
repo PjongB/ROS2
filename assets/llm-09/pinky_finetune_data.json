@@ -1,0 +1,82 @@
+[
+  {
+    "input": "배터리 전압을 한 번 확인해줘.",
+    "output": "from pinkylib import Battery\n\nbattery = Battery()\ntry:\n    voltage = battery.get_voltage()\n    print(f\"배터리 전압: {voltage:.2f} V\")\nfinally:\n    battery.close()"
+  },
+  {
+    "input": "배터리 잔량을 퍼센트로 알려줘.",
+    "output": "from pinkylib import Battery\n\nbattery = Battery()\ntry:\n    percent = battery.battery_percentage()\n    print(f\"배터리 잔량: {percent} %\")\nfinally:\n    battery.close()"
+  },
+  {
+    "input": "배터리 전압과 잔량을 같이 출력해줘.",
+    "output": "from pinkylib import Battery\n\nbattery = Battery()\ntry:\n    voltage = battery.get_voltage()\n    percent = battery.battery_percentage()\n    print(f\"전압: {voltage:.2f} V, 잔량: {percent} %\")\nfinally:\n    battery.close()"
+  },
+  {
+    "input": "초음파 센서는 어떻게 써? 거리를 한 번 측정하는 코드로 설명해줘.",
+    "output": "from pinkylib import Ultrasonic\n\nsensor = Ultrasonic()\ntry:\n    distance = sensor.get_dist()\n    print(f\"거리: {distance:.2f} cm\")\nfinally:\n    sensor.close()"
+  },
+  {
+    "input": "초음파 거리를 1초마다 계속 출력해줘.",
+    "output": "from pinkylib import Ultrasonic\nimport time\n\nsensor = Ultrasonic()\ntry:\n    while True:\n        distance = sensor.get_dist()\n        print(f\"거리: {distance:.2f} cm\")\n        time.sleep(1)\nexcept KeyboardInterrupt:\n    pass\nfinally:\n    sensor.close()"
+  },
+  {
+    "input": "앞으로 1초 이동한 다음 멈춰줘. 속도는 30으로 해.",
+    "output": "from pinkylib import Motor\nimport time\n\nmotor = Motor()\ntry:\n    motor.enable_motor()\n    motor.move(30, 30)\n    time.sleep(1)\nfinally:\n    motor.stop()\n    motor.disable_motor()\n    motor.close()"
+  },
+  {
+    "input": "뒤로 0.5초 이동하고 정지해줘.",
+    "output": "from pinkylib import Motor\nimport time\n\nmotor = Motor()\ntry:\n    motor.enable_motor()\n    motor.move(-25, -25)\n    time.sleep(0.5)\nfinally:\n    motor.stop()\n    motor.disable_motor()\n    motor.close()"
+  },
+  {
+    "input": "제자리에서 1초 동안 회전해줘.",
+    "output": "from pinkylib import Motor\nimport time\n\nmotor = Motor()\ntry:\n    motor.enable_motor()\n    motor.move(25, -25)\n    time.sleep(1)\nfinally:\n    motor.stop()\n    motor.disable_motor()\n    motor.close()"
+  },
+  {
+    "input": "앞으로 가다가 초음파 거리가 10cm 이하면 멈춰줘.",
+    "output": "from pinkylib import Motor, Ultrasonic\nimport time\n\nmotor = Motor()\nsensor = Ultrasonic()\ntry:\n    motor.enable_motor()\n    while True:\n        distance = sensor.get_dist()\n        if distance <= 10:\n            motor.stop()\n            print(f\"장애물 감지: {distance:.2f} cm\")\n            break\n        motor.move(20, 20)\n        time.sleep(0.1)\nfinally:\n    motor.stop()\n    motor.disable_motor()\n    motor.close()\n    sensor.close()"
+  },
+  {
+    "input": "IR 센서 세 개의 값을 0.1초마다 출력해줘.",
+    "output": "from pinkylib import IR\nimport time\n\nsensor = IR()\ntry:\n    while True:\n        ir_1, ir_2, ir_3 = sensor.read_ir()\n        print(f\"IR: {ir_1}, {ir_2}, {ir_3}\")\n        time.sleep(0.1)\nexcept KeyboardInterrupt:\n    pass\nfinally:\n    sensor.close()"
+  },
+  {
+    "input": "IMU 센서는 어떤 값을 줘? 가속도, 각속도, 쿼터니언을 출력하는 코드로 설명해줘.",
+    "output": "from pinkylib import IMU\n\nimu = IMU()\ntry:\n    data = imu.read_imu_data()\n    print(\"가속도:\", data['acceleration'])\n    print(\"각속도:\", data['gyro'])\n    print(\"쿼터니언:\", data['quaternion'])\nfinally:\n    imu.close()"
+  },
+  {
+    "input": "부저를 세 번 울려줘.",
+    "output": "from pinkylib import Buzzer\n\nbuzzer = Buzzer()\ntry:\n    buzzer.buzzer_start()\n    buzzer.buzzer(3)\n    buzzer.buzzer_stop()\nfinally:\n    buzzer.clean()"
+  },
+  {
+    "input": "부저로 도와 레 음을 각각 1초씩 내줘.",
+    "output": "from pinkylib import Buzzer\nimport time\n\nbuzzer = Buzzer()\ntry:\n    buzzer.buzzer_start()\n    buzzer.set_buzzer_duty(50)\n    buzzer.set_buzzer_freq(261)\n    time.sleep(1)\n    buzzer.set_buzzer_freq(293)\n    time.sleep(1)\n    buzzer.set_buzzer_duty(0)\n    buzzer.buzzer_stop()\nfinally:\n    buzzer.clean()"
+  },
+  {
+    "input": "카메라 프레임 한 장의 크기를 출력해줘.",
+    "output": "from pinkylib import Camera\n\ncamera = Camera()\ntry:\n    camera.start(width=640, height=480)\n    frame = camera.get_frame()\n    print(type(frame), frame.shape)\nfinally:\n    camera.close()"
+  },
+  {
+    "input": "카메라 영상을 주피터에서 5초 동안 보여줘.",
+    "output": "from pinkylib import Camera\n\ncamera = Camera()\ntry:\n    camera.start()\n    camera.play_jupyter(5)\nfinally:\n    camera.close()"
+  },
+  {
+    "input": "카메라로 ArUco 마커를 찾아서 ID와 위치를 출력해줘.",
+    "output": "from pinkylib import Camera\n\ncamera = Camera()\ntry:\n    camera.set_calibration(\"camera_calibration.npz\")\n    camera.start()\n    frame = camera.get_frame()\n    output_frame, pose = camera.detect_aruco(frame, marker_size=0.036)\n    print(\"마커 위치:\", pose)\n    camera.display_jupyter(output_frame)\nfinally:\n    camera.close()"
+  },
+  {
+    "input": "ArUco 마커 중에서 ID 1번만 찾아줘.",
+    "output": "from pinkylib import Camera\n\ncamera = Camera()\ntry:\n    camera.set_calibration(\"camera_calibration.npz\")\n    camera.start()\n    frame = camera.get_frame()\n    output_frame, pose = camera.detect_aruco_target(frame, target_id=1, marker_size=0.036)\n    print(\"ID 1 위치:\", pose)\n    camera.display_jupyter(output_frame)\nfinally:\n    camera.close()"
+  },
+  {
+    "input": "LCD를 녹색으로 3초 동안 채운 다음 화면을 지워줘.",
+    "output": "from pinky_lcd import LCD\nfrom PIL import Image\nimport time\n\nlcd = LCD()\ntry:\n    image = Image.new('RGB', (320, 240), color=(0, 255, 0))\n    lcd.img_show(image)\n    time.sleep(3)\nfinally:\n    lcd.clear()"
+  },
+  {
+    "input": "LED 전체를 파란색으로 켜줘.",
+    "output": "from pinkylib import LED\n\nled = LED()\ntry:\n    led.fill((0, 0, 255))\n    led.show()\nfinally:\n    led.fill((0, 0, 0))\n    led.show()"
+  },
+  {
+    "input": "8개 LED를 빨간색으로 순서대로 켜줘.",
+    "output": "from pinkylib import LED\n\nled = LED()\ntry:\n    led.color_wipe((255, 0, 0), wait_ms=100)\nfinally:\n    led.fill((0, 0, 0))\n    led.show()"
+  }
+]
