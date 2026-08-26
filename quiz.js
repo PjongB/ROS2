@@ -134,6 +134,9 @@ const LESSON03=[
 ,
 ["05-08 · LLM RAG",[
 ["RAG의 주된 목적은?","검색한 외부 문서를 LLM 답변 근거로 제공"],["강의에서 vector DB로 사용하는 것은?","ChromaDB"],["문장을 vector로 바꾸는 모델은?","mxbai-embed-large"],["강의의 필수 지식 문서 파일은?","pinky_library.md"],["문서를 나눌 때 사용하는 splitter는?","RecursiveCharacterTextSplitter"],["강의의 chunk 크기는?","500자"],["강의의 chunk overlap은?","50자"],["검색하는 기본 문서 개수 top_k는?","3개"],["문서를 수정한 뒤 필요한 작업은?","기존 vector DB 재생성"],["RAG를 적용해도 반드시 필요한 것은?","검색 근거와 답변 검증"]]]
+,
+["05-09 · Pinky LLM Fine-tuning",[
+["강의에서 학습하는 기반 모델은?","Qwen3-4B 4bit"],["전체 모델 대신 작은 adapter를 학습하는 방법은?","LoRA"],["학습 데이터의 두 필드는?","input과 output"],["학습 text에 사용하는 형식은?","Alpaca format"],["강의의 LoRA rank 값은?","16"],["강의의 epoch 수는?","10"],["학습 결과를 Ollama에 넣기 위한 파일 형식은?","GGUF"],["강의의 GGUF 양자화 방식은?","Q4_K_M"],["Ollama 모델 등록 명령은?","ollama create"],["로봇 코드 학습 데이터에서 반드시 검증할 것은?","실제 API와 안전한 자원 해제"]]]
 ];
 for(const [cat,items] of LESSON03){const answers=items.map(x=>x[1]);items.forEach(([question,answer],i)=>{const wrong=[answers[(i+3)%10],answers[(i+7)%10]];Q.push([cat,question,answer,[answer,...wrong],`${answer} — ${question.replace(/\?$/,'')}의 핵심 개념입니다.`])})}
 document.querySelector('.kicker').textContent=`${Q.length} QUESTIONS · INSTANT FEEDBACK`;
