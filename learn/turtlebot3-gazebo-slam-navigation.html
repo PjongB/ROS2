@@ -1,20 +1,47 @@
-<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>TurtleBot3 Gazebo SLAM & Navigation · ROS2</title><link rel="stylesheet" href="mobile-robot-summary.css"></head><body><header><div class="shell top"><a class="brand" href="../index.html"><b>ROS</b>2 LEARN</a><a href="../index.html">← 전체 강의</a></div></header><section class="hero"><div class="shell"><small>06.02 · TURTLEBOT3 · SIMULATION</small><h1>Gazebo SLAM & Navigation</h1><p>Gazebo 월드에서 Cartographer로 지도를 만들고 저장한 뒤, Nav2로 목표점과 여러 Waypoint를 주행합니다.</p><div class="source-buttons"><a class="html" target="_blank" rel="noopener" href="../assets/turtlebot3-02/turtlebot3-gazebo-slam-navigation-presentation.html">원본 HTML</a><a class="html" href="#commands">실행 순서 ↓</a></div></div></section><div class="shell layout"><nav><b>목차</b><a href="#flow">전체 흐름</a><a href="#slam">SLAM</a><a href="#map">지도 저장</a><a href="#nav">Navigation</a><a href="#coords">좌표·Waypoint</a><a href="#commands">명령</a></nav><main>
-<div class="intro"><b>한 줄 정리</b><span>같은 Gazebo 월드를 기준으로 SLAM 지도를 저장한 뒤, 그 YAML 지도를 Nav2에 넘겨 자율주행합니다.</span></div>
-<section id="flow"><div class="number">MAP</div><div><h2>실습 흐름</h2><pre><code>Gazebo world → Cartographer → teleop 탐색 → map 저장
-                                          ↓
-저장한 map.yaml → Nav2 → 2D Pose Estimate → Nav2 Goal</code></pre></div></section>
-<section id="slam"><div class="number">01</div><div><h2>SLAM 지도 작성</h2><ul><li>Gazebo 월드를 먼저 실행합니다.</li><li>Cartographer SLAM과 teleop을 각각 새 터미널에서 실행합니다.</li><li>벽 가까이까지 빠짐없이 탐색하되 급회전과 충돌을 피합니다.</li></ul></div></section>
-<section id="map"><div class="number">02</div><div><h2>지도 저장</h2><p>지도 저장 후 <code>.pgm</code> 이미지와 <code>.yaml</code> 메타데이터가 모두 생성됐는지 확인하고 기존 프로세스를 종료합니다.</p></div></section>
-<section id="nav"><div class="number">03</div><div><h2>Nav2 주행</h2><ul><li>저장한 YAML 경로로 Navigation을 실행합니다.</li><li>RViz의 2D Pose Estimate로 실제 로봇 자세를 지도와 맞춥니다.</li><li>Nav2 Goal의 위치와 화살표 방향을 함께 지정합니다.</li></ul></div></section>
-<section id="coords"><div class="number">04</div><div><h2>좌표와 Waypoint</h2><p><code>/amcl_pose</code>는 추정된 현재 위치, <code>/clicked_point</code>는 RViz에서 선택한 지도 좌표를 제공합니다. Waypoint 모드에서는 점을 순서대로 추가한 뒤 Following을 시작합니다.</p></div></section>
-<section id="commands" class="commands"><h2>핵심 명령</h2><pre><code>export TURTLEBOT3_MODEL=burger
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>TurtleBot3 Gazebo SLAM &amp; Navigation · ROS2</title><link rel="stylesheet" href="mobile-robot-summary.css"><style>.warn{padding:15px;border:1px solid #e0a52e;border-radius:12px;background:#fff8df}.terminal{margin:14px 0;padding:18px;border:1px solid #d9dfea;border-radius:14px}.terminal h3{margin:0 0 7px}.terminal pre{overflow:auto;padding:16px;border-radius:11px;color:#deebf6;background:#0e1726;font:13px/1.7 ui-monospace,monospace;white-space:pre-wrap}</style></head><body>
+<header><div class="shell top"><a class="brand" href="../index.html"><b>ROS</b>2 LEARN</a><a href="turtlebot3-environment.html">← TurtleBot3 01</a></div></header>
+<section class="hero"><div class="shell"><small>06.02 · TURTLEBOT3 · GAZEBO + CARTOGRAPHER + NAV2</small><h1>Gazebo SLAM &amp; Navigation</h1><p>Gazebo 월드에서 Cartographer로 지도를 만들고 저장한 뒤, 같은 지도에서 AMCL 위치 추정과 Nav2 목표·Waypoint 주행을 실습합니다.</p><div class="source-buttons"><a class="html" target="_blank" rel="noopener" href="../assets/turtlebot3-02/turtlebot3-gazebo-slam-navigation-presentation.html">원본 HTML</a><a class="pdf" target="_blank" rel="noopener" href="../assets/turtlebot3-02/turtlebot3-gazebo-slam-navigation.pdf">강의 PDF</a><a class="html" href="#order">터미널 실행 순서 ↓</a></div></div></section>
+<div class="shell layout"><nav><b>강의 목차</b><a href="#concept">전체 구조</a><a href="#prepare">사전 확인</a><a href="#slam">SLAM</a><a href="#save">지도 저장</a><a href="#nav2">Nav2</a><a href="#coords">좌표·Waypoint</a><a href="#order">터미널 순서</a><a href="#trouble">문제 해결</a></nav><main>
+<div class="intro"><b>전체 흐름</b><span><code>Gazebo → /scan·/odom → Cartographer → turtlemap.pgm/yaml → AMCL·Nav2 → /cmd_vel</code></span></div>
+<section id="concept"><div class="number">01</div><div><h2>SLAM과 Navigation의 역할</h2><ul><li><b>SLAM:</b> 지도가 없을 때 LiDAR와 odometry로 지도를 작성합니다.</li><li><b>Map Saver:</b> occupancy grid를 <code>.pgm</code>과 <code>.yaml</code>로 저장합니다.</li><li><b>AMCL:</b> 저장된 지도와 현재 scan을 비교해 로봇 위치를 추정합니다.</li><li><b>Nav2:</b> 전역·지역 경로와 속도 명령을 계산합니다.</li><li><code>use_sim_time:=True</code>는 Gazebo의 <code>/clock</code>을 사용한다는 뜻입니다.</li></ul></div></section>
+<section id="prepare"><div class="number">02</div><div><h2>시작 전 환경 확인</h2><pre><code>source /opt/ros/jazzy/setup.bash
+source ~/turtlebot3_ws/install/setup.bash
+export TURTLEBOT3_MODEL=burger
+echo $TURTLEBOT3_MODEL
+ros2 pkg prefix turtlebot3_gazebo
+ros2 pkg prefix turtlebot3_cartographer
+ros2 pkg prefix turtlebot3_navigation2</code></pre><div class="warn"><b>이전 Gazebo가 남았을 때:</b> 먼저 정상 종료합니다. 그래도 프로세스가 남을 때만 다른 Gazebo 작업이 없는지 확인하고 <code>sudo pkill -9 -f "gz|gazebo|ign"</code>을 사용합니다.</div></div></section>
+<section id="slam"><div class="number">03</div><div><h2>Cartographer로 지도 작성</h2><ul><li>Gazebo 월드를 완전히 띄운 뒤 Cartographer를 시작합니다.</li><li>teleop에서 <code>w/a/s/d/x</code>로 천천히 이동합니다.</li><li>벽을 반복 관찰하고 처음 위치 부근으로 돌아오면 loop closure에 도움이 됩니다.</li><li>급회전과 충돌은 odometry 오차를 키워 벽이 겹치거나 휘게 만듭니다.</li></ul></div></section>
+<section id="save"><div class="number">04</div><div><h2>지도 저장과 파일 확인</h2><pre><code>ros2 run nav2_map_server map_saver_cli -f ~/turtlemap
+ls -lh ~/turtlemap.pgm ~/turtlemap.yaml
+sed -n '1,20p' ~/turtlemap.yaml</code></pre><p>PGM과 YAML 두 파일을 확인한 뒤 SLAM·teleop·Gazebo 터미널을 종료합니다.</p></div></section>
+<section id="nav2"><div class="number">05</div><div><h2>AMCL 초기 위치와 Nav2 Goal</h2><ol><li>같은 Gazebo 월드를 다시 실행합니다.</li><li>저장한 YAML을 지정해 Navigation을 실행합니다.</li><li>RViz의 <b>2D Pose Estimate</b>로 로봇 위치와 방향을 맞춥니다.</li><li>LiDAR scan과 지도 벽이 겹치는지 확인합니다.</li><li><b>Nav2 Goal</b>로 목적지와 도착 방향을 지정합니다.</li></ol></div></section>
+<section id="coords"><div class="number">06</div><div><h2>현재 위치·클릭 좌표·Waypoint</h2><pre><code>ros2 topic echo /amcl_pose
+ros2 topic echo /clicked_point</code></pre><ul><li><code>/amcl_pose</code>는 추정 위치와 covariance를 제공합니다.</li><li>Publish Point로 클릭하면 <code>/clicked_point</code>에서 map 좌표를 읽습니다.</li><li>Waypoint 모드에서 여러 목표를 추가한 뒤 Start Waypoint Following을 누릅니다.</li></ul></div></section>
+<section id="order" class="commands"><h2>터미널에 입력하는 전체 순서</h2>
+<div class="terminal"><h3>1 · SLAM 터미널 3개</h3><pre><code># 터미널 A - 시뮬레이터
+source ~/turtlebot3_ws/install/setup.bash
+export TURTLEBOT3_MODEL=burger
 ros2 launch turtlebot3_gazebo turtlebot3_world.launch.py
-ros2 launch turtlebot3_cartographer cartographer.launch.py use_sim_time:=True
-ros2 run turtlebot3_teleop teleop_keyboard
-ros2 run nav2_map_server map_saver_cli -f ~/map
 
+# 터미널 B - Cartographer
+source ~/turtlebot3_ws/install/setup.bash
+export TURTLEBOT3_MODEL=burger
+ros2 launch turtlebot3_cartographer cartographer.launch.py use_sim_time:=True
+
+# 터미널 C - 키보드 조작
+source ~/turtlebot3_ws/install/setup.bash
+export TURTLEBOT3_MODEL=burger
+ros2 run turtlebot3_teleop teleop_keyboard</code></pre></div>
+<div class="terminal"><h3>2 · 지도 저장</h3><pre><code># 터미널 D
+ros2 run nav2_map_server map_saver_cli -f ~/turtlemap
+ls -lh ~/turtlemap.pgm ~/turtlemap.yaml</code></pre></div>
+<div class="terminal"><h3>3 · Navigation 터미널 2개</h3><pre><code># 터미널 A - 같은 월드 다시 실행
+ros2 launch turtlebot3_gazebo turtlebot3_world.launch.py
+
+# 터미널 B - 저장 지도 기반 Nav2
 ros2 launch turtlebot3_navigation2 navigation2.launch.py \
-  use_sim_time:=True map:=$HOME/map.yaml
-ros2 topic echo /amcl_pose
-ros2 topic echo /clicked_point</code></pre><ol><li>지도 파일 두 개가 저장됩니다.</li><li>LiDAR 스캔과 지도가 겹칩니다.</li><li>목표 경로가 생성되고 로봇이 도착합니다.</li></ol></section>
-<div class="bottom-buttons"><a target="_blank" rel="noopener" href="../assets/turtlebot3-02/turtlebot3-gazebo-slam-navigation-presentation.html">원본 HTML</a><a target="_blank" rel="noopener" href="../assets/turtlebot3-02/turtlebot3-gazebo-slam-navigation.pdf">강의 PDF</a></div></main></div></body></html>
+  use_sim_time:=True map:=$HOME/turtlemap.yaml</code></pre></div></section>
+<section id="trouble"><div class="number">FIX</div><div><h2>문제 해결</h2><ul><li><b>패키지를 못 찾음:</b> ROS와 workspace setup을 source하고 빌드를 확인합니다.</li><li><b>RViz가 멈춤:</b> <code>ros2 topic echo /clock</code>으로 시뮬레이션 시간을 봅니다.</li><li><b>지도가 안 생김:</b> <code>/scan</code>, <code>/odom</code>, TF를 확인합니다.</li><li><b>지도를 못 읽음:</b> <code>$HOME/turtlemap.yaml</code>처럼 절대경로를 씁니다.</li><li><b>경로가 안 생김:</b> 초기 위치 재설정 → scan 정합 → costmap 순서로 확인합니다.</li></ul></div></section>
+<section><div class="number">✓</div><div><h2>완료 체크리스트</h2><ul><li>Gazebo에서 <code>/scan</code>과 <code>/odom</code>이 발행됩니다.</li><li>지도 PGM·YAML을 모두 저장했습니다.</li><li>AMCL scan과 지도 벽이 일치합니다.</li><li>Nav2 Goal에 도착하고 Waypoint를 순서대로 방문합니다.</li></ul></div></section>
+<div class="bottom-buttons"><a href="turtlebot3-environment.html">← 01</a><a href="turtlebot3-sbc-setup.html">03 SBC Setup →</a></div></main></div></body></html>

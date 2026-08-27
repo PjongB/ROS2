@@ -12,4 +12,4 @@ ros2 launch turtlebot3_bringup robot.launch.py
 # PC
 ros2 launch turtlebot3_navigation2 navigation2.launch.py \
   map:=$HOME/map.yaml</code></pre><ol><li>지도와 LiDAR가 일치합니다.</li><li>로봇 위치와 방향이 실제와 같습니다.</li><li>경로가 생성되고 안전하게 목표에 도착합니다.</li><li>Waypoint를 지정한 순서로 방문합니다.</li></ol></section>
-</main></div></body></html>
+<section><div class="number">FIX</div><div><h2>문제 해결</h2><ul><li><b>scan과 지도가 어긋남:</b> 2D Pose Estimate를 실제 위치·방향에 맞게 다시 지정합니다.</li><li><b>경로 생성 실패:</b> 목표가 지도 자유 공간에 있는지, global costmap과 planner 상태를 확인합니다.</li><li><b>로봇이 움직이지 않음:</b> Nav2 lifecycle 상태, controller와 <code>/cmd_vel</code>을 확인합니다.</li><li><b>장애물 앞에서 멈춤:</b> local costmap의 obstacle·inflation layer와 회피 공간을 확인합니다.</li><li><b>목표 방향이 이상함:</b> Nav2 Goal 화살표의 끝 방향이 도착 후 orientation입니다.</li></ul></div></section><div class="bottom-buttons"><a href="turtlebot3-slam.html">← 04</a><a href="turtlebot3-python-navigation.html">06 Python →</a></div></main></div></body></html>

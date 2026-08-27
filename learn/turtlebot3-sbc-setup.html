@@ -1,13 +1,76 @@
-<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>TurtleBot3 SBC Setup · ROS2</title><link rel="stylesheet" href="mobile-robot-summary.css"></head><body><header><div class="shell top"><a class="brand" href="../index.html"><b>ROS</b>2 LEARN</a><a href="../index.html">← 전체 강의</a></div></header><section class="hero"><div class="shell"><small>06.03 · TURTLEBOT3 · RASPBERRY PI</small><h1>TurtleBot3 SBC Setup</h1><p>Raspberry Pi 4에 Ubuntu Server 24.04와 ROS 2 Jazzy를 설치하고 OpenCR·LiDAR·PC 통신을 준비합니다.</p><div class="source-buttons"><a class="html" target="_blank" rel="noopener" href="../assets/turtlebot3-03/turtlebot3-sbc-setup-presentation.html">원본 HTML</a><a class="html" href="#check">체크리스트 ↓</a></div></div></section><div class="shell layout"><nav><b>목차</b><a href="#image">SD 이미지</a><a href="#network">네트워크</a><a href="#ros">ROS 2</a><a href="#robot">로봇 패키지</a><a href="#opencr">OpenCR</a><a href="#check">검증</a></nav><main>
-<div class="intro"><b>역할 구분</b><span>SBC는 센서·모터와 bringup을 담당하고, PC는 RViz·SLAM·Nav2·teleop을 담당합니다. 둘은 같은 네트워크와 ROS Domain을 사용합니다.</span></div>
-<section id="image"><div class="number">01</div><div><h2>Ubuntu Server SD 카드</h2><ul><li>Raspberry Pi Imager에서 Raspberry Pi 4와 Ubuntu Server 24.04 64-bit를 선택합니다.</li><li>사용자 이름·비밀번호·Wi-Fi·시간대·SSH를 미리 설정합니다.</li><li>저장장치가 올바른 microSD인지 재확인한 뒤 기록합니다.</li></ul></div></section>
-<section id="network"><div class="number">02</div><div><h2>부팅·IP·SSH</h2><pre><code>hostname -I
-ssh &lt;사용자명&gt;@&lt;로봇_IP&gt;
-ping -c 3 google.com</code></pre><p>IP가 없다면 Wi-Fi 설정과 공유기 연결부터 해결합니다. 인터넷, SSH, 시간 동기화가 된 뒤 패키지 설치로 넘어갑니다.</p></div></section>
-<section id="ros"><div class="number">03</div><div><h2>ROS 2 Jazzy</h2><p>공식 Ubuntu 설치 절차로 locale·Universe·ROS APT 저장소를 설정하고 <code>ros-jazzy-ros-base</code>와 개발 도구를 설치합니다. 설치 뒤 <code>/opt/ros/jazzy/setup.bash</code>를 source합니다.</p></div></section>
-<section id="robot"><div class="number">04</div><div><h2>TurtleBot3 패키지와 환경변수</h2><pre><code>export ROS_DOMAIN_ID=&lt;수업 도메인&gt;
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>TurtleBot3 SBC Setup · ROS2</title><link rel="stylesheet" href="mobile-robot-summary.css"><style>.warn{padding:15px;border:1px solid #e0a52e;border-radius:12px;background:#fff8df}.danger{padding:15px;border:1px solid #dc6868;border-radius:12px;background:#fff0f0}.terminal{margin:14px 0;padding:18px;border:1px solid #d9dfea;border-radius:14px}.terminal h3{margin:0 0 7px}.terminal pre{overflow:auto;padding:16px;border-radius:11px;color:#deebf6;background:#0e1726;font:13px/1.7 ui-monospace,monospace;white-space:pre-wrap}</style></head><body>
+<header><div class="shell top"><a class="brand" href="../index.html"><b>ROS</b>2 LEARN</a><a href="turtlebot3-gazebo-slam-navigation.html">← TurtleBot3 02</a></div></header>
+<section class="hero"><div class="shell"><small>06.03 · TURTLEBOT3 · UBUNTU 24.04 + ROS 2 JAZZY + OPENCR</small><h1>TurtleBot3 SBC Setup</h1><p>Raspberry Pi 4에 Ubuntu Server를 설치하고 ROS 2·TurtleBot3 패키지·udev·Domain ID·LiDAR·OpenCR 펌웨어를 구성합니다.</p><div class="source-buttons"><a class="html" target="_blank" rel="noopener" href="../assets/turtlebot3-03/turtlebot3-sbc-setup-presentation.html">원본 HTML</a><a class="pdf" target="_blank" rel="noopener" href="../assets/turtlebot3-03/turtlebot3-sbc-setup.pdf">강의 PDF</a><a class="html" href="#order">터미널 실행 순서 ↓</a></div></div></section>
+<div class="shell layout"><nav><b>강의 목차</b><a href="#architecture">PC·SBC 역할</a><a href="#image">SD 카드</a><a href="#network">네트워크·SSH</a><a href="#ros">ROS 2 Jazzy</a><a href="#packages">로봇 패키지</a><a href="#udev">udev·환경변수</a><a href="#opencr">OpenCR</a><a href="#order">터미널 순서</a><a href="#trouble">문제 해결</a></nav><main>
+<div class="intro"><b>전체 흐름</b><span><code>microSD → Wi-Fi·SSH → ROS 2 Base → TurtleBot3 build → udev·Domain·LDS → OpenCR → bringup → PC teleop</code></span></div>
+<section id="architecture"><div class="number">MAP</div><div><h2>PC와 SBC 역할 구분</h2><pre><code>SBC: LiDAR + OpenCR + motor + robot.launch.py
+                 │ 같은 Wi-Fi / ROS_DOMAIN_ID
+PC: RViz + Cartographer + Nav2 + teleop + Python</code></pre><p>SBC에는 GUI가 필요 없으므로 <code>ros-jazzy-ros-base</code>를 사용하고 RViz·Gazebo는 PC에서 실행합니다.</p></div></section>
+<section id="image"><div class="number">01</div><div><h2>Ubuntu Server microSD 만들기</h2><ol><li><code>sudo apt install rpi-imager</code> 후 Imager를 실행합니다.</li><li>Raspberry Pi 4와 Ubuntu Server 24.04 64-bit를 선택합니다.</li><li>Username·Password·Wi-Fi·시간대와 SSH를 설정합니다.</li><li>대상 microSD의 장치명과 용량을 다시 확인하고 기록합니다.</li><li>Pi에 삽입하고 HDMI·키보드를 연결해 첫 부팅을 확인합니다.</li></ol><div class="danger"><b>주의:</b> Storage 선택을 틀리면 다른 디스크의 데이터가 지워질 수 있습니다.</div></div></section>
+<section id="network"><div class="number">02</div><div><h2>IP 확인과 PC SSH 접속</h2><pre><code># SBC
+ip a
+
+# Wi-Fi IP가 없을 때
+sudo nano /etc/netplan/50-cloud-init.yaml
+sudo netplan apply
+
+# PC
+ssh &lt;username&gt;@&lt;robot-ip&gt;</code></pre><p><code>wlan0</code>의 <code>inet</code> 주소를 사용하고 PC와 로봇을 같은 공유기에 연결합니다.</p></div></section>
+<section id="ros"><div class="number">03</div><div><h2>ROS 2 Jazzy 설치 원칙</h2><ul><li>UTF-8 locale, Ubuntu Universe, ROS APT 저장소를 공식 Jazzy 문서 순서로 설정합니다.</li><li>개발 도구와 <code>ros-jazzy-ros-base</code>를 설치합니다.</li><li><code>source /opt/ros/jazzy/setup.bash</code>와 <code>ros2 --help</code>로 확인합니다.</li></ul><div class="warn"><b>중요:</b> ROS 저장소 등록 명령은 변경될 수 있으므로 PDF에 연결된 공식 Jazzy 문서의 현재 명령을 사용합니다.</div></div></section>
+<section id="packages"><div class="number">04</div><div><h2>TurtleBot3 패키지와 빌드</h2><pre><code>sudo apt install python3-argcomplete python3-colcon-common-extensions \
+  libboost-system-dev build-essential libudev-dev
+sudo apt install ros-jazzy-hls-lfcd-lds-driver ros-jazzy-turtlebot3-msgs \
+  ros-jazzy-dynamixel-sdk ros-jazzy-xacro
+
+mkdir -p ~/turtlebot3_ws/src
+cd ~/turtlebot3_ws/src
+git clone -b jazzy https://github.com/ROBOTIS-GIT/turtlebot3.git
+git clone -b jazzy https://github.com/ROBOTIS-GIT/ld08_driver.git
+git clone -b jazzy https://github.com/ROBOTIS-GIT/coin_d4_driver
+
+# SBC에는 SLAM·Navigation GUI 패키지가 필요 없음
+cd ~/turtlebot3_ws/src/turtlebot3
+rm -r turtlebot3_cartographer turtlebot3_navigation2
+
+cd ~/turtlebot3_ws
+colcon build --symlink-install --parallel-workers 1</code></pre><p>삭제 명령은 정확히 위 두 패키지 폴더에서만 실행합니다. 단일 worker는 Pi의 메모리 부담을 줄입니다.</p></div></section>
+<section id="udev"><div class="number">05</div><div><h2>OpenCR udev·Domain·모델 설정</h2><pre><code>sudo cp `ros2 pkg prefix turtlebot3_bringup`/share/turtlebot3_bringup/script/99-turtlebot3-cdc.rules /etc/udev/rules.d/
+sudo udevadm control --reload-rules
+sudo udevadm trigger
+
+# PC와 같은 값
+export ROS_DOMAIN_ID=30
 export TURTLEBOT3_MODEL=burger
-export LDS_MODEL=LDS-02</code></pre><p>실제 장착 모델에 따라 <code>LDS-01</code> 또는 <code>LDS-02</code>를 선택하며 PC의 Domain ID도 같아야 합니다.</p></div></section>
-<section id="opencr"><div class="number">05</div><div><h2>OpenCR 연결</h2><ul><li>OpenCR용 udev 규칙을 적용하고 USB 연결을 확인합니다.</li><li>Burger에 맞는 OpenCR 펌웨어를 내려받아 업로드합니다.</li><li>배터리를 연결하고 bringup 로그에서 모터와 LiDAR 초기화를 확인합니다.</li></ul></div></section>
-<section id="check" class="commands"><h2>완료 체크리스트</h2><ol><li>SBC가 Wi-Fi IP를 받고 PC에서 SSH 접속됩니다.</li><li><code>ros2 --help</code>가 정상 출력됩니다.</li><li>PC와 SBC의 <code>ROS_DOMAIN_ID</code>가 같습니다.</li><li>모델과 LDS 환경변수가 실제 하드웨어와 일치합니다.</li><li><code>ros2 launch turtlebot3_bringup robot.launch.py</code>가 오류 없이 실행됩니다.</li><li>PC에서 로봇 토픽이 보이고 teleop 명령에 반응합니다.</li></ol><p><b>안전:</b> 첫 모터 시험은 바퀴를 바닥에서 들어 올린 상태로 진행합니다.</p></section>
-<div class="bottom-buttons"><a target="_blank" rel="noopener" href="../assets/turtlebot3-03/turtlebot3-sbc-setup-presentation.html">원본 HTML</a><a target="_blank" rel="noopener" href="../assets/turtlebot3-03/turtlebot3-sbc-setup.pdf">강의 PDF</a></div></main></div></body></html>
+
+# 실제 센서에 맞춰 하나만 선택
+export LDS_MODEL=LDS-01   # 또는 LDS-02 / LDS-03</code></pre><p>검증 후 필요한 값만 <code>~/.bashrc</code>에 한 번 추가합니다. <code>grep -n 'ROS_DOMAIN_ID\|TURTLEBOT3_MODEL\|LDS_MODEL' ~/.bashrc</code>로 중복을 확인합니다.</p></div></section>
+<section id="opencr"><div class="number">06</div><div><h2>OpenCR 펌웨어</h2><pre><code>sudo dpkg --add-architecture armhf
+sudo apt-get update
+sudo apt-get install libc6:armhf
+
+export OPENCR_MODEL=burger
+export OPENCR_PORT=/dev/ttyACM0
+wget https://github.com/ROBOTIS-GIT/OpenCR-Binaries/raw/master/turtlebot3/ROS2/latest/opencr_update.tar.bz2
+tar -xvf opencr_update.tar.bz2
+cd opencr_update
+./update.sh $OPENCR_PORT $OPENCR_MODEL.opencr</code></pre><ul><li>Waffle은 모델 값을 알맞게 변경합니다.</li><li><code>ls -l /dev/ttyACM*</code>로 포트를 먼저 확인합니다.</li><li>업로드 중 전원이나 USB를 분리하지 않습니다.</li></ul></div></section>
+<section id="order" class="commands"><h2>터미널에 입력하는 전체 실행 순서</h2>
+<div class="terminal"><h3>1 · PC에서 SBC 접속</h3><pre><code>ssh &lt;username&gt;@&lt;robot-ip&gt;</code></pre></div>
+<div class="terminal"><h3>2 · SBC 환경 확인과 bringup</h3><pre><code>source /opt/ros/jazzy/setup.bash
+source ~/turtlebot3_ws/install/setup.bash
+echo $ROS_DOMAIN_ID
+echo $TURTLEBOT3_MODEL
+echo $LDS_MODEL
+ls -l /dev/ttyACM*
+ros2 launch turtlebot3_bringup robot.launch.py</code></pre></div>
+<div class="terminal"><h3>3 · PC 새 터미널에서 통신 확인</h3><pre><code>source /opt/ros/jazzy/setup.bash
+source ~/turtlebot3_ws/install/setup.bash
+export ROS_DOMAIN_ID=30
+export TURTLEBOT3_MODEL=burger
+ros2 node list
+ros2 topic list
+ros2 topic hz /scan</code></pre></div>
+<div class="terminal"><h3>4 · PC 새 터미널에서 주행 시험</h3><pre><code>ros2 run turtlebot3_teleop teleop_keyboard</code></pre></div></section>
+<section id="trouble"><div class="number">FIX</div><div><h2>문제 해결과 안전</h2><ul><li><b>SSH 실패:</b> 전원 → IP → 같은 서브넷 → ping → SSH 순서로 확인합니다.</li><li><b>토픽이 안 보임:</b> 양쪽 setup, Domain ID, 네트워크와 방화벽을 확인합니다.</li><li><b><code>/dev/ttyACM0</code> 없음:</b> OpenCR 전원·USB·udev 규칙을 확인합니다.</li><li><b>LiDAR가 안 돎:</b> LDS 모델, 드라이버와 센서 전원을 확인합니다.</li><li><b>빌드 중 멈춤:</b> 단일 worker, swap·저장공간·온도를 확인합니다.</li><li><b>모터가 반응하지 않음:</b> firmware 모델, 배터리와 <code>/cmd_vel</code>을 확인합니다.</li></ul><div class="danger"><b>첫 구동:</b> 바퀴를 들어 올리고 저속 명령과 정지 키부터 검증합니다.</div></div></section>
+<section><div class="number">✓</div><div><h2>완료 체크리스트</h2><ul><li>PC에서 SBC로 SSH 접속됩니다.</li><li>Domain·로봇·LDS 모델이 실제 구성과 일치합니다.</li><li>OpenCR firmware upload가 성공합니다.</li><li>bringup에서 모터·LiDAR가 초기화됩니다.</li><li>PC에서 <code>/scan</code>과 teleop을 확인했습니다.</li></ul></div></section>
+<div class="bottom-buttons"><a href="turtlebot3-gazebo-slam-navigation.html">← 02</a><a href="turtlebot3-slam.html">04 SLAM →</a></div></main></div></body></html>

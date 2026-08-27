@@ -28,4 +28,4 @@ export TURTLEBOT3_MODEL=burger
 ros2 launch turtlebot3_gazebo empty_world.launch.py
 # 새 터미널
 ros2 run turtlebot3_teleop teleop_keyboard</code></pre><h2>완료 체크</h2><ol><li>빌드가 오류 없이 끝납니다.</li><li>모델 환경변수가 burger로 출력됩니다.</li><li>Gazebo에 로봇 모델이 나타납니다.</li><li>키보드 명령으로 이동하고 정지합니다.</li></ol></section>
-</main></div></body></html>
+<section><div class="number">FIX</div><div><h2>문제 해결</h2><ul><li><b>clone 시 branch 오류:</b> 저장소의 <code>jazzy</code> 브랜치 존재 여부와 철자를 확인합니다.</li><li><b>rosdep 오류:</b> 워크스페이스 루트에서 실행했는지, 패키지 목록이 업데이트됐는지 확인합니다.</li><li><b>빌드 실패:</b> 가장 처음 발생한 error부터 해결한 뒤 <code>colcon build --symlink-install</code>을 다시 실행합니다.</li><li><b>launch 패키지를 못 찾음:</b> <code>source ~/turtlebot3_ws/install/setup.bash</code>가 적용됐는지 봅니다.</li><li><b>모델이 안 보임:</b> <code>TURTLEBOT3_MODEL</code> 값과 Gazebo 프로세스를 확인합니다.</li></ul></div></section><div class="bottom-buttons"><a href="../index.html">전체 목차</a><a href="turtlebot3-gazebo-slam-navigation.html">02 Gazebo →</a></div></main></div></body></html>

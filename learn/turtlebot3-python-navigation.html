@@ -28,4 +28,12 @@ while not navigator.isTaskComplete():
 print(navigator.getResult())
 navigator.lifecycleShutdown()
 rclpy.shutdown()</code></pre><h2>완료 체크</h2><ol><li>Nav2가 Active가 된 뒤 목표를 보냅니다.</li><li>목표 frame과 timestamp가 유효합니다.</li><li>주행 중 피드백이 갱신됩니다.</li><li>결과를 확인하고 navigator와 rclpy를 종료합니다.</li></ol></section>
-</main></div></body></html>
+<section class="commands"><h2>실습 터미널 실행 순서</h2><pre><code># 터미널 A - SBC
+ros2 launch turtlebot3_bringup robot.launch.py
+
+# 터미널 B - PC Nav2
+ros2 launch turtlebot3_navigation2 navigation2.launch.py map:=$HOME/map.yaml
+
+# RViz에서 2D Pose Estimate 완료 후 터미널 C
+source ~/turtlebot3_ws/install/setup.bash
+jupyter notebook</code></pre></section><section><div class="number">FIX</div><div><h2>문제 해결</h2><ul><li><b>Navigator가 Active에서 대기:</b> Nav2 lifecycle 노드와 map·AMCL 초기화를 확인합니다.</li><li><b>목표가 거부됨:</b> <code>frame_id='map'</code>, timestamp와 목표가 자유 공간인지 확인합니다.</li><li><b>Notebook 재실행 오류:</b> 기존 rclpy context를 shutdown한 뒤 kernel을 재시작합니다.</li><li><b>Waypoint 일부 실패:</b> <code>getResult()</code>와 missed waypoint 정보를 기록합니다.</li><li><b>중간 취소:</b> 필요할 때 <code>navigator.cancelTask()</code>를 호출하고 결과를 확인합니다.</li></ul></div></section><div class="bottom-buttons"><a href="turtlebot3-navigation.html">← 05</a><a href="../index.html">전체 목차</a></div></main></div></body></html>

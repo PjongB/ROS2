@@ -16,4 +16,4 @@ ros2 run turtlebot3_teleop teleop_keyboard
 
 # PC 터미널 3 - 저장
 ros2 run nav2_map_server map_saver_cli -f ~/map</code></pre><ol><li>RViz의 지도와 scan이 안정적으로 겹칩니다.</li><li>미탐색 구역과 심하게 휘어진 벽이 없습니다.</li><li>PGM·YAML 두 파일이 저장됐습니다.</li></ol></section>
-</main></div></body></html>
+<section><div class="number">FIX</div><div><h2>문제 해결</h2><ul><li><b>PC에서 토픽이 안 보임:</b> PC·SBC의 Domain ID, Wi-Fi와 ROS setup을 확인합니다.</li><li><b>scan이 없음:</b> LDS 모델과 bringup 로그, LiDAR 회전을 확인합니다.</li><li><b>지도가 겹침:</b> 속도를 낮추고 충돌·미끄러짐을 피하면서 이미 본 구역으로 돌아옵니다.</li><li><b>지도 저장 실패:</b> 저장 경로의 쓰기 권한과 <code>nav2_map_server</code> 설치를 확인합니다.</li></ul></div></section><div class="bottom-buttons"><a href="turtlebot3-sbc-setup.html">← 03</a><a href="turtlebot3-navigation.html">05 Navigation →</a></div></main></div></body></html>
