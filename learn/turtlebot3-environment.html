@@ -1,0 +1,31 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>TurtleBot3 개발 환경 구축 · ROS2</title><link rel="stylesheet" href="mobile-robot-summary.css"></head><body>
+<header><div class="shell top"><a class="brand" href="../index.html"><b>ROS</b>2 LEARN</a><a href="../index.html">← 전체 강의</a></div></header>
+<section class="hero"><div class="shell"><small>06.01 · TURTLEBOT3 · PC SETUP</small><h1>TurtleBot3 개발 환경 구축</h1><p>ROS 2 Jazzy PC에 Cartographer·Nav2·Gazebo와 ROBOTIS 패키지를 설치하고 첫 시뮬레이션 주행까지 확인합니다.</p><div class="source-buttons"><a class="html" target="_blank" rel="noopener" href="../assets/turtlebot3-01/turtlebot3-environment-presentation.html">원본 HTML</a><a class="pdf" target="_blank" rel="noopener" href="../assets/turtlebot3-01/turtlebot3-environment.pdf">강의 PDF</a><a class="html" href="#commands">실행 순서 ↓</a></div></div></section>
+<div class="shell layout"><nav><b>목차</b><a href="#goal">학습 목표</a><a href="#packages">필수 패키지</a><a href="#workspace">워크스페이스</a><a href="#model">모델 설정</a><a href="#test">실행 확인</a><a href="#commands">전체 명령</a></nav><main>
+<div class="intro"><b>한 줄 정리</b><span>PC 의존성 설치 → 소스 clone → rosdep → colcon build → 모델 지정 → Gazebo·teleop 검증 순서로 진행합니다.</span></div>
+<section id="goal"><div class="number">MAP</div><div><h2>학습 목표</h2><ul><li>TurtleBot3 Burger/Waffle Pi와 PC 개발 환경의 역할을 구분합니다.</li><li>ROS 2 Jazzy용 ROBOTIS 패키지를 소스 빌드합니다.</li><li>Gazebo에서 로봇을 띄우고 키보드로 움직입니다.</li></ul></div></section>
+<section id="packages"><div class="number">01</div><div><h2>필수 패키지</h2><p>Cartographer는 지도 작성, Nav2는 위치 추정과 경로 주행, colcon은 ROS 워크스페이스 빌드에 사용합니다.</p><pre><code>sudo apt install ros-jazzy-cartographer ros-jazzy-cartographer-ros -y
+sudo apt install ros-jazzy-navigation2 ros-jazzy-nav2-bringup -y
+sudo apt install python3-colcon-common-extensions -y</code></pre></div></section>
+<section id="workspace"><div class="number">02</div><div><h2>워크스페이스 구성</h2><p><code>jazzy</code> 브랜치의 SDK·메시지·본체·시뮬레이션 저장소를 같은 <code>src</code> 아래에 둡니다. <code>rosdep</code>은 반드시 워크스페이스 루트에서 실행합니다.</p></div></section>
+<section id="model"><div class="number">03</div><div><h2>모델 환경변수</h2><pre><code>export TURTLEBOT3_MODEL=burger
+echo $TURTLEBOT3_MODEL</code></pre><p><code>~/.bashrc</code>에 추가하기 전 기존 항목을 검색하면 중복 설정을 피할 수 있습니다.</p></div></section>
+<section id="test"><div class="number">04</div><div><h2>Gazebo와 teleop 검증</h2><ul><li>첫 터미널에서 빈 Gazebo 월드를 실행합니다.</li><li>두 번째 터미널에서 teleop을 실행합니다.</li><li>로봇이 전진·회전·정지하고 터미널 오류가 없는지 확인합니다.</li></ul></div></section>
+<section id="commands" class="commands"><h2>전체 실행 순서</h2><pre><code>mkdir -p ~/turtlebot3_ws/src
+cd ~/turtlebot3_ws/src
+git clone -b jazzy https://github.com/ROBOTIS-GIT/DynamixelSDK.git
+git clone -b jazzy https://github.com/ROBOTIS-GIT/turtlebot3_msgs.git
+git clone -b jazzy https://github.com/ROBOTIS-GIT/turtlebot3.git
+git clone -b jazzy https://github.com/ROBOTIS-GIT/turtlebot3_simulations.git
+
+cd ~/turtlebot3_ws
+rosdep update
+rosdep install --from-paths src --ignore-src -r -y
+colcon build --symlink-install
+source ~/turtlebot3_ws/install/setup.bash
+export TURTLEBOT3_MODEL=burger
+
+ros2 launch turtlebot3_gazebo empty_world.launch.py
+# 새 터미널
+ros2 run turtlebot3_teleop teleop_keyboard</code></pre><h2>완료 체크</h2><ol><li>빌드가 오류 없이 끝납니다.</li><li>모델 환경변수가 burger로 출력됩니다.</li><li>Gazebo에 로봇 모델이 나타납니다.</li><li>키보드 명령으로 이동하고 정지합니다.</li></ol></section>
+</main></div></body></html>
