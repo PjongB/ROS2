@@ -6,10 +6,24 @@
 <section id="coords"><div class="number">04</div><div><h2>현재 위치와 지도 좌표</h2><pre><code>ros2 topic echo /amcl_pose
 ros2 topic echo /clicked_point</code></pre><p>Publish Point로 지도를 클릭하면 <code>/clicked_point</code>에서 해당 좌표를 확인할 수 있습니다.</p></div></section>
 <section id="waypoint"><div class="number">05</div><div><h2>다중 Waypoint</h2><p>RViz의 Waypoint 모드에서 Nav2 Goal 방식으로 여러 점을 순서대로 추가하고 Start Waypoint Following을 실행합니다.</p></div></section>
-<section id="commands" class="commands"><h2>실행 순서</h2><pre><code># SBC
+<section id="commands" class="commands"><h2>터미널에 입력하는 전체 실행 순서</h2><pre><code># 터미널 A - PC에서 SBC 접속 후 bringup
+ssh &lt;username&gt;@&lt;robot-ip&gt;
+source /opt/ros/jazzy/setup.bash
+source ~/turtlebot3_ws/install/setup.bash
 ros2 launch turtlebot3_bringup robot.launch.py
 
-# PC
+# 터미널 B - PC에서 저장 지도 기반 Navigation
+source /opt/ros/jazzy/setup.bash
+source ~/turtlebot3_ws/install/setup.bash
+export ROS_DOMAIN_ID=30
+export TURTLEBOT3_MODEL=burger
+ls -lh $HOME/turtlemap.yaml $HOME/turtlemap.pgm
 ros2 launch turtlebot3_navigation2 navigation2.launch.py \
-  map:=$HOME/map.yaml</code></pre><ol><li>지도와 LiDAR가 일치합니다.</li><li>로봇 위치와 방향이 실제와 같습니다.</li><li>경로가 생성되고 안전하게 목표에 도착합니다.</li><li>Waypoint를 지정한 순서로 방문합니다.</li></ol></section>
+  map:=$HOME/turtlemap.yaml
+
+# 터미널 C - 현재 위치 확인
+ros2 topic echo /amcl_pose
+
+# 터미널 D - RViz Publish Point 좌표 확인
+ros2 topic echo /clicked_point</code></pre><ol><li>RViz에서 2D Pose Estimate를 먼저 지정합니다.</li><li>지도와 LiDAR가 일치합니다.</li><li>경로가 생성되고 안전하게 목표에 도착합니다.</li><li>Waypoint를 지정한 순서로 방문합니다.</li></ol></section>
 <section><div class="number">FIX</div><div><h2>문제 해결</h2><ul><li><b>scan과 지도가 어긋남:</b> 2D Pose Estimate를 실제 위치·방향에 맞게 다시 지정합니다.</li><li><b>경로 생성 실패:</b> 목표가 지도 자유 공간에 있는지, global costmap과 planner 상태를 확인합니다.</li><li><b>로봇이 움직이지 않음:</b> Nav2 lifecycle 상태, controller와 <code>/cmd_vel</code>을 확인합니다.</li><li><b>장애물 앞에서 멈춤:</b> local costmap의 obstacle·inflation layer와 회피 공간을 확인합니다.</li><li><b>목표 방향이 이상함:</b> Nav2 Goal 화살표의 끝 방향이 도착 후 orientation입니다.</li></ul></div></section><div class="bottom-buttons"><a href="turtlebot3-slam.html">← 04</a><a href="turtlebot3-python-navigation.html">06 Python →</a></div></main></div></body></html>

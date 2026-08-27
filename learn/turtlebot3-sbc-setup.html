@@ -16,7 +16,31 @@ sudo netplan apply
 
 # PC
 ssh &lt;username&gt;@&lt;robot-ip&gt;</code></pre><p><code>wlan0</code>의 <code>inet</code> 주소를 사용하고 PC와 로봇을 같은 공유기에 연결합니다.</p></div></section>
-<section id="ros"><div class="number">03</div><div><h2>ROS 2 Jazzy 설치 원칙</h2><ul><li>UTF-8 locale, Ubuntu Universe, ROS APT 저장소를 공식 Jazzy 문서 순서로 설정합니다.</li><li>개발 도구와 <code>ros-jazzy-ros-base</code>를 설치합니다.</li><li><code>source /opt/ros/jazzy/setup.bash</code>와 <code>ros2 --help</code>로 확인합니다.</li></ul><div class="warn"><b>중요:</b> ROS 저장소 등록 명령은 변경될 수 있으므로 PDF에 연결된 공식 Jazzy 문서의 현재 명령을 사용합니다.</div></div></section>
+<section id="ros"><div class="number">03</div><div><h2>ROS 2 Jazzy 설치 - 터미널에서 그대로 입력</h2><pre><code># 1. UTF-8 locale
+sudo apt update
+sudo apt install locales -y
+sudo locale-gen en_US en_US.UTF-8
+sudo update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8
+export LANG=en_US.UTF-8
+locale
+
+# 2. Universe와 ROS 2 APT source
+sudo apt install software-properties-common -y
+sudo add-apt-repository universe
+sudo apt update
+sudo apt install curl -y
+export ROS_APT_SOURCE_VERSION=$(curl -s https://api.github.com/repos/ros-infrastructure/ros-apt-source/releases/latest | grep -F "tag_name" | awk -F'"' '{print $4}')
+curl -L -o /tmp/ros2-apt-source.deb "https://github.com/ros-infrastructure/ros-apt-source/releases/download/${ROS_APT_SOURCE_VERSION}/ros2-apt-source_${ROS_APT_SOURCE_VERSION}.$(. /etc/os-release &amp;&amp; echo ${UBUNTU_CODENAME:-${VERSION_CODENAME}})_all.deb"
+sudo dpkg -i /tmp/ros2-apt-source.deb
+
+# 3. ROS Base와 개발 도구
+sudo apt update
+sudo apt upgrade -y
+sudo apt install ros-dev-tools ros-jazzy-ros-base -y
+
+# 4. 현재 터미널 적용·확인
+source /opt/ros/jazzy/setup.bash
+ros2 --help</code></pre><div class="warn"><b>공식 Jazzy 설치 절차 기준:</b> Ubuntu 24.04 ARM64에서 APT source package를 등록하는 현재 방식입니다. 명령 전체를 한 번에 붙이지 말고 번호별로 성공 여부를 확인합니다. <a target="_blank" rel="noopener" href="https://docs.ros.org/en/jazzy/Installation/Ubuntu-Install-Debs.html">ROS 2 Jazzy Ubuntu 설치 문서 열기</a></div></div></section>
 <section id="packages"><div class="number">04</div><div><h2>TurtleBot3 패키지와 빌드</h2><pre><code>sudo apt install python3-argcomplete python3-colcon-common-extensions \
   libboost-system-dev build-essential libudev-dev
 sudo apt install ros-jazzy-hls-lfcd-lds-driver ros-jazzy-turtlebot3-msgs \

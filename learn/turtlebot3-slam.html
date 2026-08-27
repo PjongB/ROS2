@@ -4,16 +4,27 @@
 <section id="launch"><div class="number">01</div><div><h2>SBC와 PC 실행</h2><p>SBC에서 로봇 bringup을 먼저 시작하고, PC에서 Cartographer를 실행한 뒤 별도 터미널의 teleop으로 움직입니다.</p></div></section>
 <section id="mapping"><div class="number">02</div><div><h2>좋은 지도 만들기</h2><ul><li>처음에는 천천히 회전해 주변 벽을 인식시킵니다.</li><li>복도와 방의 경계를 겹쳐 지나가 loop closure를 돕습니다.</li><li>급가속·바퀴 미끄러짐·사람이 LiDAR 앞을 막는 상황을 줄입니다.</li></ul></div></section>
 <section id="save"><div class="number">03</div><div><h2>지도 저장과 확인</h2><p>완성 후 Map Saver로 저장하고 <code>map.yaml</code>의 이미지 경로, 해상도, origin과 <code>map.pgm</code> 존재 여부를 확인합니다.</p></div></section>
-<section id="commands" class="commands"><h2>PC/SBC 실행 순서</h2><pre><code># SBC
+<section id="commands" class="commands"><h2>터미널에 입력하는 전체 실행 순서</h2><pre><code># 터미널 A - PC에서 SBC 접속 후 로봇 실행
+ssh &lt;username&gt;@&lt;robot-ip&gt;
+source /opt/ros/jazzy/setup.bash
+source ~/turtlebot3_ws/install/setup.bash
 ros2 launch turtlebot3_bringup robot.launch.py
 
-# PC 터미널 1
+# 터미널 B - PC에서 통신 확인 후 SLAM
+source /opt/ros/jazzy/setup.bash
+source ~/turtlebot3_ws/install/setup.bash
+export ROS_DOMAIN_ID=30
+export TURTLEBOT3_MODEL=burger
 ros2 topic list
+ros2 topic hz /scan
 ros2 launch turtlebot3_cartographer cartographer.launch.py
 
-# PC 터미널 2
+# 터미널 C - PC 키보드 조작
+source ~/turtlebot3_ws/install/setup.bash
+export TURTLEBOT3_MODEL=burger
 ros2 run turtlebot3_teleop teleop_keyboard
 
-# PC 터미널 3 - 저장
-ros2 run nav2_map_server map_saver_cli -f ~/map</code></pre><ol><li>RViz의 지도와 scan이 안정적으로 겹칩니다.</li><li>미탐색 구역과 심하게 휘어진 벽이 없습니다.</li><li>PGM·YAML 두 파일이 저장됐습니다.</li></ol></section>
+# 터미널 D - PC 지도 저장
+ros2 run nav2_map_server map_saver_cli -f $HOME/turtlemap
+ls -lh $HOME/turtlemap.pgm $HOME/turtlemap.yaml</code></pre><ol><li>RViz의 지도와 scan이 안정적으로 겹칩니다.</li><li>미탐색 구역과 심하게 휘어진 벽이 없습니다.</li><li>PGM·YAML 두 파일이 저장됐습니다.</li></ol></section>
 <section><div class="number">FIX</div><div><h2>문제 해결</h2><ul><li><b>PC에서 토픽이 안 보임:</b> PC·SBC의 Domain ID, Wi-Fi와 ROS setup을 확인합니다.</li><li><b>scan이 없음:</b> LDS 모델과 bringup 로그, LiDAR 회전을 확인합니다.</li><li><b>지도가 겹침:</b> 속도를 낮추고 충돌·미끄러짐을 피하면서 이미 본 구역으로 돌아옵니다.</li><li><b>지도 저장 실패:</b> 저장 경로의 쓰기 권한과 <code>nav2_map_server</code> 설치를 확인합니다.</li></ul></div></section><div class="bottom-buttons"><a href="turtlebot3-sbc-setup.html">← 03</a><a href="turtlebot3-navigation.html">05 Navigation →</a></div></main></div></body></html>

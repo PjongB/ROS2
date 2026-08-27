@@ -11,7 +11,8 @@ sudo apt install python3-colcon-common-extensions -y</code></pre></div></section
 <section id="model"><div class="number">03</div><div><h2>모델 환경변수</h2><pre><code>export TURTLEBOT3_MODEL=burger
 echo $TURTLEBOT3_MODEL</code></pre><p><code>~/.bashrc</code>에 추가하기 전 기존 항목을 검색하면 중복 설정을 피할 수 있습니다.</p></div></section>
 <section id="test"><div class="number">04</div><div><h2>Gazebo와 teleop 검증</h2><ul><li>첫 터미널에서 빈 Gazebo 월드를 실행합니다.</li><li>두 번째 터미널에서 teleop을 실행합니다.</li><li>로봇이 전진·회전·정지하고 터미널 오류가 없는지 확인합니다.</li></ul></div></section>
-<section id="commands" class="commands"><h2>전체 실행 순서</h2><pre><code>mkdir -p ~/turtlebot3_ws/src
+<section id="commands" class="commands"><h2>터미널에 입력하는 전체 실행 순서</h2><pre><code># 터미널 1 - 설치와 빌드
+mkdir -p ~/turtlebot3_ws/src
 cd ~/turtlebot3_ws/src
 git clone -b jazzy https://github.com/ROBOTIS-GIT/DynamixelSDK.git
 git clone -b jazzy https://github.com/ROBOTIS-GIT/turtlebot3_msgs.git
@@ -25,7 +26,12 @@ colcon build --symlink-install
 source ~/turtlebot3_ws/install/setup.bash
 export TURTLEBOT3_MODEL=burger
 
+# 터미널 1 - Gazebo 실행
 ros2 launch turtlebot3_gazebo empty_world.launch.py
-# 새 터미널
+
+# 터미널 2 - 새 터미널에서 다시 환경 적용 후 teleop
+source /opt/ros/jazzy/setup.bash
+source ~/turtlebot3_ws/install/setup.bash
+export TURTLEBOT3_MODEL=burger
 ros2 run turtlebot3_teleop teleop_keyboard</code></pre><h2>완료 체크</h2><ol><li>빌드가 오류 없이 끝납니다.</li><li>모델 환경변수가 burger로 출력됩니다.</li><li>Gazebo에 로봇 모델이 나타납니다.</li><li>키보드 명령으로 이동하고 정지합니다.</li></ol></section>
 <section><div class="number">FIX</div><div><h2>문제 해결</h2><ul><li><b>clone 시 branch 오류:</b> 저장소의 <code>jazzy</code> 브랜치 존재 여부와 철자를 확인합니다.</li><li><b>rosdep 오류:</b> 워크스페이스 루트에서 실행했는지, 패키지 목록이 업데이트됐는지 확인합니다.</li><li><b>빌드 실패:</b> 가장 처음 발생한 error부터 해결한 뒤 <code>colcon build --symlink-install</code>을 다시 실행합니다.</li><li><b>launch 패키지를 못 찾음:</b> <code>source ~/turtlebot3_ws/install/setup.bash</code>가 적용됐는지 봅니다.</li><li><b>모델이 안 보임:</b> <code>TURTLEBOT3_MODEL</code> 값과 Gazebo 프로세스를 확인합니다.</li></ul></div></section><div class="bottom-buttons"><a href="../index.html">전체 목차</a><a href="turtlebot3-gazebo-slam-navigation.html">02 Gazebo →</a></div></main></div></body></html>
