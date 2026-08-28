@@ -1,0 +1,37 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="LeRobotDataset 시각화·재생과 에피소드 삭제·분할·병합·feature 제거 실습"><title>데이터셋 관리 - OMX-AI · ROS2</title><link rel="stylesheet" href="mobile-robot-summary.css"><style>.warn{padding:15px;border:1px solid #e0a52e;border-radius:12px;background:#fff8df}.danger{padding:15px;border:1px solid #d45b5b;border-radius:12px;background:#fff0f0}.good{padding:15px;border:1px solid #58a879;border-radius:12px;background:#edf9f1}</style></head><body>
+<header><div class="shell top"><a class="brand" href="../index.html"><b>ROS</b>2 LEARN</a><a href="imitation-omx-ai-data-collection.html">← 모방학습 07</a></div></header>
+<section class="hero"><div class="shell"><small>07.08 · IMITATION LEARNING · DATASET QA</small><h1>데이터셋 관리 - OMX-AI</h1><p>수집한 에피소드를 영상·관절 그래프로 검토하고, LeRobot 도구로 삭제·분할·병합·feature 제거를 안전하게 수행합니다.</p><div class="source-buttons"><a class="pdf" target="_blank" rel="noopener" href="../assets/imitation-08/omx-ai-dataset-management.pdf">강의 PDF</a><a class="html" href="#edit">편집 명령 ↓</a></div></div></section>
+<div class="shell layout"><nav><b>목차</b><a href="#visualize">웹 시각화</a><a href="#replay">로봇 재생</a><a href="#check">품질 점검</a><a href="#edit">에피소드 삭제</a><a href="#split">분할</a><a href="#merge">병합</a><a href="#feature">Feature 제거</a></nav><main>
+<div class="intro"><b>운영 원칙</b><span>원본은 보존하고 <code>--new_repo_id</code>로 편집본을 만든 뒤, 에피소드 수와 feature schema를 다시 검증합니다.</span></div>
+<section id="visualize"><div class="number">01</div><div><h2>Hub에서 데이터 시각화</h2><p><a target="_blank" rel="noopener" href="https://huggingface.co/spaces/lerobot/visualize_dataset">LeRobot Dataset Visualizer</a>에 <code>username/dataset-name</code>을 넣으면 별도 로컬 설정 없이 에피소드 영상과 그래프를 확인할 수 있습니다.</p><ul><li>전체 sample/frame, episode 수와 FPS</li><li>카메라 view와 Language Instruction</li><li><code>observation.state</code>와 <code>action</code> 관절 그래프</li><li>episode 전환·재생·일시정지</li></ul></div></section>
+<section id="replay"><div class="number">02</div><div><h2>Follower에서 에피소드 재생</h2><div class="danger"><b>실물 재생 주의:</b> 기록된 궤적대로 Follower가 움직입니다. 수집 때와 비슷한 환경을 만들고 가동 범위를 비운 뒤 낮은 위험의 에피소드부터 확인합니다.</div><pre><code>source ~/venv/il/bin/activate
+HF_USER=$(hf auth whoami | head -n 1 | sed 's/\x1b\[[0-9;]*m//g' | awk -F': ' '{print $2}' | xargs)
+
+cd ~/il_ws/src/lerobot
+lerobot-replay \
+  --robot.type=omx_follower \
+  --robot.port=/dev/omx_follower \
+  --robot.id=omx_follower_arm \
+  --dataset.repo_id=${HF_USER}/record-test \
+  --dataset.episode=0</code></pre></div></section>
+<section id="check"><div class="number">03</div><div><h2>품질 체크리스트</h2><ul><li>Task가 중간에 끊기지 않고 성공으로 끝났는가</li><li>영상과 관절값 사이 frame drop·시간 어긋남이 없는가</li><li>중요 물체가 모든 카메라 FOV 안에 있는가</li><li>관절 graph에 의도하지 않은 spike가 없는가</li><li>Task instruction, camera key, FPS와 robot type이 일관적인가</li></ul></div></section>
+<section id="edit"><div class="number">04</div><div><h2>낮은 품질의 에피소드 삭제</h2><pre><code>lerobot-edit-dataset \
+  --repo_id ${HF_USER}/record-test \
+  --new_repo_id ${HF_USER}/record-test-clean \
+  --operation.type delete_episodes \
+  --operation.episode_indices "[0, 2, 3]"</code></pre><div class="good"><b>권장:</b> 처음에는 <code>--new_repo_id</code>를 반드시 지정합니다. 편집본을 검증한 후에만 후속 학습에 사용하세요.</div></div></section>
+<section id="split"><div class="number">05</div><div><h2>Train · Validation · Test 분할</h2><pre><code>lerobot-edit-dataset \
+  --repo_id ${HF_USER}/record-test-clean \
+  --operation.type split \
+  --operation.splits '{"train": 0.8, "val": 0.1, "test": 0.1}'</code></pre><div class="warn"><b>PDF 예시 정정:</b> 강의 PDF의 <code>0.8 + 0.2 + 0.2</code>는 합이 1.2입니다. 비율 분할은 합이 1.0이 되도록 위처럼 사용합니다.</div><p>특정 episode를 Task별로 의도적으로 묶을 수도 있습니다.</p><pre><code>--operation.splits '{"task1": [0, 1, 2, 3], "task2": [4, 5]}'</code></pre></div></section>
+<section id="merge"><div class="number">06</div><div><h2>데이터셋 병합</h2><pre><code>lerobot-edit-dataset \
+  --repo_id ${HF_USER}/merged-dataset \
+  --operation.type merge \
+  --operation.repo_ids "['${HF_USER}/dataset-a', '${HF_USER}/dataset-b']"</code></pre><p>두 데이터셋의 robot type, 관절 차원, camera key, 해상도와 data type 등 feature schema가 같아야 합니다. 에피소드는 <code>repo_ids</code>에 적은 순서로 이어집니다.</p></div></section>
+<section id="feature"><div class="number">07</div><div><h2>불필요한 feature 제거</h2><pre><code>lerobot-edit-dataset \
+  --repo_id ${HF_USER}/record-test-clean \
+  --new_repo_id ${HF_USER}/record-test-front-only \
+  --operation.type remove_feature \
+  --operation.feature_names "['observation.images.top']"</code></pre><p>사용하지 않는 카메라·센서를 제거해 저장 공간과 입력 구성을 줄일 수 있습니다. 제거 후 학습·평가의 입력 schema도 같은 feature 집합을 사용해야 합니다.</p></div></section>
+<section><div class="number">✓</div><div><h2>편집 후 검증</h2><ul><li>원본 repo가 그대로 남아 있습니다.</li><li>episode 수와 index가 기대한 값입니다.</li><li><code>meta/info.json</code>의 feature와 실제 video·Parquet가 일치합니다.</li><li>Visualizer에서 대표 episode를 다시 재생했습니다.</li><li>학습용 split에 평가 episode가 섞이지 않았습니다.</li></ul></div></section>
+<div class="bottom-buttons"><a href="imitation-omx-ai-data-collection.html">← 07 데이터 수집</a><a href="imitation-omx-ai-act-training-inference.html">09 학습·추론 →</a></div></main></div></body></html>

@@ -1,0 +1,60 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="OMX-AI LeRobot ACT 모델 학습·체크포인트 재개·동기 및 비동기 추론·안전 평가"><title>모방학습 모델 학습 및 추론 - OMX-AI · ROS2</title><link rel="stylesheet" href="mobile-robot-summary.css"><style>.warn{padding:15px;border:1px solid #e0a52e;border-radius:12px;background:#fff8df}.danger{padding:15px;border:1px solid #d45b5b;border-radius:12px;background:#fff0f0}.good{padding:15px;border:1px solid #58a879;border-radius:12px;background:#edf9f1}.tag{display:inline-block;padding:3px 8px;border-radius:6px;background:#0f766e;color:#fff;font-size:11px;font-weight:800}</style></head><body>
+<header><div class="shell top"><a class="brand" href="../index.html"><b>ROS</b>2 LEARN</a><a href="imitation-omx-ai-dataset-management.html">← 모방학습 08</a></div></header>
+<section class="hero"><div class="shell"><small>07.09 · IMITATION LEARNING · ACT</small><h1>모방학습 모델 학습 및 추론 - OMX-AI</h1><p>정제된 LeRobotDataset으로 ACT 정책을 학습하고, 체크포인트 재개·동기 평가·Policy Server 기반 비동기 추론까지 연결합니다.</p><div class="source-buttons"><a class="pdf" target="_blank" rel="noopener" href="../assets/imitation-09/omx-ai-act-training-inference.pdf">강의 PDF</a><a class="html" href="#train">학습 명령 ↓</a></div></div></section>
+<div class="shell layout"><nav><b>목차</b><a href="#act">ACT 개념</a><a href="#train">모델 학습</a><a href="#resume">재개·업로드</a><a href="#infer">동기 추론</a><a href="#match">환경 일치</a><a href="#async">비동기 추론</a><a href="#safety">평가·안전</a><a href="#trouble">문제 해결</a></nav><main>
+<div class="intro"><b>전체 흐름</b><span><code>정제 dataset</code> → <code>ACT train</code> → <code>checkpoint</code> → <code>동기 평가</code> → <code>비동기 실행</code> → <code>안전·성공률 기록</code></span></div>
+<section id="act"><div class="number">01</div><div><h2>ACT: Action Chunking with Transformers</h2><p>ACT는 한 observation에서 다음 한 동작이 아니라 짧은 미래 action sequence를 한 번에 예측합니다. Transformer 기반 encoder-decoder로 시연의 시간 구조를 학습해 step별 오차 누적을 줄이고 부드러운 조작을 만듭니다.</p><ul><li>입력: 카메라 이미지와 현재 로봇 state</li><li>출력: 여러 step의 목표 관절값 action chunk</li><li>학습 자료: Teleoperation으로 모은 성공 demonstration</li></ul></div></section>
+<section id="train"><div class="number">02</div><div><h2>ACT 모델 학습</h2><pre><code>source ~/venv/il/bin/activate
+HF_USER=$(hf auth whoami | head -n 1 | sed 's/\x1b\[[0-9;]*m//g' | awk -F': ' '{print $2}' | xargs)
+
+cd ~/il_ws/src/lerobot
+lerobot-train \
+  --dataset.repo_id=${HF_USER}/record-test-clean \
+  --policy.type=act \
+  --output_dir=outputs/train/omx_act_policy \
+  --job_name=act_record-test \
+  --policy.device=cuda \
+  --wandb.enable=false \
+  --policy.repo_id=${HF_USER}/omx_act_policy \
+  --batch_size=16 \
+  --save_checkpoint=true \
+  --save_freq=10000 \
+  --steps=100000</code></pre><table><thead><tr><th>인자</th><th>운영 기준</th></tr></thead><tbody><tr><td><code>batch_size</code></td><td>VRAM 부족/OOM이면 먼저 줄입니다.</td></tr><tr><td><code>steps</code></td><td>너무 작으면 underfit, 너무 크면 overfit을 검증 loss·평가로 판단합니다.</td></tr><tr><td><code>save_freq</code></td><td>복구 손실과 disk 사용량 사이에서 정합니다.</td></tr><tr><td><code>wandb.enable</code></td><td>사용할 때만 로그인하고 loss·learning rate를 추적합니다.</td></tr></tbody></table></div></section>
+<section id="resume"><div class="number">03</div><div><h2>체크포인트 재개와 Hub 업로드</h2><pre><code>lerobot-train \
+  --config_path=outputs/train/omx_act_policy/checkpoints/last/pretrained_model/train_config.json \
+  --resume=true</code></pre><p>학습 config와 checkpoint 디렉터리 구조를 그대로 유지해야 optimizer와 hyperparameter가 복원됩니다.</p><pre><code>huggingface-cli upload \
+  ${HF_USER}/omx_act_policy \
+  outputs/train/omx_act_policy/checkpoints/last/pretrained_model</code></pre></div></section>
+<section id="infer"><div class="number">04</div><div><h2>동기 추론과 평가 기록</h2><div class="danger"><b>실물 실행:</b> 학습된 action은 안전이 보장된 명령이 아닙니다. 로봇을 고정하고 관절 범위·속도·비상 정지·작업 공간을 먼저 확인합니다.</div><pre><code>lerobot-record \
+  --robot.type=omx_follower \
+  --robot.port=/dev/omx_follower \
+  --robot.id=omx_follower_arm \
+  --robot.cameras="{front: {type: opencv, index_or_path: 0, width: 640, height: 480, fps: 30}}" \
+  --display_data=true \
+  --dataset.repo_id=${HF_USER}/eval_act_omx \
+  --dataset.single_task="Pick up Doll and put in cup" \
+  --dataset.num_episodes=10 \
+  --dataset.push_to_hub=false \
+  --policy.path=${HF_USER}/omx_act_policy</code></pre><p><code>eval_*</code> 이름으로 학습 자료와 평가 결과를 구분합니다. 평가 dataset의 자동 업로드는 필요할 때만 켭니다.</p></div></section>
+<section id="match"><div class="number">05</div><div><h2>학습과 추론 환경 일치</h2><table><thead><tr><th>항목</th><th>반드시 맞출 것</th></tr></thead><tbody><tr><td>Robot</td><td>type, joint order, ID·calibration</td></tr><tr><td>Camera</td><td>개수, key(front/wrist), 해상도, FPS, 위치</td></tr><tr><td>Task</td><td>작업 정의, 물체·목적지, 시작·종료 조건</td></tr><tr><td>Scene</td><td>작업 영역, 고정 물체, 조명과 배경</td></tr></tbody></table><p>학습에서 고정한 그릇 위치·top view·조명은 평가에서도 유지하고, 학습에서 다양화한 물체 위치만 같은 범위 안에서 바꿉니다.</p></div></section>
+<section id="async"><div class="number">06</div><div><h2>비동기 추론</h2><p>동기 방식은 action queue가 비면 다음 추론을 기다리며 멈춥니다. 비동기 방식은 현재 chunk를 실행하는 동안 다음 observation을 보내 새 chunk를 미리 계산하고, 겹친 구간을 집계해 끊김을 줄입니다.</p><span class="tag">TERMINAL 1 · POLICY SERVER</span><pre><code>python -m lerobot.async_inference.policy_server \
+  --host=127.0.0.1 \
+  --port=8080 \
+  --fps=30 \
+  --inference_latency=0.033 \
+  --obs_queue_timeout=1</code></pre><span class="tag">TERMINAL 2 · ROBOT CLIENT</span><pre><code>python -m lerobot.async_inference.robot_client \
+  --robot.type=omx_follower \
+  --robot.port=/dev/omx_follower \
+  --robot.id=omx_follower_arm \
+  --robot.cameras="{front: {type: opencv, index_or_path: 0, width: 640, height: 480, fps: 30}}" \
+  --task="Pick up Doll and put in cup" \
+  --server_address=127.0.0.1:8080 \
+  --policy_type=act \
+  --pretrained_name_or_path=${HF_USER}/omx_act_policy \
+  --policy_device=cuda \
+  --actions_per_chunk=100 \
+  --chunk_size_threshold=0.5 \
+  --aggregate_fn_name=weighted_average</code></pre><div class="warn"><b>버전 고정:</b> 비동기 module과 CLI 인자는 LeRobot version에 따라 달라질 수 있습니다. 이 강의의 v0.4.4 환경과 PDF 명령을 기준으로 실행하고, 실제 설치본의 <code>--help</code>를 함께 확인합니다.</div></div></section>
+<section id="safety"><div class="number">07</div><div><h2>평가 지표와 안전 게이트</h2><ul><li>Task 성공률, 완료 시간, 재시도 횟수와 실패 유형을 episode별로 기록합니다.</li><li>NaN/Inf, 관절 범위, 한 step 변화량, camera timestamp를 실행 전에 검사합니다.</li><li>추종 오차·전류 급증·frame drop을 감시하고 이상 시 hold 또는 safe stop으로 전환합니다.</li><li>같은 평가 조건에서 checkpoint별 결과를 비교해 최고 모델을 선택합니다.</li></ul></div></section>
+<section id="trouble"><div class="number">FIX</div><div><h2>문제 해결</h2><table><thead><tr><th>증상</th><th>확인</th><th>해결</th></tr></thead><tbody><tr><td>CUDA OOM</td><td>batch size·해상도·camera 수</td><td>batch size부터 줄이고 GPU memory 확인</td></tr><tr><td>추론 input mismatch</td><td>camera key·joint schema</td><td>학습 dataset과 완전히 동일하게 맞춤</td></tr><tr><td>동작이 chunk마다 멈춤</td><td>inference latency·queue</td><td>비동기 threshold·chunk·FPS 측정 후 조정</td></tr><tr><td>resume 실패</td><td>config·checkpoint 경로</td><td>last/pretrained_model 구조와 권한 확인</td></tr><tr><td>robot ID 오류</td><td>수집·평가의 <code>robot.id</code></td><td>calibration과 같은 ID로 통일</td></tr></tbody></table></div></section>
+<div class="bottom-buttons"><a href="imitation-omx-ai-dataset-management.html">← 08 데이터셋 관리</a><a href="../index.html">전체 목차 →</a></div></main></div></body></html>

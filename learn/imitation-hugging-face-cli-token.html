@@ -1,0 +1,29 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="LeRobot 데이터셋과 모델 업로드를 위한 Hugging Face Write 토큰 생성·CLI 인증·보안 관리"><title>CLI에 Hugging Face 토큰 등록 · ROS2</title><link rel="stylesheet" href="mobile-robot-summary.css"><style>.warn{padding:15px;border:1px solid #e0a52e;border-radius:12px;background:#fff8df}.danger{padding:15px;border:1px solid #d45b5b;border-radius:12px;background:#fff0f0}.good{padding:15px;border:1px solid #58a879;border-radius:12px;background:#edf9f1}</style></head><body>
+<header><div class="shell top"><a class="brand" href="../index.html"><b>ROS</b>2 LEARN</a><a href="imitation-omx-ai-keyboard-teleoperation.html">← 모방학습 05</a></div></header>
+<section class="hero"><div class="shell"><small>07.06 · IMITATION LEARNING · HUB AUTH</small><h1>CLI에 Hugging Face 토큰 등록</h1><p>LeRobot 데이터셋과 학습 모델을 Hub에 올릴 수 있도록 Write 토큰을 만들고, CLI 인증과 사용자 변수까지 안전하게 준비합니다.</p><div class="source-buttons"><a class="pdf" target="_blank" rel="noopener" href="../assets/imitation-06/hugging-face-cli-token.pdf">강의 PDF</a><a class="html" href="#order">전체 순서 ↓</a></div></div></section>
+<div class="shell layout"><nav><b>목차</b><a href="#concept">Hub·토큰</a><a href="#create">토큰 생성</a><a href="#login">CLI 로그인</a><a href="#user">HF_USER</a><a href="#security">보안</a><a href="#order">전체 순서</a><a href="#trouble">문제 해결</a></nav><main>
+<div class="intro"><b>역할 구분</b><span><code>Read</code>는 다운로드, <code>Write</code>는 데이터셋·모델 업로드, <code>Fine-grained</code>는 지정한 저장소만 허용할 때 사용합니다.</span></div>
+<section id="concept"><div class="number">01</div><div><h2>Hugging Face Hub와 Access Token</h2><p>Hub는 모델·데이터셋·애플리케이션을 버전 관리하고 공유하는 공간입니다. Access Token은 비밀번호 대신 CLI와 API를 인증하는 키이며, LeRobot의 업로드 대상은 <code>username/repository-name</code> 형식으로 식별합니다.</p><table><thead><tr><th>권한</th><th>읽기</th><th>쓰기</th><th>용도</th></tr></thead><tbody><tr><td>Fine-grained</td><td>선택</td><td>선택</td><td>특정 저장소로 범위 제한</td></tr><tr><td>Read</td><td>가능</td><td>불가</td><td>비공개 자료 다운로드</td></tr><tr><td>Write</td><td>가능</td><td>가능</td><td>강의의 데이터셋·모델 업로드</td></tr></tbody></table></div></section>
+<section id="create"><div class="number">02</div><div><h2>계정과 토큰 생성</h2><ol><li><a target="_blank" rel="noopener" href="https://huggingface.co/">huggingface.co</a>에서 계정을 만들고 이메일 인증을 완료합니다.</li><li>프로필 → Settings → Access Tokens → Create new token으로 이동합니다.</li><li>용도를 알 수 있는 이름을 붙이고 강의 업로드용 <b>Write</b> 권한을 선택합니다.</li><li>생성 직후 한 번만 표시되는 <code>hf_...</code> 값을 안전한 비밀 저장소에 보관합니다.</li></ol><div class="danger"><b>토큰은 비밀번호입니다.</b> 명령 기록, 화면 캡처, Git 저장소, 노션 본문, 메신저에 실제 값을 남기지 마세요. 노출되면 즉시 Revoke하고 새 토큰을 만듭니다.</div></div></section>
+<section id="login"><div class="number">03</div><div><h2>CLI 인증</h2><p>셸 변수에 실제 토큰을 넣고 로그인합니다. 아래 자리표시자를 토큰 그대로 커밋하거나 공유하지 않습니다.</p><pre><code>source ~/venv/il/bin/activate
+cd ~/il_ws/src/lerobot
+
+export HUGGINGFACE_TOKEN='hf_your_write_token'
+hf auth login --token "${HUGGINGFACE_TOKEN}" --add-to-git-credential
+hf auth whoami</code></pre><div class="warn"><b>강의의 credential.helper store:</b> 편리하지만 <code>~/.git-credentials</code>에 인증 정보를 평문으로 저장할 수 있습니다. 개인 장비에서만 사용하고, 공용 PC에서는 OS credential manager 또는 세션 로그인 방식을 사용하세요.</div><p><code>Token is valid (permission: write)</code>와 로그인 성공 메시지가 나오면 인증이 완료된 것입니다.</p></div></section>
+<section id="user"><div class="number">04</div><div><h2>사용자명을 HF_USER로 저장</h2><pre><code>HF_USER=$(hf auth whoami | head -n 1 | sed 's/\x1b\[[0-9;]*m//g' | awk -F': ' '{print $2}' | xargs)
+echo "$HF_USER"</code></pre><p>이후 <code>${HF_USER}/record-test</code>, <code>${HF_USER}/omx_act_policy</code>처럼 본인 계정에 맞는 저장소 경로를 재사용할 수 있습니다. 새 터미널에서는 변수를 다시 설정해야 합니다.</p></div></section>
+<section id="security"><div class="number">05</div><div><h2>인증 파일과 로그아웃</h2><table><thead><tr><th>항목</th><th>의미</th></tr></thead><tbody><tr><td><code>~/.cache/huggingface/stored_tokens</code></td><td>HF CLI가 관리하는 저장 토큰</td></tr><tr><td><code>~/.cache/huggingface/token</code></td><td>현재 활성 토큰</td></tr><tr><td><code>~/.git-credentials</code></td><td>store helper 사용 시 Git 인증 정보</td></tr></tbody></table><pre><code>hf auth logout</code></pre><p>공용 장비 사용 후에는 로그아웃하고, Hugging Face 웹 설정에서 해당 토큰도 폐기합니다.</p></div></section>
+<section id="order" class="commands"><h2>전체 실행 순서</h2><pre><code>source ~/venv/il/bin/activate
+cd ~/il_ws/src/lerobot
+
+# 실제 값은 안전한 방법으로 현재 shell에만 입력
+export HUGGINGFACE_TOKEN='hf_your_write_token'
+hf auth login --token "${HUGGINGFACE_TOKEN}" --add-to-git-credential
+hf auth whoami
+
+HF_USER=$(hf auth whoami | head -n 1 | sed 's/\x1b\[[0-9;]*m//g' | awk -F': ' '{print $2}' | xargs)
+echo "$HF_USER"
+unset HUGGINGFACE_TOKEN</code></pre></section>
+<section id="trouble"><div class="number">FIX</div><div><h2>문제 해결</h2><table><thead><tr><th>증상</th><th>확인</th><th>해결</th></tr></thead><tbody><tr><td>업로드 권한 오류</td><td>토큰 permission</td><td>Write 또는 필요한 저장소의 Fine-grained 권한 사용</td></tr><tr><td><code>hf</code> 없음</td><td>가상환경·LeRobot 설치</td><td><code>~/venv/il</code> 활성화</td></tr><tr><td><code>HF_USER</code>가 비어 있음</td><td><code>hf auth whoami</code> 원문</td><td>로그인 후 출력 형식에 맞게 다시 추출</td></tr><tr><td>토큰 노출</td><td>Git·로그·화면 공유</td><td>즉시 Revoke 후 새 토큰 발급</td></tr></tbody></table></div></section>
+<div class="bottom-buttons"><a href="imitation-omx-ai-keyboard-teleoperation.html">← 05 키보드·원격 조종</a><a href="imitation-omx-ai-data-collection.html">07 데이터 수집 →</a></div></main></div></body></html>
