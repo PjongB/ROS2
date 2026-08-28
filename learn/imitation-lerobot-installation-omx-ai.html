@@ -1,0 +1,62 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>LeRobot Installation - OMX-AI · ROS2</title><link rel="stylesheet" href="mobile-robot-summary.css"><style>.warn{padding:15px;border:1px solid #e0a52e;border-radius:12px;background:#fff8df}.good{padding:15px;border:1px solid #58a879;border-radius:12px;background:#edf9f1}.step{margin:14px 0;padding:16px;border:1px solid #d9dfea;border-radius:12px;background:#f8fafc}.step h3{margin:0 0 8px;color:#10233d}</style></head><body>
+<header><div class="shell top"><a class="brand" href="../index.html"><b>ROS</b>2 LEARN</a><a href="imitation-lerobot-introduction.html">← 모방학습 02</a></div></header>
+<section class="hero"><div class="shell"><small>07.03 · IMITATION LEARNING · INSTALLATION</small><h1>LeRobot Installation - OMX-AI</h1><p>Ubuntu에서 Python 3.10 전용 가상환경을 만들고 LeRobot v0.4.4와 DYNAMIXEL 의존성을 재현 가능한 방식으로 설치합니다.</p><div class="source-buttons"><a class="pdf" target="_blank" rel="noopener" href="../assets/imitation-03/lerobot-installation-omx-ai.pdf">강의 PDF</a><a class="html" href="#order">전체 실행 순서 ↓</a></div></div></section>
+<div class="shell layout"><nav><b>목차</b><a href="#before">환경 확인</a><a href="#python">Python 3.10</a><a href="#venv">가상환경</a><a href="#workspace">Workspace</a><a href="#clone">v0.4.4 Clone</a><a href="#install">LeRobot 설치</a><a href="#verify">검증</a><a href="#order">전체 순서</a><a href="#trouble">문제 해결</a></nav><main>
+<div class="intro"><b>강의 고정 환경</b><span><code>Linux + Python 3.10 + LeRobot v0.4.4 + DYNAMIXEL extras</code>. 최신 main이 아니라 강의와 같은 태그를 사용해야 결과를 재현하기 쉽습니다.</span></div>
+<section id="before"><div class="number">00</div><div><h2>설치 전 환경 확인</h2><table><thead><tr><th>항목</th><th>강의 기준</th><th>이유</th></tr></thead><tbody><tr><td>운영체제</td><td>Linux·Ubuntu</td><td>USB serial 장치와 driver 지원</td></tr><tr><td>Python</td><td>3.10</td><td>LeRobot v0.4.4 의존성 호환</td></tr><tr><td>LeRobot</td><td>v0.4.4 tag</td><td>강의와 같은 코드 고정</td></tr><tr><td>설치 위치</td><td><code>~/il_ws/src/lerobot</code></td><td>소스와 가상환경을 구분</td></tr></tbody></table><pre><code>lsb_release -a
+python3 --version
+git --version</code></pre><div class="warn"><b>주의:</b> <code>deadsnakes</code>는 Ubuntu 기본 저장소가 아닌 PPA입니다. 조직·학교 PC에서는 외부 저장소 정책과 Ubuntu 버전을 먼저 확인하세요.</div></div></section>
+<section id="python"><div class="number">01</div><div><h2>Python 3.10 설치</h2><pre><code>sudo add-apt-repository ppa:deadsnakes/ppa -y
+sudo apt update
+sudo apt install python3.10 python3.10-venv python3.10-dev -y</code></pre><ul><li><code>python3.10</code>: Interpreter</li><li><code>python3.10-venv</code>: 프로젝트별 가상환경 생성</li><li><code>python3.10-dev</code>: C/C++ 확장 모듈 빌드용 header</li></ul><pre><code>python3.10 --version</code></pre><p>출력에 <code>Python 3.10.x</code>가 보이면 다음 단계로 이동합니다.</p></div></section>
+<section id="venv"><div class="number">02</div><div><h2>LeRobot 전용 가상환경</h2><pre><code>mkdir -p ~/venv
+python3.10 -m venv ~/venv/il
+source ~/venv/il/bin/activate
+python --version
+which python
+pip install --upgrade pip</code></pre><ul><li>Prompt 앞에 <code>(il)</code>이 표시되어야 합니다.</li><li><code>which python</code> 결과는 <code>~/venv/il/bin/python</code> 경로여야 합니다.</li><li>가상환경을 끝낼 때는 <code>deactivate</code>를 입력합니다.</li></ul></div></section>
+<section id="workspace"><div class="number">03</div><div><h2>Imitation Learning Workspace 생성</h2><pre><code>mkdir -p ~/il_ws/src
+cd ~/il_ws/src
+pwd</code></pre><p><code>il_ws</code>는 Imitation Learning Workspace이고 <code>src</code>에는 clone한 source를 보관합니다. ROS workspace와 비슷한 디렉터리 습관이지만 이 단계에서는 <code>colcon build</code>를 실행하지 않습니다.</p></div></section>
+<section id="clone"><div class="number">04</div><div><h2>LeRobot v0.4.4 가져오기</h2><pre><code>cd ~/il_ws/src
+git clone --branch v0.4.4 https://github.com/huggingface/lerobot.git
+cd ~/il_ws/src/lerobot
+git describe --tags --always</code></pre><p><code>--branch v0.4.4</code>는 특정 tag의 코드를 checkout해 main branch 변화로부터 강의 환경을 고정합니다.</p></div></section>
+<section id="install"><div class="number">05</div><div><h2>Editable + DYNAMIXEL 설치</h2><pre><code># (il) 가상환경이 활성화된 터미널
+cd ~/il_ws/src/lerobot
+pip install -e ".[dynamixel]"
+
+# 시스템 영상·버전 관리 도구
+sudo apt install ffmpeg git -y</code></pre><table><thead><tr><th>구문</th><th>의미</th><th>왜 사용하는가</th></tr></thead><tbody><tr><td><code>-e</code></td><td>Editable mode</td><td>clone 폴더의 코드 수정이 재설치 없이 반영</td></tr><tr><td><code>.</code></td><td>현재 폴더의 Python package</td><td>LeRobot source를 설치</td></tr><tr><td><code>[dynamixel]</code></td><td>선택 의존성 그룹</td><td><code>dynamixel-sdk</code> 등 모터 통신 package 포함</td></tr><tr><td><code>ffmpeg</code></td><td>영상 codec·변환 도구</td><td>카메라 영상 기록·dataset decode</td></tr></tbody></table></div></section>
+<section id="verify"><div class="number">06</div><div><h2>설치 검증</h2><pre><code>source ~/venv/il/bin/activate
+python -c "import lerobot; print(lerobot.__version__)"
+python -c "import dynamixel_sdk; print('dynamixel-sdk OK')"
+ffmpeg -version | head -n 1
+pip show lerobot</code></pre><div class="good"><b>성공 기준:</b> LeRobot import와 version 출력, <code>dynamixel-sdk OK</code>, ffmpeg version이 모두 확인됩니다.</div></div></section>
+<section id="order" class="commands"><h2>터미널에 입력하는 전체 순서</h2><pre><code># 1. Python 3.10
+sudo add-apt-repository ppa:deadsnakes/ppa -y
+sudo apt update
+sudo apt install python3.10 python3.10-venv python3.10-dev -y
+
+# 2. 전용 가상환경
+mkdir -p ~/venv
+python3.10 -m venv ~/venv/il
+source ~/venv/il/bin/activate
+pip install --upgrade pip
+
+# 3. LeRobot v0.4.4
+mkdir -p ~/il_ws/src
+cd ~/il_ws/src
+git clone --branch v0.4.4 https://github.com/huggingface/lerobot.git
+cd ~/il_ws/src/lerobot
+pip install -e ".[dynamixel]"
+
+# 4. 영상·Git 도구
+sudo apt install ffmpeg git -y
+
+# 5. 설치 확인
+python -c "import lerobot; print(lerobot.__version__)"
+python -c "import dynamixel_sdk; print('dynamixel-sdk OK')"</code></pre></section>
+<section id="trouble"><div class="number">FIX</div><div><h2>문제 해결</h2><table><thead><tr><th>증상</th><th>확인</th><th>해결 방향</th></tr></thead><tbody><tr><td><code>python3.10: command not found</code></td><td>PPA·apt update·Ubuntu 버전</td><td>Python 설치 단계 재확인</td></tr><tr><td>Prompt에 <code>(il)</code>이 없음</td><td><code>which python</code></td><td>가상환경 다시 source</td></tr><tr><td><code>lerobot</code> import 실패</td><td>현재 Python·pip 경로</td><td>같은 <code>(il)</code> 환경에서 설치</td></tr><tr><td>DYNAMIXEL module 없음</td><td><code>pip show dynamixel-sdk</code></td><td><code>.[dynamixel]</code> extras 포함 확인</td></tr><tr><td>버전이 강의와 다름</td><td><code>git describe --tags</code></td><td>v0.4.4 tag checkout 확인</td></tr></tbody></table></div></section>
+<section><div class="number">✓</div><div><h2>완료 체크리스트</h2><ol><li>Python 3.10으로 <code>~/venv/il</code>을 만들었습니다.</li><li>가상환경의 Python·pip 경로를 확인했습니다.</li><li>LeRobot v0.4.4 tag를 clone했습니다.</li><li>Editable mode와 DYNAMIXEL extras로 설치했습니다.</li><li>LeRobot·dynamixel-sdk·ffmpeg를 검증했습니다.</li></ol></div></section>
+<div class="bottom-buttons"><a href="imitation-lerobot-introduction.html">← 02 소개</a><a href="../index.html">전체 목차 →</a></div></main></div></body></html>
