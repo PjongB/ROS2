@@ -1,0 +1,80 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>로봇 파라미터·RQT 설정 가이드</title><link rel="stylesheet" href="mobile-robot-summary.css"><style>.warn{padding:15px;border:1px solid #e0a52e;border-radius:12px;background:#fff8df}.danger{padding:15px;border:1px solid #dc6868;border-radius:12px;background:#fff0f0}.good{padding:15px;border:1px solid #58a879;border-radius:12px;background:#edf9f1}.param{margin:18px 0;padding:20px;border:1px solid #d9dfea;border-radius:15px}.param h3{margin-top:0}.tag{display:inline-block;padding:3px 8px;border-radius:6px;background:#7154d8;color:#fff;font-size:11px;font-weight:800}.mini{font-size:13px;color:#526075}</style></head><body>
+<header><div class="shell top"><a class="brand" href="../index.html"><b>ROS</b>2 LEARN</a><a href="glossary.html">← 용어 정리</a></div></header>
+<section class="hero"><div class="shell"><small>REFERENCE · ROS 2 JAZZY · PINKYPRO + TURTLEBOT3</small><h1>로봇 파라미터·RQT 설정 가이드</h1><p>Nav2·Costmap·AMCL·Controller·SLAM 설정의 의미를 읽고, RQT와 CLI로 한 항목씩 안전하게 변경·검증·저장하는 실전 참고서입니다.</p><div class="source-buttons"><a class="html" href="#workflow">RQT 순서 ↓</a><a class="html" href="#symptom">증상별 찾기 ↓</a><a class="html" target="_blank" rel="noopener" href="https://docs.nav2.org/configuration/index.html">Nav2 공식 설정</a></div></div></section>
+<div class="shell layout"><nav><b>가이드 목차</b><a href="#before">변경 전 원칙</a><a href="#concept">파라미터 개념</a><a href="#workflow">RQT 실행 순서</a><a href="#cli">CLI 검증·저장</a><a href="#costmap">Costmap</a><a href="#amcl">AMCL</a><a href="#controller">Controller</a><a href="#slam">SLAM</a><a href="#robot">Pinky·TurtleBot3</a><a href="#symptom">증상별 조정</a><a href="#record">기록 양식</a></nav><main>
+<div class="intro"><b>가장 중요한 원칙</b><span><code>현재값 기록 → 한 항목 변경 → 실제 적용값 재조회 → RViz·Topic 결과 확인 → YAML에 반영 또는 원복</code></span></div>
+<section id="before"><div class="number">01</div><div><h2>변경 전에 먼저 확인할 것</h2><ul><li>파라미터는 ROS 2 전체의 전역값이 아니라 <b>각 Node가 소유하는 설정값</b>입니다.</li><li>같은 이름이라도 <code>global_costmap</code>과 <code>local_costmap</code>, PinkyPro와 TurtleBot3의 적절한 값은 다를 수 있습니다.</li><li>RQT에서 보인다는 사실이 “주행 중 안전하게 변경 가능”하다는 뜻은 아닙니다. read-only, lifecycle 상태, plugin 구현에 따라 변경이 거절되거나 재시작 뒤에만 적용될 수 있습니다.</li><li>숫자를 바꾸기 전에 TF, 센서, footprint, 초기 위치가 정상인지 먼저 확인합니다. 구조 오류를 튜닝으로 가리면 위험합니다.</li></ul><div class="danger"><b>실물 로봇:</b> 바퀴를 들거나 넓은 시험 공간을 확보하고, 속도·가속도는 작은 값부터 올립니다. footprint와 안전 반경을 통과 목적으로 거짓으로 줄이지 않습니다.</div></div></section>
+<section id="concept"><div class="number">02</div><div><h2>런타임 값과 YAML의 차이</h2><table><thead><tr><th>방식</th><th>언제 적용</th><th>지속 여부</th><th>용도</th></tr></thead><tbody><tr><td>RQT / <code>ros2 param set</code></td><td>실행 중</td><td>대부분 재시작하면 사라짐</td><td>실험·비교</td></tr><tr><td><code>ros2 param load</code></td><td>실행 중인 Node에 load</td><td>재시작하면 launch 설정으로 복귀</td><td>설정 묶음 시험</td></tr><tr><td>YAML 수정</td><td>다음 launch부터</td><td>파일에 남음</td><td>검증된 최종값</td></tr><tr><td>Launch argument</td><td>Node 시작 시</td><td>해당 실행 동안</td><td>환경별 설정 선택</td></tr></tbody></table><h3>파라미터 이름을 세 부분으로 읽기</h3><pre><code>/local_costmap/local_costmap
+└─ inflation_layer.inflation_radius
+   ├─ plugin: inflation_layer
+   └─ setting: inflation_radius</code></pre><p>Node 이름, plugin 이름, 실제 setting 이름을 분리해서 읽으면 같은 파라미터가 여러 곳에 존재해도 혼동이 줄어듭니다.</p></div></section>
+<section id="workflow"><div class="number">03</div><div><h2>RQT에서 변경하는 정확한 순서</h2><pre><code># 새 터미널
+source /opt/ros/jazzy/setup.bash
+
+# PinkyPro 또는 TurtleBot3 workspace가 있다면 추가
+source ~/pinky/install/setup.bash
+# source ~/turtlebot3_ws/install/setup.bash
+
+# 설치 확인
+ros2 pkg prefix rqt_reconfigure
+
+# 없을 때
+sudo apt update
+sudo apt install ros-jazzy-rqt-reconfigure -y
+
+rqt</code></pre><ol><li><b>Plugins → Configuration → Parameter Reconfigure</b>를 엽니다.</li><li>왼쪽 Node tree에서 바꿀 Node를 선택합니다. 예: <code>/local_costmap/local_costmap</code>.</li><li>검색창에 <code>inflation</code>, <code>velocity</code>, <code>tolerance</code>처럼 일부 이름을 입력합니다.</li><li>현재값을 기록하거나 CLI로 dump합니다.</li><li>한 번에 한 항목만 작은 폭으로 변경하고 Enter를 누릅니다.</li><li>RViz, <code>ros2 param get</code>, Topic, 실제 로봇 반응을 함께 확인합니다.</li><li>효과가 없거나 위험하면 즉시 이전 값으로 원복합니다.</li></ol><div class="warn"><b>플러그인 이름:</b> 환경에 따라 메뉴가 Dynamic Reconfigure 또는 Parameter Reconfigure로 표시될 수 있습니다. Node가 목록에 없으면 Node 실행·ROS Domain·source부터 확인합니다.</div></div></section>
+<section id="cli"><div class="number">04</div><div><h2>CLI로 현재값·설명·적용 여부 확인</h2><pre><code># Node와 parameter 탐색
+ros2 node list
+ros2 param list /local_costmap/local_costmap
+
+# 설명·type·제약 확인
+ros2 param describe /local_costmap/local_costmap \
+  inflation_layer.inflation_radius
+
+# 변경 전 값
+ros2 param get /local_costmap/local_costmap \
+  inflation_layer.inflation_radius
+
+# 한 항목 변경
+ros2 param set /local_costmap/local_costmap \
+  inflation_layer.inflation_radius 0.35
+
+# 실제 적용값 재확인
+ros2 param get /local_costmap/local_costmap \
+  inflation_layer.inflation_radius</code></pre><h3>백업과 복원</h3><pre><code>mkdir -p ~/robot_param_backup
+ros2 param dump /local_costmap/local_costmap \
+  --output-dir ~/robot_param_backup
+
+# 생성된 YAML을 확인한 뒤 필요할 때 load
+ls -l ~/robot_param_backup
+ros2 param load /local_costmap/local_costmap \
+  ~/robot_param_backup/local_costmap__local_costmap.yaml</code></pre><p>실제 dump 파일명은 Node 이름과 ROS 2 버전에 따라 달라질 수 있으므로 <code>ls</code>로 확인합니다. 최종값은 사용 중인 Nav2 YAML의 정확한 namespace에 반영합니다.</p></div></section>
+<section id="costmap"><div class="number">05</div><div><h2>Costmap 핵심 파라미터</h2><table><thead><tr><th>파라미터</th><th>올리면</th><th>내리면</th><th>주로 보는 증상</th></tr></thead><tbody><tr><td><code>inflation_radius</code></td><td>장애물 영향 범위가 넓어짐</td><td>좁은 길 선택 가능성이 커짐</td><td>벽에 붙음·통로가 막힘</td></tr><tr><td><code>cost_scaling_factor</code></td><td>거리별 비용이 더 빨리 감소</td><td>높은 비용이 멀리 유지</td><td>우회가 큼·벽 가까운 경로</td></tr><tr><td><code>footprint_padding</code></td><td>충돌 검사 외곽이 커짐</td><td>통과 공간이 늘어남</td><td>실제 차체 여유</td></tr><tr><td><code>update_frequency</code></td><td>장애물 반영이 빨라지나 CPU 사용 증가</td><td>부하는 줄지만 반영 지연</td><td>동적 장애물 반응</td></tr><tr><td><code>publish_frequency</code></td><td>시각화·구독 갱신 증가</td><td>network·CPU 부담 감소</td><td>RViz 갱신 속도</td></tr><tr><td><code>transform_tolerance</code></td><td>일부 TF 지연을 더 허용</td><td>시간 일치 요구가 엄격</td><td>TF timeout</td></tr></tbody></table><div class="good"><b>기억법:</b> <code>radius</code>는 비용 영역의 끝 범위이고 <code>cost_scaling_factor</code>는 범위 안에서 비용이 떨어지는 속도입니다. scaling factor가 클수록 더 빨리 낮아집니다.</div><h3>Global과 Local을 따로 보는 이유</h3><ul><li><b>Global:</b> 지도 전체에서 어떤 길을 선택할지 결정합니다.</li><li><b>Local:</b> 실제 주행 중 어떤 속도 궤적을 허용할지 결정합니다.</li><li>Global Path가 있어도 Local Costmap이 통로를 위험하다고 판단하면 로봇은 입구에서 멈출 수 있습니다.</li></ul><pre><code>ros2 param list /global_costmap/global_costmap | grep -E 'inflation|footprint|frequency'
+ros2 param list /local_costmap/local_costmap | grep -E 'inflation|footprint|frequency'</code></pre></div></section>
+<section id="amcl"><div class="number">06</div><div><h2>AMCL·Localization 파라미터</h2><table><thead><tr><th>파라미터</th><th>의미</th><th>조정 시 주의</th></tr></thead><tbody><tr><td><code>min_particles</code> / <code>max_particles</code></td><td>위치 후보 particle 수 범위</td><td>많으면 계산량 증가, 적으면 복잡한 환경에서 표현력 부족</td></tr><tr><td><code>update_min_d</code></td><td>이 거리만큼 이동해야 filter 갱신</td><td>작으면 자주 갱신, 크면 위치 반영 지연</td></tr><tr><td><code>update_min_a</code></td><td>이 각도만큼 회전해야 갱신</td><td>작으면 계산 증가, 크면 회전 반영 지연</td></tr><tr><td><code>laser_max_range</code></td><td>Localization에 사용할 최대 scan 거리</td><td>실제 LiDAR 범위와 환경을 넘겨 설정하지 않음</td></tr><tr><td><code>alpha1~alpha5</code></td><td>odometry motion noise model</td><td>임의 조정보다 실제 motion·encoder 오차를 근거로 튜닝</td></tr><tr><td><code>transform_tolerance</code></td><td>발행 TF의 시간 여유</td><td>근본적인 clock·network 지연을 숨기지 않음</td></tr></tbody></table><p>초기 위치가 틀리거나 <code>map→odom</code> TF가 불안정한 문제를 particle 수만 늘려 해결하려 하지 않습니다. 먼저 Map·Scan 정합, laser frame, odometry, timestamp를 봅니다.</p><pre><code>ros2 param list /amcl
+ros2 param get /amcl min_particles
+ros2 topic echo /amcl_pose --once
+ros2 run tf2_ros tf2_echo map odom</code></pre></div></section>
+<section id="controller"><div class="number">07</div><div><h2>Controller·속도·목표 허용 오차</h2><p>Controller plugin에 따라 DWB, Regulated Pure Pursuit(RPP) 등 파라미터 이름이 달라집니다. 먼저 현재 plugin과 전체 parameter list를 확인합니다.</p><pre><code>ros2 param list /controller_server
+ros2 param dump /controller_server --output-dir ~/robot_param_backup</code></pre><table><thead><tr><th>계열</th><th>대표 이름</th><th>효과·주의</th></tr></thead><tbody><tr><td>최대 속도</td><td><code>max_vel_x</code>, <code>max_linear_vel</code></td><td>낮추면 안전하고 안정적, 높이면 추종 오차·제동거리 증가</td></tr><tr><td>최대 회전</td><td><code>max_vel_theta</code>, <code>max_angular_vel</code></td><td>높으면 빠르지만 scan·Localization 불안정 가능</td></tr><tr><td>가속도</td><td><code>acc_lim_x</code>, <code>acc_lim_theta</code></td><td>실제 motor가 따라갈 수 있는 범위 사용</td></tr><tr><td>목표 허용 오차</td><td><code>xy_goal_tolerance</code>, <code>yaw_goal_tolerance</code></td><td>작으면 정밀하지만 목표 주변 진동·실패 가능</td></tr><tr><td>RPP lookahead</td><td><code>lookahead_dist</code></td><td>길면 부드럽지만 급곡선 둔감, 짧으면 민감·진동 가능</td></tr><tr><td>Goal checker</td><td><code>stateful</code></td><td>위치 도달 후 방향 정렬 상태 처리 방식에 영향</td></tr></tbody></table><div class="warn"><b>이름이 없을 때:</b> 다른 Controller plugin을 쓰는 것입니다. 인터넷 예제 이름을 그대로 만들지 말고 <code>ros2 param list</code>와 실제 YAML의 plugin namespace를 기준으로 찾습니다.</div></div></section>
+<section id="slam"><div class="number">08</div><div><h2>SLAM은 모두 RQT로 바뀌지 않는다</h2><table><thead><tr><th>구성</th><th>주요 설정 위치</th><th>RQT 변경</th></tr></thead><tbody><tr><td>SLAM Toolbox</td><td>ROS parameter YAML</td><td>노출·동적 지원 항목만 가능</td></tr><tr><td>Cartographer</td><td>Lua configuration·launch argument</td><td>많은 algorithm option은 재시작 필요</td></tr><tr><td>Map Saver</td><td>CLI·Map Saver parameter</td><td>저장 시점·파일 옵션 중심</td></tr></tbody></table><p>지도 왜곡은 parameter 이전에 주행 속도, wheel slip, LiDAR 가림, odometry, TF, loop closure 경로를 먼저 확인합니다.</p><pre><code># 공통 입력 점검
+ros2 topic hz /scan
+ros2 topic hz /odom
+ros2 run tf2_ros tf2_echo odom base_link
+
+# Simulation이면 clock도 확인
+ros2 topic echo /clock --once</code></pre></div></section>
+<section id="robot"><div class="number">09</div><div><h2>PinkyPro와 TurtleBot3에 적용하기</h2><table><thead><tr><th>확인</th><th>PinkyPro</th><th>TurtleBot3</th></tr></thead><tbody><tr><td>Workspace</td><td>현재 Pinky workspace 경로 확인</td><td><code>~/turtlebot3_ws</code> 예시</td></tr><tr><td>Base 제어</td><td>Pinky controller·footprint 확인</td><td>OpenCR·TurtleBot3 model 확인</td></tr><tr><td>크기</td><td>실제 차체·돌출부 측정</td><td>Burger/Waffle별 model 차이</td></tr><tr><td>센서</td><td>설치된 LiDAR·Camera frame</td><td><code>LDS_MODEL</code>과 laser frame</td></tr><tr><td>기준값</td><td>현재 Pinky YAML</td><td>현재 TurtleBot3 Nav2 YAML</td></tr></tbody></table><p>같은 실내 공간이라도 차체 크기, LiDAR 위치, 회전 반경, motor 응답이 달라 값을 복사하면 안 됩니다. 각 로봇에서 별도 백업·실험 기록을 유지합니다.</p></div></section>
+<section id="symptom"><div class="number">10</div><div><h2>증상별로 무엇부터 볼까?</h2><table><thead><tr><th>증상</th><th>먼저 확인</th><th>그다음 후보</th></tr></thead><tbody><tr><td>Global Path가 벽에 붙음</td><td>footprint·Global costmap</td><td>Global radius↑ 또는 scaling factor↓</td></tr><tr><td>Path는 있는데 통로 입구에서 정지</td><td>Local costmap·Controller·실제 폭</td><td>Local radius·scaling·padding</td></tr><tr><td>좁은 길에 Path 자체가 없음</td><td>Goal·Map·실제 footprint</td><td>Global inflation을 작은 폭으로 조정</td></tr><tr><td>목표 주변에서 계속 진동</td><td>Localization·Goal checker</td><td>xy/yaw tolerance·속도</td></tr><tr><td>회전할 때 위치가 튐</td><td>TF·odometry·scan timestamp</td><td>AMCL motion model·회전 속도</td></tr><tr><td>동적 장애물 반응이 늦음</td><td>scan rate·observation source</td><td>costmap update frequency·network</td></tr><tr><td>RQT 변경 효과가 없음</td><td>올바른 Node·namespace인지</td><td>read-only·callback·lifecycle·재시작 필요 여부</td></tr></tbody></table></div></section>
+<section id="record"><div class="number">11</div><div><h2>안전한 튜닝 기록 양식</h2><pre><code>로봇: PinkyPro / TurtleBot3 Burger / Waffle
+지도·장소:
+Node:
+Parameter:
+변경 전:
+변경 후:
+목표 증상:
+RViz 결과:
+주행 결과:
+되돌릴 값:
+최종 YAML 반영 위치:</code></pre><h3>최종 체크</h3><ul><li>한 번에 한 항목만 변경했습니다.</li><li><code>ros2 param get</code>으로 실제 적용값을 확인했습니다.</li><li>여러 시작 위치·목표·장애물 상황에서 반복했습니다.</li><li>실물 로봇은 낮은 속도에서 먼저 검증했습니다.</li><li>검증된 값만 YAML에 반영하고 Git 또는 별도 파일로 이전 설정을 보존했습니다.</li></ul></div></section>
+<div class="bottom-buttons"><a href="glossary.html">← 용어 정리</a><a href="../index.html">전체 강의</a></div></main></div></body></html>
