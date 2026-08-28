@@ -1,0 +1,46 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>로봇 연결 세팅 - OMX-AI · ROS2</title><link rel="stylesheet" href="mobile-robot-summary.css"><style>.warn{padding:15px;border:1px solid #e0a52e;border-radius:12px;background:#fff8df}.danger{padding:15px;border:1px solid #d45b5b;border-radius:12px;background:#fff0f0}.good{padding:15px;border:1px solid #58a879;border-radius:12px;background:#edf9f1}.step{margin:14px 0;padding:16px;border:1px solid #d9dfea;border-radius:12px;background:#f8fafc}.step h3{margin:0 0 8px;color:#10233d}</style></head><body>
+<header><div class="shell top"><a class="brand" href="../index.html"><b>ROS</b>2 LEARN</a><a href="imitation-lerobot-installation-omx-ai.html">← 모방학습 03</a></div></header>
+<section class="hero"><div class="shell"><small>07.04 · IMITATION LEARNING · HARDWARE SETUP</small><h1>로봇 연결 세팅 - OMX-AI</h1><p>Leader와 Follower의 전원·USB를 올바르게 연결하고, Linux 권한과 udev 규칙을 설정해 재부팅하거나 연결 순서가 바뀌어도 같은 장치 이름을 사용합니다.</p><div class="source-buttons"><a class="pdf" target="_blank" rel="noopener" href="../assets/imitation-04/omx-ai-robot-connection-setup.pdf">강의 PDF</a><a class="html" href="#order">전체 실행 순서 ↓</a></div></div></section>
+<div class="shell layout"><nav><b>목차</b><a href="#hardware">하드웨어 연결</a><a href="#led">LED 확인</a><a href="#port">포트 찾기</a><a href="#permission">장치 권한</a><a href="#attributes">장치 정보</a><a href="#udev">udev 규칙</a><a href="#verify">적용·검증</a><a href="#order">전체 순서</a><a href="#trouble">문제 해결</a></nav><main>
+<div class="intro"><b>이번 강의의 핵심</b><span><code>/dev/ttyACM0</code> 같은 번호는 연결 순서에 따라 바뀔 수 있습니다. 장치의 고유 serial을 기준으로 <code>/dev/omx_leader</code>와 <code>/dev/omx_follower</code>라는 고정 별칭을 만듭니다.</span></div>
+<section id="hardware"><div class="number">00</div><div><h2>Leader·Follower 하드웨어 연결</h2><div class="danger"><b>먼저 고정:</b> 두 로봇을 작업대에 단단히 고정하고 팔이 움직일 공간을 확보하세요. Follower는 토크가 크므로 손·케이블·도구를 가동 범위 밖에 둡니다.</div><table><thead><tr><th>구분</th><th>역할</th><th>USB</th><th>외부 전원</th><th>고정 장치명</th></tr></thead><tbody><tr><td>Leader</td><td>사용자 시연 입력</td><td>전원 + 통신</td><td>불필요</td><td><code>/dev/omx_leader</code></td></tr><tr><td>Follower</td><td>동작 실행</td><td>통신</td><td><b>12V 5A 필요</b></td><td><code>/dev/omx_follower</code></td></tr></tbody></table><ol><li>USB-C를 각 Bus Servo Adapter(OpenRB-150)에 연결합니다.</li><li>USB-A를 PC에 연결합니다.</li><li>Follower에 12V 5A 어댑터를 연결합니다.</li></ol></div></section>
+<section id="led"><div class="number">01</div><div><h2>어댑터 LED 확인</h2><table><thead><tr><th>LED</th><th>색상</th><th>의미</th><th>확인할 점</th></tr></thead><tbody><tr><td>PWR</td><td>빨강</td><td>전원 공급</td><td>꺼져 있으면 USB·외부 전원 확인</td></tr><tr><td>DXL</td><td>초록</td><td>서보 통신 활성</td><td>명령 중 반응이 없으면 케이블·모터 bus 확인</td></tr><tr><td>USER</td><td>주황</td><td>사용자 상태 표시</td><td>실습 프로그램의 상태 정의에 따라 해석</td></tr></tbody></table></div></section>
+<section id="port"><div class="number">02</div><div><h2>현재 serial 포트 찾기</h2><p>LeRobot 환경을 활성화한 뒤 포트 검색 도구를 실행합니다. 안내가 나오면 확인할 로봇의 USB를 뽑고 Enter를 눌러 사라진 장치를 찾습니다.</p><pre><code>source ~/venv/il/bin/activate
+lerobot-find-port</code></pre><div class="warn"><b>번호를 이름처럼 외우지 마세요.</b> 오늘의 Leader가 <code>ttyACM0</code>이어도 다음 부팅에는 <code>ttyACM1</code>이 될 수 있습니다. 이 값은 udev 설정 전 장치를 식별할 때만 사용합니다.</div></div></section>
+<section id="permission"><div class="number">03</div><div><h2>장치 접근 권한</h2><h3>임시 진단용</h3><pre><code>sudo chmod 666 /dev/ttyACM0
+sudo chmod 666 /dev/ttyACM1</code></pre><p><code>chmod 666</code>은 모든 사용자에게 읽기·쓰기를 열며 재연결하면 사라집니다. 첫 연결의 권한 문제를 진단할 때만 사용하세요.</p><h3>권장: dialout 그룹 등록</h3><pre><code>sudo usermod -a -G dialout $USER
+sudo reboot now</code></pre><div class="warn"><b>재부팅 전:</b> 열려 있는 작업을 저장하세요. 재부팅 대신 로그아웃 후 다시 로그인해도 그룹 변경이 적용됩니다.</div><pre><code>groups</code></pre><p>출력에 <code>dialout</code>이 있으면 지속적인 serial 장치 접근 권한이 적용된 것입니다.</p></div></section>
+<section id="attributes"><div class="number">04</div><div><h2>각 장치의 고유 정보 조회</h2><p>Leader와 Follower를 하나씩 확실히 구분해 아래 명령을 실행하고 <code>ID_VENDOR_ID</code>와 <code>ID_SERIAL_SHORT</code>를 기록합니다.</p><pre><code>udevadm info -q all -n /dev/ttyACM0 | egrep 'DEVNAME=|ID_VENDOR_ID=|ID_MODEL_ID=|ID_SERIAL=|ID_SERIAL_SHORT=|ID_MODEL=|ID_VENDOR=|ID_USB_INTERFACE_NUM='
+
+udevadm info -q all -n /dev/ttyACM1 | egrep 'DEVNAME=|ID_VENDOR_ID=|ID_MODEL_ID=|ID_SERIAL=|ID_SERIAL_SHORT=|ID_MODEL=|ID_VENDOR=|ID_USB_INTERFACE_NUM='</code></pre><table><thead><tr><th>항목</th><th>용도</th><th>규칙에서 사용</th></tr></thead><tbody><tr><td><code>ID_VENDOR_ID</code></td><td>USB 제조사 ID</td><td><code>ATTRS{idVendor}</code></td></tr><tr><td><code>ID_SERIAL_SHORT</code></td><td>보드별 고유 serial</td><td><code>ATTRS{serial}</code></td></tr><tr><td><code>DEVNAME</code></td><td>현재 임시 포트</td><td>확인용</td></tr></tbody></table></div></section>
+<section id="udev"><div class="number">05</div><div><h2>고정 장치명 udev 규칙 작성</h2><pre><code>sudoedit /etc/udev/rules.d/99-omx.rules</code></pre><p>아래 꺾쇠 부분을 방금 조회한 실제 값으로 바꿉니다. PDF에 보이는 예시 serial은 강의 장비의 값이므로 그대로 복사하면 안 됩니다.</p><pre><code>SUBSYSTEM=="tty", ATTRS{idVendor}=="&lt;VENDOR_ID&gt;", ATTRS{serial}=="&lt;FOLLOWER_SERIAL&gt;", SYMLINK+="omx_follower"
+SUBSYSTEM=="tty", ATTRS{idVendor}=="&lt;VENDOR_ID&gt;", ATTRS{serial}=="&lt;LEADER_SERIAL&gt;", SYMLINK+="omx_leader"</code></pre><div class="good"><b>매핑 확인:</b> Follower의 serial이 <code>omx_follower</code>, Leader의 serial이 <code>omx_leader</code> 행에 들어갔는지 저장 전에 다시 확인하세요.</div></div></section>
+<section id="verify"><div class="number">06</div><div><h2>규칙 적용과 검증</h2><pre><code>sudo udevadm control --reload-rules
+sudo udevadm trigger</code></pre><p>두 USB 케이블을 분리했다가 다시 연결한 후 고정 별칭과 실제 연결 대상을 확인합니다.</p><pre><code>ls -l /dev/omx_follower /dev/omx_leader
+readlink -f /dev/omx_follower
+readlink -f /dev/omx_leader</code></pre><p><code>ls -l</code>에는 udev가 만든 symbolic link가, <code>readlink -f</code>에는 현재 연결된 <code>/dev/ttyACM*</code> 경로가 표시됩니다. USB 연결 순서를 바꿔도 별칭의 로봇 역할은 같아야 합니다.</p></div></section>
+<section id="order" class="commands"><h2>터미널에 입력하는 전체 순서</h2><pre><code># 1. 포트 식별
+source ~/venv/il/bin/activate
+lerobot-find-port
+
+# 2. 영구 권한 부여 (적용하려면 재로그인 또는 재부팅)
+sudo usermod -a -G dialout $USER
+sudo reboot now
+
+# 3. 재접속 후 그룹·장치 정보 확인
+groups
+udevadm info -q all -n /dev/ttyACM0 | egrep 'DEVNAME=|ID_VENDOR_ID=|ID_SERIAL_SHORT='
+udevadm info -q all -n /dev/ttyACM1 | egrep 'DEVNAME=|ID_VENDOR_ID=|ID_SERIAL_SHORT='
+
+# 4. 실제 조회값으로 udev 규칙 작성
+sudoedit /etc/udev/rules.d/99-omx.rules
+
+# 5. 규칙을 다시 읽고, USB 재연결 후 검증
+sudo udevadm control --reload-rules
+sudo udevadm trigger
+ls -l /dev/omx_follower /dev/omx_leader
+readlink -f /dev/omx_follower
+readlink -f /dev/omx_leader</code></pre></section>
+<section id="trouble"><div class="number">FIX</div><div><h2>문제 해결</h2><table><thead><tr><th>증상</th><th>확인</th><th>해결 방향</th></tr></thead><tbody><tr><td><code>Permission denied</code></td><td><code>groups</code>, 장치 group</td><td>dialout 등록 후 재로그인</td></tr><tr><td><code>/dev/omx_*</code> 없음</td><td>rule 오타·serial 값</td><td>실제 udevadm 출력과 비교 후 reload·재연결</td></tr><tr><td>Leader·Follower가 뒤바뀜</td><td>두 serial 매핑</td><td>규칙의 serial 행을 올바른 역할로 수정</td></tr><tr><td>Follower 모터가 동작하지 않음</td><td>12V 5A·PWR·DXL LED</td><td>전원을 끄고 배선부터 재확인</td></tr><tr><td><code>lerobot-find-port</code> 없음</td><td><code>which python</code>, 가상환경</td><td><code>~/venv/il</code> 활성화와 LeRobot 설치 확인</td></tr></tbody></table></div></section>
+<section><div class="number">✓</div><div><h2>완료 체크리스트</h2><ol><li>두 로봇을 고정하고 Leader USB, Follower USB·12V 5A를 구분했습니다.</li><li>LED와 <code>lerobot-find-port</code>로 연결을 확인했습니다.</li><li>사용자를 <code>dialout</code> 그룹에 등록했습니다.</li><li>각 보드의 실제 vendor ID와 serial을 기록했습니다.</li><li>udev 규칙으로 역할별 고정 별칭을 만들었습니다.</li><li>연결 순서를 바꿔도 별칭이 같은 역할을 가리키는지 확인했습니다.</li></ol></div></section>
+<div class="bottom-buttons"><a href="imitation-lerobot-installation-omx-ai.html">← 03 설치</a><a href="../index.html">전체 목차 →</a></div></main></div></body></html>
