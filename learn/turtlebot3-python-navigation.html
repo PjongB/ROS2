@@ -1,4 +1,4 @@
-<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Python으로 TurtleBot3 자율주행 · ROS2</title><link rel="stylesheet" href="mobile-robot-summary.css"></head><body><header><div class="shell top"><a class="brand" href="../index.html"><b>ROS</b>2 LEARN</a><a href="../index.html">← 전체 강의</a></div></header><section class="hero"><div class="shell"><small>06.06 · TURTLEBOT3 · PYTHON NAV2</small><h1>Python으로 TurtleBot3 자율주행</h1><p>Jupyter Notebook과 Nav2 Simple Commander의 BasicNavigator로 단일 목표, 피드백, 결과, 다중 Waypoint를 제어합니다.</p><div class="source-buttons"><a class="html" target="_blank" rel="noopener" href="../assets/turtlebot3-06/turtlebot3-python-navigation-presentation.html">원본 HTML</a><a class="html" href="#example">코드 흐름 ↓</a></div></div></section><div class="shell layout"><nav><b>목차</b><a href="#prepare">준비</a><a href="#navigator">Navigator</a><a href="#goal">단일 목표</a><a href="#feedback">피드백</a><a href="#waypoints">Waypoint</a><a href="#example">예제</a></nav><main>
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Python으로 TurtleBot3 자율주행 · ROS2</title><link rel="stylesheet" href="mobile-robot-summary.css"></head><body><header><div class="shell top"><a class="brand" href="../index.html"><b>ROS</b>2 LEARN</a><a href="../index.html">← 전체 강의</a></div></header><section class="hero"><div class="shell"><small>06.06 · TURTLEBOT3 · PYTHON NAV2</small><h1>Python으로 TurtleBot3 자율주행</h1><p>Jupyter Notebook과 Nav2 Simple Commander의 BasicNavigator로 단일 목표, 피드백, 결과, 다중 Waypoint를 제어합니다.</p><div class="source-buttons"><a class="html" target="_blank" rel="noopener" href="../assets/turtlebot3-06/turtlebot3-python-navigation-presentation.html">원본 HTML</a><a class="pdf" target="_blank" rel="noopener" href="../assets/turtlebot3-06/turtlebot3-python-navigation.pdf">강의 PDF</a><a class="html" href="#example">코드 흐름 ↓</a></div></div></section><div class="shell layout"><nav><b>목차</b><a href="#prepare">준비</a><a href="#navigator">Navigator</a><a href="#goal">단일 목표</a><a href="#feedback">피드백</a><a href="#waypoints">Waypoint</a><a href="#example">예제</a></nav><main>
 <div class="intro"><b>한 줄 정리</b><span>Nav2가 활성화된 상태에서 Python 클라이언트가 목표 Pose를 보내고, 완료 전까지 피드백을 읽은 뒤 결과와 ROS 자원을 정리합니다.</span></div>
 <section id="prepare"><div class="number">01</div><div><h2>실행 준비</h2><ul><li>SBC bringup과 PC Navigation을 먼저 실행합니다.</li><li>RViz에서 2D Pose Estimate로 초기 위치를 맞춥니다.</li><li>Nav2 환경이 source된 터미널에서 Jupyter Notebook을 실행합니다.</li></ul></div></section>
 <section id="navigator"><div class="number">02</div><div><h2>BasicNavigator 초기화</h2><pre><code>import rclpy
@@ -7,27 +7,77 @@ from nav2_simple_commander.robot_navigator import BasicNavigator
 rclpy.init()
 navigator = BasicNavigator()
 navigator.waitUntilNav2Active()</code></pre></div></section>
-<section id="goal"><div class="number">03</div><div><h2>목표 Pose 구성</h2><p><code>PoseStamped</code>의 frame은 <code>map</code>, timestamp는 navigator clock을 사용합니다. 위치 <code>x/y</code>와 방향 quaternion을 모두 지정합니다.</p></div></section>
-<section id="feedback"><div class="number">04</div><div><h2>피드백과 결과</h2><p><code>isTaskComplete()</code>가 거짓인 동안 <code>getFeedback()</code>으로 남은 거리·경과 시간을 확인합니다. 완료되면 <code>getResult()</code>로 성공·취소·실패를 구분합니다.</p></div></section>
-<section id="waypoints"><div class="number">05</div><div><h2>여러 좌표 주행</h2><p>여러 <code>PoseStamped</code>를 리스트에 담아 <code>followWaypoints()</code>로 전달합니다. 각 점의 좌표계와 orientation을 빠뜨리지 않습니다.</p></div></section>
-<section id="example" class="commands"><h2>단일 목표 코드 흐름</h2><pre><code>from geometry_msgs.msg import PoseStamped
+<section id="goal"><div class="number">03</div><div><h2>목표 Pose 구성</h2><p><code>PoseStamped</code>의 frame은 <code>map</code>, timestamp는 navigator clock을 사용합니다. 위치 <code>x/y</code>와 방향 quaternion을 모두 지정합니다.</p><pre><code>from geometry_msgs.msg import PoseStamped
 
-goal = PoseStamped()
-goal.header.frame_id = 'map'
-goal.header.stamp = navigator.get_clock().now().to_msg()
-goal.pose.position.x = 1.0
-goal.pose.position.y = 0.5
-goal.pose.orientation.w = 1.0
+goal_pose = PoseStamped()
+goal_pose.header.frame_id = 'map'
+goal_pose.header.stamp = navigator.get_clock().now().to_msg()
+goal_pose.pose.position.x = 1.5
+goal_pose.pose.position.y = 0.55
 
-navigator.goToPose(goal)
+# 약 90도 회전: z=sin(45°), w=cos(45°)
+goal_pose.pose.orientation.z = 0.707
+goal_pose.pose.orientation.w = 0.707</code></pre><p><code>w=1.0, z=0.0</code>은 회전 없는 방향이고, PDF 예제의 <code>z=w=0.707</code>은 약 90도 방향입니다. 목표 위치는 RViz Publish Point로 확인합니다.</p></div></section>
+<section id="feedback"><div class="number">04</div><div><h2>주행 피드백·취소·결과 분기</h2><p><code>isTaskComplete()</code>가 거짓인 동안 남은 거리를 확인하고, 시간 제한을 넘으면 작업을 취소합니다. 완료 후에는 성공·취소·실패를 구분합니다.</p></div></section>
+<section id="waypoints"><div class="number">05</div><div><h2>여러 좌표 주행</h2><p>여러 <code>PoseStamped</code>를 리스트에 담아 <code>followWaypoints()</code>로 전달합니다. 각 점의 frame, timestamp, 위치와 orientation을 모두 지정합니다.</p></div></section>
+<section id="example" class="commands"><h2>1 · 단일 목표 전송과 피드백</h2><pre><code>from rclpy.duration import Duration
+from nav2_simple_commander.robot_navigator import TaskResult
+
+navigator.goToPose(goal_pose)
+i = 0
 while not navigator.isTaskComplete():
+    i += 1
     feedback = navigator.getFeedback()
-    if feedback:
-        print(feedback.distance_remaining)
+    if feedback and i % 5 == 0:
+        print(f'Distance remaining: {feedback.distance_remaining:.2f} meters')
 
-print(navigator.getResult())
-navigator.lifecycleShutdown()
-rclpy.shutdown()</code></pre><h2>완료 체크</h2><ol><li>Nav2가 Active가 된 뒤 목표를 보냅니다.</li><li>목표 frame과 timestamp가 유효합니다.</li><li>주행 중 피드백이 갱신됩니다.</li><li>결과를 확인하고 navigator와 rclpy를 종료합니다.</li></ol></section>
+        # 10분을 넘으면 안전하게 취소
+        if Duration.from_msg(feedback.navigation_time) &gt; Duration(seconds=600.0):
+            navigator.cancelTask()
+
+result = navigator.getResult()
+if result == TaskResult.SUCCEEDED:
+    print('Goal succeeded!')
+elif result == TaskResult.CANCELED:
+    print('Goal was canceled!')
+elif result == TaskResult.FAILED:
+    print('Goal failed!')
+else:
+    print('Goal has an invalid return status!')</code></pre>
+<h2>2 · 다중 Waypoint 만들기</h2><pre><code>def make_pose(x, y, z=0.0, w=1.0):
+    pose = PoseStamped()
+    pose.header.frame_id = 'map'
+    pose.header.stamp = navigator.get_clock().now().to_msg()
+    pose.pose.position.x = x
+    pose.pose.position.y = y
+    pose.pose.orientation.z = z
+    pose.pose.orientation.w = w
+    return pose
+
+goal_pose_list = [
+    make_pose(1.5, 0.55, 0.707, 0.707),
+    make_pose(1.5, -3.75, 0.707, 0.707),
+    make_pose(-3.6, -4.75, 0.707, 0.707),
+]</code></pre>
+<h2>3 · Waypoint 실행과 진행 상황</h2><pre><code>navigator.followWaypoints(goal_pose_list)
+start_time = navigator.get_clock().now()
+i = 0
+
+while not navigator.isTaskComplete():
+    i += 1
+    feedback = navigator.getFeedback()
+    if feedback and i % 5 == 0:
+        print(
+            f'Executing waypoint: {feedback.current_waypoint + 1}/'
+            f'{len(goal_pose_list)}'
+        )
+
+    if navigator.get_clock().now() - start_time &gt; Duration(seconds=600.0):
+        navigator.cancelTask()  # PDF의 navigator/nav 변수 혼용 오타를 수정
+
+print(navigator.getResult())</code></pre>
+<h2>4 · Nav2와 ROS 종료</h2><pre><code>navigator.lifecycleShutdown()
+rclpy.shutdown()</code></pre><h2>완료 체크</h2><ol><li>Nav2가 Active가 된 뒤 목표를 보냅니다.</li><li>목표 frame, timestamp와 quaternion이 유효합니다.</li><li>주행 중 거리와 현재 Waypoint가 갱신됩니다.</li><li>성공·취소·실패 결과를 구분합니다.</li><li>마지막에 Nav2 lifecycle과 rclpy를 종료합니다.</li></ol></section>
 <section class="commands"><h2>터미널에 입력하는 전체 실행 순서</h2><pre><code># 터미널 A - PC에서 SBC 접속 후 bringup
 ssh &lt;username&gt;@&lt;robot-ip&gt;
 source /opt/ros/jazzy/setup.bash
