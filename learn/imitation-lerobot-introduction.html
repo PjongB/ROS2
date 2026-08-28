@@ -1,0 +1,28 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>LeRobot 소개 · ROS2</title><link rel="stylesheet" href="mobile-robot-summary.css"><style>.warn{padding:15px;border:1px solid #e0a52e;border-radius:12px;background:#fff8df}.good{padding:15px;border:1px solid #58a879;border-radius:12px;background:#edf9f1}</style></head><body>
+<header><div class="shell top"><a class="brand" href="../index.html"><b>ROS</b>2 LEARN</a><a href="imitation-omx-ai.html">← 모방학습 01</a></div></header>
+<section class="hero"><div class="shell"><small>07.02 · IMITATION LEARNING · LEROBOT</small><h1>LeRobot 소개</h1><p>로봇 제어를 표준화하는 Robot 클래스, 영상과 수치를 동기화하는 LeRobotDataset v3, 정책 학습·평가·공유의 전체 생태계를 이해합니다.</p><div class="source-buttons"><a class="pdf" target="_blank" rel="noopener" href="../assets/imitation-02/lerobot-introduction.pdf">강의 PDF</a><a class="html" href="#flow">워크플로우 ↓</a></div></div></section>
+<div class="shell layout"><nav><b>목차</b><a href="#goal">LeRobot이란</a><a href="#problem">해결하는 문제</a><a href="#robot">Robot 클래스</a><a href="#dataset">Dataset v3</a><a href="#policy">정책 모델</a><a href="#vla">VLA</a><a href="#flow">전체 흐름</a><a href="#check">복습</a></nav><main>
+<div class="intro"><b>자료 성격</b><span>이 PDF는 LeRobot 구성 소개 자료이며 설치·학습 CLI 명령은 포함하지 않습니다. 버전이 바뀌는 명령은 후속 실습 자료에서 확인합니다.</span></div>
+<section id="goal"><div class="number">01</div><div><h2>LeRobot이란?</h2><ul><li>Hugging Face가 개발한 PyTorch 기반 오픈소스 로봇 학습 프레임워크입니다.</li><li>데이터 수집 → 관리 → 정책 학습 → 평가 → 배포·공유를 하나의 생태계로 연결합니다.</li><li>저가형 로봇 팔부터 모바일 로봇·휴머노이드까지 하드웨어 차이를 공통 인터페이스로 감쌉니다.</li></ul></div></section>
+<section id="problem"><div class="number">02</div><div><h2>LeRobot이 해결하는 문제</h2><table><thead><tr><th>기존 문제</th><th>LeRobot의 접근</th><th>효과</th></tr></thead><tbody><tr><td>연구실마다 다른 데이터 형식</td><td><code>LeRobotDataset</code></td><td>데이터 공유·재사용</td></tr><tr><td>하드웨어에 묶인 제어 코드</td><td><code>Robot</code> 추상화</td><td>동일한 제어 흐름 재사용</td></tr><tr><td>논문 재현 환경 부족</td><td>SoTA 정책 구현과 평가 도구</td><td>학습·평가 기준 통일</td></tr><tr><td>모델·데이터 배포 단절</td><td>Hugging Face Hub 연동</td><td>다운로드·스트리밍·공유</td></tr></tbody></table></div></section>
+<section id="robot"><div class="number">03</div><div><h2>Robot 클래스와 Teleoperation</h2><pre><code>게임패드·키보드·Leader Robot
+              ↓
+         Teleoperation
+              ↓
+Camera + State + Action 동기화
+              ↓
+       LeRobotDataset 저장</code></pre><ul><li><b>Robot 클래스:</b> 서로 다른 하드웨어의 연결·관측·명령을 공통 Python 인터페이스로 추상화합니다.</li><li><b>Teleoperation:</b> 사람이 로봇을 조작하면서 성공 시연을 수집합니다.</li><li><b>동기화:</b> 한 프레임을 볼 때 로봇 상태와 실행한 행동이 정확히 대응해야 합니다.</li></ul></div></section>
+<section id="dataset"><div class="number">04</div><div><h2>LeRobotDataset v3 구조</h2><table><thead><tr><th>폴더·형식</th><th>저장 내용</th><th>역할</th></tr></thead><tbody><tr><td><code>meta/</code></td><td>info·episode·task 메타데이터</td><td>구조와 작업 정의</td></tr><tr><td><code>data/</code> · Parquet</td><td>state·action·timestamp</td><td>빠른 수치 데이터 읽기와 압축</td></tr><tr><td><code>videos/</code> · MP4</td><td>카메라별 영상</td><td>비전 Observation</td></tr><tr><td>Frame index</td><td>수치 행과 영상 프레임 연결</td><td>시간 동기화</td></tr></tbody></table><ul><li><b>Episode:</b> 한 작업을 시작부터 종료까지 수행한 기록입니다.</li><li><b>State:</b> 현재 관절 각도와 그리퍼 상태입니다.</li><li><b>Action:</b> 다음 관절·그리퍼 제어 명령입니다.</li><li><b>Observation:</b> 카메라 영상과 State를 합친 Policy 입력입니다.</li></ul></div></section>
+<section id="policy"><div class="number">05</div><div><h2>정책 모델의 범주</h2><table><thead><tr><th>범주</th><th>대표 모델</th><th>특징</th></tr></thead><tbody><tr><td>모방학습</td><td>ACT·Diffusion Policy·VQ-BeT</td><td>전문가 시연으로 행동 시퀀스 학습</td></tr><tr><td>강화학습</td><td>HIL-SERL·TDMPC</td><td>보상과 상호작용으로 정책 개선</td></tr><tr><td>VLA</td><td>Pi0Fast·Pi0.5·GR00T·SmolVLA·XVLA</td><td>영상·언어·상태에서 행동 생성</td></tr></tbody></table><p>ACT는 여러 미래 행동을 Chunk로 예측하고, Diffusion Policy는 노이즈에서 행동 시퀀스를 정제하며, VQ-BeT는 행동을 이산 토큰으로 표현합니다.</p></div></section>
+<section id="vla"><div class="number">06</div><div><h2>Vision-Language-Action 흐름</h2><pre><code>Camera + 자연어 지시 + Robot State
+                  ↓
+       Vision·Text·State Encoder
+                  ↓
+      VLM / Diffusion Transformer
+                  ↓
+            Action Decoder
+                  ↓
+        Robot-specific Motor Action</code></pre><div class="warn"><b>주의:</b> Policy 출력은 명령 후보입니다. 관절 범위, 속도, 충돌, 센서 최신성, NaN/Inf 검사를 통과한 뒤 로봇에 전달합니다.</div></div></section>
+<section id="flow"><div class="number">07</div><div><h2>전체 워크플로우</h2><table><thead><tr><th>단계</th><th>도구</th><th>결과</th></tr></thead><tbody><tr><td>1. 수집</td><td>Robot 클래스·Teleoperation</td><td>시간 정렬된 시연 Episode</td></tr><tr><td>2. 관리</td><td>LeRobotDataset</td><td>삭제·분할·병합된 데이터</td></tr><tr><td>3. 학습</td><td>ACT·Diffusion·VLA</td><td>Policy checkpoint</td></tr><tr><td>4. 평가</td><td>EnvHub·실물 평가</td><td>성공률·실패 유형</td></tr><tr><td>5. 공유</td><td>Hugging Face Hub</td><td>Model·Dataset 배포</td></tr></tbody></table></div></section>
+<section id="check"><div class="number">✓</div><div><h2>복습 질문</h2><ol><li>Robot 클래스가 하드웨어 종속성을 줄이는 방식은 무엇인가?</li><li>Parquet 행과 MP4 프레임의 시간 정렬이 왜 중요한가?</li><li>ACT·Diffusion Policy·VLA의 출력 방식은 어떻게 다른가?</li><li>학습 성능이 좋아도 실제 로봇에 Safety Gate가 필요한 이유는 무엇인가?</li></ol></div></section>
+<div class="bottom-buttons"><a href="imitation-omx-ai.html">← 01 OMX-AI</a><a href="../index.html">전체 목차 →</a></div></main></div></body></html>
