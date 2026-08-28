@@ -1,0 +1,63 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="OMX-AI Follower 키보드 제어와 LeRobot Leader-Follower 원격 조종, 카메라·Rerun Viewer 실습"><title>키보드 제어 및 원격 조종 - OMX-AI · ROS2</title><link rel="stylesheet" href="mobile-robot-summary.css"><style>.warn{padding:15px;border:1px solid #e0a52e;border-radius:12px;background:#fff8df}.danger{padding:15px;border:1px solid #d45b5b;border-radius:12px;background:#fff0f0}.good{padding:15px;border:1px solid #58a879;border-radius:12px;background:#edf9f1}.key-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:15px 0}.key-grid div{padding:14px;border:1px solid #d9dfea;border-radius:12px;background:#f8fafc}.key-grid code{display:inline-block;margin-bottom:7px;font-size:16px;font-weight:800}</style></head><body>
+<header><div class="shell top"><a class="brand" href="../index.html"><b>ROS</b>2 LEARN</a><a href="imitation-omx-ai-robot-connection-setup.html">← 모방학습 04</a></div></header>
+<section class="hero"><div class="shell"><small>07.05 · IMITATION LEARNING · TELEOPERATION</small><h1>키보드 제어 및 원격 조종 - OMX-AI</h1><p>키보드로 Follower의 관절과 그리퍼를 먼저 점검한 뒤, LeRobot에서 Leader-Follower 원격 조종과 카메라 시각화를 실행합니다.</p><div class="source-buttons"><a class="pdf" target="_blank" rel="noopener" href="../assets/imitation-05/omx-ai-keyboard-teleoperation.pdf">강의 PDF</a><a class="html" href="#order">전체 실행 순서 ↓</a></div></div></section>
+<div class="shell layout"><nav><b>목차</b><a href="#prepare">실습 준비</a><a href="#keyboard">키보드 제어</a><a href="#mapping">키 매핑</a><a href="#leader">Leader-Follower</a><a href="#camera">카메라 확인</a><a href="#viewer">카메라 원격 조종</a><a href="#order">전체 실행 순서</a><a href="#compare">방식 비교</a><a href="#trouble">문제 해결</a></nav><main>
+<div class="intro"><b>이번 강의의 핵심</b><span><code>Follower 단독 점검</code> → <code>Leader-Follower mirroring</code> → <code>카메라·관절 데이터 시각화</code> 순서로 범위를 넓힙니다.</span></div>
+<section id="prepare"><div class="number">00</div><div><h2>안전한 실습 준비</h2><div class="danger"><b>전원을 넣기 전에:</b> 두 로봇을 작업대에 고정하고 Follower의 가동 범위에서 손·케이블·도구를 치웁니다. 처음에는 작은 입력으로 관절 방향을 하나씩 확인하세요.</div><ol><li>04 강의에서 만든 <code>/dev/omx_follower</code>와 <code>/dev/omx_leader</code>가 있는지 확인합니다.</li><li>Follower에 12V 5A 전원을 연결하고 PWR·DXL 상태를 확인합니다.</li><li>LeRobot v0.4.4가 설치된 <code>~/venv/il</code> 가상환경을 사용합니다.</li></ol><pre><code>ls -l /dev/omx_follower /dev/omx_leader
+source ~/venv/il/bin/activate</code></pre></div></section>
+<section id="keyboard"><div class="number">01</div><div><h2>Follower 키보드 제어</h2><p>강의에서 제공하는 <code>omx_f_keyboard_teleop.py</code>를 내려받아 작업 공간으로 옮깁니다. 이 스크립트는 모방학습 데이터를 모으기 전 Follower의 관절 방향과 그리퍼 동작을 빠르게 확인하는 용도입니다.</p><pre><code>mv ~/Downloads/omx_f_keyboard_teleop.py ~/il_ws/src/
+source ~/venv/il/bin/activate
+cd ~/il_ws/src
+ls -l /dev/omx_follower
+python3 omx_f_keyboard_teleop.py</code></pre><p>고정 별칭이 없으면 실제 포트를 찾은 뒤 명시합니다.</p><pre><code>lerobot-find-port
+python3 omx_f_keyboard_teleop.py --port /dev/ttyACM1</code></pre><div class="warn"><b>포트 번호 주의:</b> <code>/dev/ttyACM1</code>은 예시입니다. 현재 장비에서 찾은 값을 사용하고, 가능하면 04 강의의 udev 고정 별칭을 먼저 복구하세요.</div></div></section>
+<section id="mapping"><div class="number">02</div><div><h2>키보드 제어 매핑</h2><div class="key-grid"><div><code>1 / q</code><br>Joint 1 · Base<br>좌우 회전</div><div><code>2 / w</code><br>Joint 2 · Shoulder<br>위아래 기울기</div><div><code>3 / e</code><br>Joint 3 · Elbow<br>팔꿈치 각도</div><div><code>4 / r</code><br>Joint 4 · Wrist Pitch<br>손목 상하</div><div><code>5 / t</code><br>Joint 5 · Wrist Roll<br>손목 회전</div><div><code>o / p</code><br>Gripper<br>열기 / 닫기</div></div><p>숫자키는 해당 관절을 양(+) 방향, 짝이 되는 알파벳키는 음(-) 방향으로 움직입니다. <code>ESC</code>로 프로그램을 종료합니다.</p></div></section>
+<section id="leader"><div class="number">03</div><div><h2>LeRobot Leader-Follower 원격 조종</h2><p>사람이 Leader를 손으로 움직이면 관절 위치가 Follower로 전달됩니다. 키보드보다 자연스러운 다관절 동작을 만들 수 있어 모방학습 시연의 기본 입력 방식으로 사용합니다.</p><pre><code>source ~/venv/il/bin/activate
+cd ~/il_ws/src/lerobot
+
+lerobot-teleoperate \
+  --robot.type=omx_follower \
+  --robot.port=/dev/omx_follower \
+  --robot.id=omx_follower_arm \
+  --teleop.type=omx_leader \
+  --teleop.port=/dev/omx_leader \
+  --teleop.id=omx_leader_arm</code></pre><ul><li><code>robot.*</code>은 실제 작업을 수행하는 Follower 설정입니다.</li><li><code>teleop.*</code>은 사람이 움직이는 Leader 설정입니다.</li><li><code>id</code>는 장치를 구분하고 이후 데이터 기록에도 사용하므로 강의 기준 이름을 일관되게 유지합니다.</li></ul><div class="good"><b>조종 자세:</b> Leader 그리퍼 위쪽에 검지·중지, 아래쪽에 엄지를 두고 부드럽고 일정한 속도로 움직입니다. 급격한 동작은 Follower 안전과 이후 데이터 품질에 모두 불리합니다.</div></div></section>
+<section id="camera"><div class="number">04</div><div><h2>카메라 장치 확인</h2><pre><code>sudo apt update
+sudo apt install v4l-utils
+v4l2-ctl --list-devices</code></pre><p>한 물리 카메라가 raw stream과 metadata 용도로 여러 <code>/dev/video*</code> 장치를 만들 수 있습니다. 장치명 아래에 나열된 경로 중 실제 영상 stream을 제공하는 번호를 사용합니다.</p><table><thead><tr><th>확인 항목</th><th>설명</th></tr></thead><tbody><tr><td>카메라 제품명</td><td>내장·외장 카메라를 구분합니다.</td></tr><tr><td><code>/dev/videoX</code></td><td>현재 부팅에서 할당된 영상 장치입니다.</td></tr><tr><td>해상도·FPS</td><td>실습 명령의 640×480·30 FPS를 지원하는지 확인합니다.</td></tr></tbody></table></div></section>
+<section id="viewer"><div class="number">05</div><div><h2>카메라와 함께 원격 조종</h2><pre><code>lerobot-teleoperate \
+  --robot.type=omx_follower \
+  --robot.port=/dev/omx_follower \
+  --robot.id=omx_follower_arm \
+  --robot.cameras="{front: {type: opencv, index_or_path: '/dev/video0', width: 640, height: 480, fps: 30}}" \
+  --teleop.type=omx_leader \
+  --teleop.port=/dev/omx_leader \
+  --teleop.id=omx_leader_arm \
+  --display_data=true</code></pre><p><code>/dev/video0</code>은 예시이므로 앞 단계에서 확인한 카메라 경로로 바꿉니다. <code>front</code>는 이후 데이터셋에서 카메라를 구분하는 이름입니다.</p><table><thead><tr><th>Rerun Viewer 영역</th><th>확인할 내용</th></tr></thead><tbody><tr><td>카메라 영상</td><td>프레임이 멈추거나 심하게 지연되지 않는가</td></tr><tr><td>관절 그래프</td><td>Leader 입력과 Follower 상태가 부드럽게 변하는가</td></tr><tr><td>Observation·Action</td><td>관측과 제어값이 같은 시간 흐름으로 갱신되는가</td></tr></tbody></table></div></section>
+<section id="order" class="commands"><h2>터미널에 입력하는 전체 순서</h2><pre><code># 1. 장치와 환경 확인
+ls -l /dev/omx_follower /dev/omx_leader
+source ~/venv/il/bin/activate
+
+# 2. Follower 단독 키보드 점검
+cd ~/il_ws/src
+python3 omx_f_keyboard_teleop.py
+
+# 3. Leader-Follower 원격 조종
+cd ~/il_ws/src/lerobot
+lerobot-teleoperate \
+  --robot.type=omx_follower \
+  --robot.port=/dev/omx_follower \
+  --robot.id=omx_follower_arm \
+  --teleop.type=omx_leader \
+  --teleop.port=/dev/omx_leader \
+  --teleop.id=omx_leader_arm
+
+# 4. 카메라 경로 확인
+sudo apt install v4l-utils
+v4l2-ctl --list-devices
+
+# 5. 위 명령에 --robot.cameras와 --display_data=true를 추가해 시각화</code></pre></section>
+<section id="compare"><div class="number">06</div><div><h2>두 제어 방식 비교</h2><table><thead><tr><th>항목</th><th>키보드 제어</th><th>LeRobot 원격 조종</th></tr></thead><tbody><tr><td>입력</td><td>관절별 키</td><td>Leader 직접 조작</td></tr><tr><td>적합한 작업</td><td>기본 동작·방향 점검</td><td>복잡하고 자연스러운 시연</td></tr><tr><td>필요 장비</td><td>Follower + 키보드</td><td>Follower + Leader</td></tr><tr><td>카메라</td><td>강의 스크립트에서는 미사용</td><td>영상·관절값 동시 시각화</td></tr><tr><td>주요 목적</td><td>하드웨어 동작 확인</td><td>모방학습 데이터 수집 준비</td></tr></tbody></table></div></section>
+<section id="trouble"><div class="number">FIX</div><div><h2>문제 해결</h2><table><thead><tr><th>증상</th><th>먼저 확인</th><th>해결 방향</th></tr></thead><tbody><tr><td><code>/dev/omx_*</code> 없음</td><td>USB·udev 규칙</td><td>04 강의의 고정 장치명 설정 재검증</td></tr><tr><td>Follower가 반응하지 않음</td><td>12V 5A·PWR·DXL LED</td><td>전원을 끄고 연결부터 점검</td></tr><tr><td><code>lerobot-teleoperate</code> 없음</td><td>가상환경·LeRobot 설치</td><td><code>~/venv/il</code> 활성화 후 v0.4.4 설치 확인</td></tr><tr><td>카메라 영상이 없음</td><td><code>v4l2-ctl --list-devices</code></td><td>실제 stream 경로로 <code>index_or_path</code> 수정</td></tr><tr><td>동작이 튀거나 늦음</td><td>급격한 Leader 입력·USB·FPS</td><td>속도를 낮추고 연결·Viewer 지연 확인</td></tr></tbody></table></div></section>
+<section><div class="number">✓</div><div><h2>완료 체크리스트</h2><ul><li>Follower의 5개 관절과 그리퍼 방향을 키보드로 확인했습니다.</li><li>Leader와 Follower의 고정 포트가 올바른 장치를 가리킵니다.</li><li>Leader 동작을 Follower가 부드럽게 따라갑니다.</li><li>실제 카메라 장치 경로를 확인해 명령에 반영했습니다.</li><li>Rerun Viewer에서 영상·관절 Observation·Action 흐름을 확인했습니다.</li></ul></div></section>
+<div class="bottom-buttons"><a href="imitation-omx-ai-robot-connection-setup.html">← 04 연결 세팅</a><a href="../index.html">전체 목차 →</a></div></main></div></body></html>
