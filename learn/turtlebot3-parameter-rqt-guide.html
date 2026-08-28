@@ -1,0 +1,44 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>TurtleBot3 파라미터·RQT 가이드 · ROS2</title><link rel="stylesheet" href="mobile-robot-summary.css"><style>.warn{padding:15px;border:1px solid #e0a52e;border-radius:12px;background:#fff8df}.good{padding:15px;border:1px solid #58a879;border-radius:12px;background:#edf9f1}</style></head><body>
+<header><div class="shell top"><a class="brand" href="../index.html"><b>ROS</b>2 LEARN</a><a href="robot-parameter-rqt-guide.html">← 공통 가이드</a></div></header>
+<section class="hero"><div class="shell"><small>REFERENCE · TURTLEBOT3 · ROS 2 JAZZY</small><h1>TurtleBot3 파라미터·RQT 가이드</h1><p>Burger·Waffle 모델과 turtlebot3_navigation2을 기준으로 환경변수, Nav2 노드와 주요 설정을 변경·검증·저장합니다.</p><div class="source-buttons"><a class="html" href="#order">터미널 순서 ↓</a><a class="html" href="pinkypro-parameter-rqt-guide.html">PinkyPro용 →</a></div></div></section>
+<div class="shell layout"><nav><b>TurtleBot3 가이드</b><a href="#before">시작 전</a><a href="#order">실행 순서</a><a href="#rqt">RQT 사용</a><a href="#nodes">노드별 위치</a><a href="#model">모델 차이</a><a href="#save">저장·복원</a></nav><main>
+<div class="intro"><b>적용 대상</b><span><code>turtlebot3_bringup + turtlebot3_navigation2</code>을 사용합니다. Gazebo에서는 <code>use_sim_time</code>도 확인하세요.</span></div>
+<section id="before"><div class="number">00</div><div><h2>시작 전에 고정할 조건</h2><table><thead><tr><th>확인</th><th>TurtleBot3 기준</th><th>검증</th></tr></thead><tbody><tr><td>워크스페이스</td><td><code>~/turtlebot3_ws</code></td><td><code>ros2 pkg prefix turtlebot3_navigation2</code></td></tr><tr><td>모델</td><td><code>burger</code> 또는 <code>waffle</code></td><td><code>echo $TURTLEBOT3_MODEL</code></td></tr><tr><td>DDS 도메인</td><td>PC와 SBC가 같은 값</td><td><code>echo $ROS_DOMAIN_ID</code></td></tr><tr><td>실물 연결</td><td>SBC bringup·OpenCR 정상</td><td><code>ros2 topic hz /odom</code></td></tr></tbody></table><div class="warn"><b>모델 혼용 금지:</b> Burger와 Waffle은 차체 크기와 동특성이 달라 footprint·속도 값을 그대로 복사하면 안 됩니다.</div></div></section>
+<section id="order"><div class="number">01</div><div><h2>실물 TurtleBot3 실행과 관찰 순서</h2><pre><code># 터미널 A · SBC에 SSH 접속 후 bringup
+ssh &lt;USER&gt;@&lt;ROBOT_IP&gt;
+source /opt/ros/jazzy/setup.bash
+source ~/turtlebot3_ws/install/setup.bash
+export ROS_DOMAIN_ID=30
+export TURTLEBOT3_MODEL=burger
+ros2 launch turtlebot3_bringup robot.launch.py
+
+# 터미널 B · PC에서 저장 지도 기반 Nav2
+source /opt/ros/jazzy/setup.bash
+source ~/turtlebot3_ws/install/setup.bash
+export ROS_DOMAIN_ID=30
+export TURTLEBOT3_MODEL=burger
+ros2 launch turtlebot3_navigation2 navigation2.launch.py \
+  map:=$HOME/turtlemap.yaml
+
+# 터미널 C · 실제 노드 확인
+ros2 node list
+ros2 param list /controller_server
+ros2 param list /local_costmap/local_costmap
+ros2 param list /global_costmap/global_costmap
+ros2 param list /amcl</code></pre><p><code>30</code>과 <code>burger</code>는 예시입니다. 실제 PC·SBC 및 보유 모델 값으로 통일합니다.</p></div></section>
+<section id="rqt"><div class="number">02</div><div><h2>RQT에서 변경하는 순서</h2><pre><code>source /opt/ros/jazzy/setup.bash
+source ~/turtlebot3_ws/install/setup.bash
+export ROS_DOMAIN_ID=30
+export TURTLEBOT3_MODEL=burger
+rqt</code></pre><ol><li><b>Plugins → Configuration → Dynamic Reconfigure</b>를 엽니다.</li><li>대상 노드를 고르고 현재값을 기록합니다.</li><li>한 항목을 작은 폭으로 바꿉니다.</li><li><code>ros2 param get</code>으로 실제 적용을 확인합니다.</li><li>RViz의 Global·Local Costmap과 실물 주행을 비교합니다.</li></ol><pre><code>ros2 param get /global_costmap/global_costmap \
+  inflation_layer.inflation_radius</code></pre></div></section>
+<section id="nodes"><div class="number">03</div><div><h2>TurtleBot3에서 찾을 위치</h2><table><thead><tr><th>목적</th><th>노드</th><th>대표 파라미터</th></tr></thead><tbody><tr><td>전역 경로 여유</td><td>Global Costmap</td><td><code>inflation_radius</code>, <code>cost_scaling_factor</code></td></tr><tr><td>장애물 회피</td><td>Local Costmap</td><td>inflation·obstacle layer, footprint</td></tr><tr><td>위치 추정</td><td><code>/amcl</code></td><td>particles, update distance·angle, laser range</td></tr><tr><td>속도·도착</td><td><code>/controller_server</code></td><td>plugin 아래 velocity·acceleration·goal checker</td></tr></tbody></table></div></section>
+<section id="model"><div class="number">04</div><div><h2>모델·실물·Gazebo 구분</h2><table><thead><tr><th>구분</th><th>확인할 것</th><th>잘못됐을 때</th></tr></thead><tbody><tr><td>Burger / Waffle</td><td>footprint, 속도, 회전 특성</td><td>가짜 충돌·통로 오판</td></tr><tr><td>실물</td><td>OpenCR·odometry·LiDAR frame</td><td>제어 불응·위치 불안정</td></tr><tr><td>Gazebo</td><td><code>use_sim_time:=True</code>, <code>/clock</code></td><td>TF 시간 오류</td></tr><tr><td>PC↔SBC</td><td>Domain ID·network·동일 모델</td><td>노드가 일부만 보임</td></tr></tbody></table><div class="good"><b>튜닝 전에:</b> <code>/scan</code>, <code>/odom</code>, <code>/tf</code>, <code>/cmd_vel</code>과 Map·Scan 정합을 먼저 확인합니다.</div></div></section>
+<section id="save"><div class="number">05</div><div><h2>백업과 영구 반영</h2><pre><code>mkdir -p ~/robot_param_backup
+ros2 param dump /controller_server \
+  --output-dir ~/robot_param_backup
+ros2 param dump /local_costmap/local_costmap \
+  --output-dir ~/robot_param_backup
+ros2 pkg prefix --share turtlebot3_navigation2</code></pre><p>설치 공간을 직접 고치면 다음 빌드 때 사라질 수 있습니다. 소스 워크스페이스의 실제 Nav2 YAML에 검증된 값만 반영합니다.</p></div></section>
+<section><div class="number">✓</div><div><h2>완료 체크리스트</h2><ol><li>PC와 SBC의 Domain ID·모델 값이 같습니다.</li><li>실제 노드와 plugin namespace를 확인했습니다.</li><li>변경 전 값을 저장했습니다.</li><li>한 항목씩 바꾸고 적용값을 재조회했습니다.</li><li>검증된 값만 YAML에 반영했습니다.</li></ol></div></section>
+<div class="bottom-buttons"><a href="pinkypro-parameter-rqt-guide.html">← PinkyPro용</a><a href="robot-parameter-rqt-guide.html">공통 원리 →</a></div></main></div></body></html>
