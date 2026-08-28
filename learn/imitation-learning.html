@@ -1,0 +1,104 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>모방학습 개념과 LeRobot 실습</title><link rel="stylesheet" href="mobile-robot-summary.css"><style>.warn{padding:15px;border:1px solid #e0a52e;border-radius:12px;background:#fff8df}.danger{padding:15px;border:1px solid #dc6868;border-radius:12px;background:#fff0f0}.practice{margin:18px 0;padding:20px;border:1px solid #d9dfea;border-radius:15px}.practice h3{margin-top:0}.flow{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px;margin:15px 0}.flow div{padding:13px;border:1px solid #d9dfea;border-radius:12px;background:#f7f9fc}.tag{display:inline-block;padding:3px 8px;border-radius:6px;background:#7154d8;color:#fff;font-size:11px;font-weight:800}</style></head><body>
+<header><div class="shell top"><a class="brand" href="../index.html"><b>ROS</b>2 LEARN</a><a href="../index.html">← 전체 목차</a></div></header>
+<section class="hero"><div class="shell"><small>07.00 · IMITATION LEARNING · LeRobot + ACT</small><h1>모방학습 개념과 LeRobot 실습</h1><p>전문가 시연을 관측·행동 에피소드로 수집하고, BC·ACT 정책을 학습해 SO101에서 동기·비동기 추론하는 흐름을 익힙니다.</p><div class="source-buttons"><a class="pdf" target="_blank" rel="noopener" href="../assets/imitation-00/imitation-learning-concepts.pdf">강의 PDF</a><a class="html" target="_blank" rel="noopener" href="https://github.com/pinklab-art/rosconkr_il">실습 저장소</a><a class="html" href="#order">실행 순서 ↓</a></div></div></section>
+<div class="shell layout"><nav><b>강의 목차</b><a href="#why">왜 모방학습인가</a><a href="#types">BC·IRL·DAgger</a><a href="#data">데이터 구조</a><a href="#tools">시연 수집 도구</a><a href="#order">설치·로그인</a><a href="#collect">수집·학습</a><a href="#infer">추론</a><a href="#async">비동기 추론</a><a href="#operation">실전 운영·안전</a></nav><main>
+<div class="intro"><b>전체 흐름</b><span><code>전문가 시연</code> → 시간 정렬된 <code>(observation, action)</code> → 데이터 검토 → ACT 정책 학습 → 동기/비동기 추론 → 안전 게이트</span></div>
+<section id="why"><div class="number">01</div><div><h2>왜 모방학습인가</h2><p>고정 환경의 반복 작업은 IK·경로 계획·MPC와 모델 기반 제어가 잘 처리합니다. 하지만 접촉과 마찰, 천·케이블 같은 변형 물체, 센서 노이즈, 긴 다단계 작업에서는 모델 오차와 규칙 수가 빠르게 늘어납니다.</p><ul><li>강화학습은 보상으로 성공을 정의하지만 실물 로봇에서 수만 번의 위험한 초기 탐색을 하기 어렵습니다.</li><li>시뮬레이션에서 학습한 정책은 마찰·미끄러짐·센서 차이 때문에 Sim-to-Real gap을 겪습니다.</li><li>모방학습은 전문가의 좋은 행동을 출발점으로 사용해 무작위 탐색을 줄입니다.</li></ul><div class="warn"><b>역할 구분:</b> 모방학습은 좋은 초기 정책을 빠르게 만들고, 필요하면 이후 강화학습으로 견고성과 적응 범위를 넓힙니다.</div></div></section>
+<section id="types"><div class="number">02</div><div><h2>BC · IRL · DAgger</h2><ul><li><b>BC(Behavior Cloning):</b> 관측 <code>o_t</code>에서 전문가 행동 <code>a_t</code>를 직접 예측합니다. 구현은 쉽지만 작은 오차로 시연 분포를 벗어나면 오류가 누적됩니다.</li><li><b>IRL(Inverse Reinforcement Learning):</b> 전문가 궤적에서 보상 함수를 추정한 뒤 RL로 정책을 학습합니다. 목표 중심 적응이 가능하지만 과정이 복잡하고 비쌉니다.</li><li><b>DAgger:</b> 현재 정책이 실제 방문한 상태를 전문가가 다시 라벨링하여 데이터셋에 누적합니다. BC의 분포 이탈을 줄이는 상호작용형 방법입니다.</li></ul></div></section>
+<section id="data"><div class="number">03</div><div><h2>정책 데이터 구조</h2><p>한 에피소드 안에서 모든 센서와 명령을 같은 시간축에 맞춥니다.</p><div class="flow"><div><b>관측 o<sub>t</sub></b><br>front/top/wrist RGB</div><div><b>로봇 상태</b><br>현재 관절 위치 6개</div><div><b>정책 π</b><br>ACT / SmolVLA</div><div><b>행동 a<sub>t</sub></b><br>목표 관절 위치 6개</div></div><p>LeRobot ACT는 한 시점에 하나의 명령만 내보내는 대신 미래 <code>k</code> step의 action chunk를 출력합니다. SO101은 그리퍼를 포함한 6개 관절값을 입력·출력으로 다루는 구성이 일반적입니다.</p></div></section>
+<section id="tools"><div class="number">04</div><div><h2>전문가 시연을 얻는 방법</h2><ul><li><b>Kinesthetic teaching:</b> 로봇을 손으로 움직여 가르칩니다. 접촉 작업은 직관적이지만 속도와 타이밍 후처리가 필요합니다.</li><li><b>Scripted expert:</b> 기존 제어기나 플래너가 시연을 생성합니다. 대량 생성에 좋지만 사람의 요령이 빠질 수 있습니다.</li><li><b>Teleoperation:</b> VR·6D 마우스·조이스틱·leader arm으로 follower를 움직입니다. 사람이 보낸 명령 자체가 action label이 됩니다.</li></ul><p>LeRobot은 번거로운 카메라·관절 동기화, 데이터셋 재생·정제, 학습·실행 코드를 수집→학습→실행 파이프라인으로 표준화합니다.</p></div></section>
+<section id="order" class="commands"><h2>터미널에 입력하는 설치·로그인 순서</h2><pre><code># 1. Python 3.10 가상환경 준비
+mkdir -p ~/venv &amp;&amp; cd ~/venv
+sudo add-apt-repository ppa:deadsnakes/ppa -y
+sudo apt update
+sudo apt install python3.10 python3.10-venv python3.10-dev -y
+python3.10 -m venv lerobot
+source ~/venv/lerobot/bin/activate
+
+# 2. ffmpeg와 LeRobot 설치
+sudo apt install ffmpeg -y
+git clone https://github.com/huggingface/lerobot.git ~/lerobot
+cd ~/lerobot
+pip install -e .
+
+# SO101용 Feetech motor 의존성
+pip install -e ".[feetech]"
+
+# 필요할 때만 추가 기능 설치
+# pip install -e ".[all]"       # 모든 기능
+# pip install -e ".[aloha,pusht]"
+# pip install -e ".[dynamixel]"
+
+# 3. Hugging Face에서 Write token을 만든 뒤 로그인
+# 실제 hf_... 토큰을 아래 자리표시자 대신 입력하고 기록·공유하지 않습니다.
+export HUGGINGFACE_TOKEN='hf_your_write_token'
+cd ~/lerobot
+git config credential.helper store
+hf auth login --token "${HUGGINGFACE_TOKEN}" --add-to-git-credential
+
+# 4. 로그인 계정명 확인
+hf auth whoami</code></pre><div class="danger"><b>토큰 보안:</b> 강의처럼 Write 권한이 필요하지만 토큰을 코드·화면 캡처·Git에 넣지 않습니다. 유출되면 Hugging Face에서 즉시 폐기하고 새로 만듭니다.</div></section>
+<section id="collect"><div class="number">05</div><div><h2>SO101 데이터 수집 → 검토 → ACT 학습</h2><span class="tag">TERMINAL 1</span><h3>Leader/Follower 텔레오퍼레이션 확인</h3><pre><code>source ~/venv/lerobot/bin/activate
+cd ~/lerobot
+
+lerobot-teleoperate \
+  --robot.type=so101_follower \
+  --robot.port=/dev/ttyACM0 \
+  --robot.id=follower \
+  --teleop.type=so101_leader \
+  --teleop.port=/dev/ttyACM1 \
+  --teleop.id=leader \
+  --robot.cameras="{ top: {type: opencv, index_or_path: /dev/video0, width: 640, height: 480, fps: 30}, wrist: {type: opencv, index_or_path: /dev/video1, width: 640, height: 480, fps: 30} }"</code></pre><p>포트·카메라 경로는 장비에 맞게 바꿉니다. 수집 전에 관절 방향, 그리퍼, top/wrist 영상 지연을 확인합니다.</p><span class="tag">TERMINAL 2</span><h3>데이터 재생과 품질 검토</h3><pre><code>lerobot-replay \
+  --robot.type=so101_follower \
+  --robot.port=/dev/ttyACM0 \
+  --robot.id=my_awesome_follower_arm \
+  --dataset.repo_id="${HF_USER}/record-test" \
+  --dataset.episode=0</code></pre><p>관찰·행동의 시간 정렬, 수집 중 action 부드러움, 조명·카메라·로봇 위치의 일관성을 확인하고 실패 시연은 제외합니다.</p><span class="tag">TERMINAL 3</span><h3>ACT 정책 학습</h3><pre><code>lerobot-train \
+  --dataset.repo_id="${HF_USER}/your_dataset" \
+  --policy.type=act \
+  --output_dir=outputs/train/act_your_dataset \
+  --job_name=act_your_dataset \
+  --policy.device=cuda \
+  --wandb.enable=true \
+  --policy.repo_id="${HF_USER}/act_policy"</code></pre><p><code>your_dataset</code>, robot id, 포트, 작업 이름은 본인 환경의 실제 값으로 바꿉니다.</p></div></section>
+<section id="infer"><div class="number">06</div><div><h2>동기 추론</h2><p>기본 추론은 Observation → Inference → Action을 순차 실행합니다. 모델 계산 중 제어 loop가 기다리므로 추론이 느릴수록 움직임이 끊길 수 있습니다.</p><pre><code>lerobot-record \
+  --robot.type=so100_follower \
+  --robot.port=/dev/ttyACM0 \
+  --robot.id=my_robot \
+  --robot.cameras="{ front: {type: opencv, index_or_path: 0, width: 640, height: 480, fps: 30} }" \
+  --display_data=true \
+  --dataset.repo_id="${HF_USER}/eval_act_your_dataset" \
+  --dataset.num_episodes=10 \
+  --dataset.single_task="Your task description" \
+  --policy.path="${HF_USER}/act_policy"</code></pre><div class="warn"><b>강의 표기 확인:</b> 수집 예시는 SO101, 동기 추론 슬라이드는 <code>so100_follower</code>로 적혀 있습니다. 보유 장비와 설치한 LeRobot 버전에 맞는 robot type을 반드시 확인하세요.</div></div></section>
+<section id="async"><div class="number">07</div><div><h2>비동기 추론: 서버와 로봇 클라이언트</h2><p>서버가 다음 action chunk를 계산하는 동안 로봇은 현재 큐를 계속 실행합니다. 큐가 절반 정도 남으면 다음 관측을 미리 보내고, 새 chunk가 도착하면 이미 지나간 action을 버린 뒤 겹치는 구간을 weighted average로 섞습니다.</p><span class="tag">TERMINAL 1 · POLICY SERVER</span><pre><code>python -m lerobot.async_inference.policy_server \
+  --host=127.0.0.1 \
+  --port=8080 \
+  --fps=25 \
+  --inference_latency=0.033 \
+  --obs_queue_timeout=1</code></pre><span class="tag">TERMINAL 2 · ROBOT CLIENT</span><pre><code>python -m lerobot.async_inference.robot_client \
+  --robot.type=so101_follower \
+  --robot.port=/dev/so101_follower \
+  --robot.id=follower \
+  --robot.cameras="{ top: {type: opencv, index_or_path: 0, width: 640, height: 480, fps: 25}, wrist: {type: opencv, index_or_path: 2, width: 640, height: 480, fps: 25} }" \
+  --task=IMsubin/pick_tomato_place_pot \
+  --server_address=127.0.0.1:8080 \
+  --policy_type=act \
+  --pretrained_name_or_path=IMsubin/pick_tomato_place_pot \
+  --policy_device=cuda \
+  --actions_per_chunk=100 \
+  --chunk_size_threshold=0.5 \
+  --aggregate_fn_name=weighted_average \
+  --debug_visualize_queue_size=True</code></pre><p><code>pretrained_name_or_path</code>와 작업 이름은 본인 모델로 교체합니다. 두 프로세스의 FPS, action chunk 크기, 실제 inference latency를 함께 기록합니다.</p></div></section>
+<section id="operation"><div class="number">08</div><div><h2>멀티 모델 오케스트레이션과 안전 게이트</h2><ul><li><b>Select → Act → Switch:</b> 물체와 작업 단계에 따라 컵 집기·서랍 조작·재집기·정렬 복구 정책을 선택합니다.</li><li><b>Action sanity:</b> NaN/Inf, 관절 범위, 한 step의 과도한 변화량을 검사합니다.</li><li><b>Observation validity:</b> 카메라 timestamp, 인식 신뢰도, TF 누락·점프를 검사합니다.</li><li><b>Limiting:</b> 관절 범위 clipping, 속도 제한, EMA/low-pass smoothing을 적용합니다.</li><li><b>Execution monitor:</b> 추종 오차, 토크·전류 급증, frame drop을 감시하고 이상 시 policy off와 safe stop/retreat로 전환합니다.</li></ul><pre><code># 정책 출력을 바로 실행하지 않는 최소 구조
+observation = read_robot_state()
+policy = select_policy(stage, detected_object)
+raw_action = policy(observation)
+safe_action = safety_gate(raw_action, observation)
+
+if safe_action is None:
+    safe_stop()
+else:
+    execute(safe_action)</code></pre></div></section>
+<section><div class="number">✓</div><div><h2>완료 체크리스트</h2><ul><li>관측과 행동이 같은 시간축으로 저장되는지 확인했습니다.</li><li>실패 시연을 제외하고 에피소드를 재생 검토했습니다.</li><li>동기 추론과 비동기 추론의 blocking 차이를 설명할 수 있습니다.</li><li>새 action chunk의 지나간 구간을 버리고 겹친 구간을 집계하는 이유를 이해했습니다.</li><li>실행 전 관절 범위·속도·입력 최신성·비상 정지를 검증했습니다.</li></ul></div></section>
+<div class="bottom-buttons"><a href="../index.html">← 전체 목차</a><a target="_blank" rel="noopener" href="../assets/imitation-00/imitation-learning-concepts.pdf">강의 PDF</a></div></main></div></body></html>
