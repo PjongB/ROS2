@@ -142,6 +142,23 @@ LESSONS = [
         "flow": ["대응점·행렬 정의", "출력 크기 결정", "역매핑·보간", "잘림·경계 확인"],
         "checks": ["점 좌표 dtype을 float32로 맞춤", "cv2 함수의 점 순서를 일관되게 지정", "변환 후 필요한 출력 dsize를 직접 계산"],
     },
+    {
+        "slug": "opencv-10-brightness-contrast",
+        "num": "10",
+        "title": "밝기와 명암비",
+        "lead": "화소 단위 변환 함수에서 출발해 밝기·명암비 조절, 영상 산술, 히스토그램과 HSV 색상 추출을 연결합니다.",
+        "source": "../opencv/10_present_Brightness_Contrast_.html", "pdf": "../opencv/10_Brightness_Contrast_.pdf", "nb": "../opencv/notebooks/10_Brightness_Contrast.ipynb",
+        "concepts": [("화소 처리", "출력 화소가 같은 위치의 입력 화소 하나로 결정되는 연산"), ("포화 연산", "계산 결과를 uint8 범위 0~255 안으로 제한"), ("히스토그램", "각 밝기 값에 속하는 화소 개수를 나타내는 분포"), ("색상 마스크", "지정 범위에 포함된 픽셀만 255로 표시한 1채널 영상")],
+        "theory": "밝기는 화소값에 상수를 더하고, 명암비는 기준점으로부터의 거리를 확대합니다. OpenCV 산술은 포화 연산을 적용하지만 NumPy uint8 덧셈은 값이 순환하므로 실수 승격과 clip이 필요합니다. 컬러 영상은 YCrCb의 Y 채널만 평활화해야 색 왜곡을 줄일 수 있습니다.",
+        "equation": "brightness: dst = saturate(src + n)\ncontrast: dst = src + α(src - 128)\nstretch: dst = (src - Gmin)·255/(Gmax - Gmin)\nblend: dst = α·src1 + β·src2 + γ",
+        "matrices": [
+            ([["p₁₁", "p₁₂", "…"], ["p₂₁", "p₂₂", "…"], ["⋮", "⋮", "pₕ𝓌"]], "각 행렬 원소에 같은 점 변환 함수 f를 적용"),
+            ([["Y", "Cr", "Cb"], ["equalize", "keep", "keep"], ["Y′", "Cr", "Cb"]], "컬러 평활화는 밝기 Y 채널만 처리"),
+        ],
+        "table": [("cv2.add / subtract", "포화 덧셈·뺄셈"), ("cv2.absdiff / addWeighted", "절대 차이·가중 합성"), ("normalize / equalizeHist", "선형 스트레칭·CDF 기반 평활화"), ("cvtColor / inRange", "색 공간 변환·범위 마스크")],
+        "flow": ["입력·dtype 확인", "변환 함수 선택", "포화·색 공간 처리", "히스토그램·마스크 비교"],
+        "checks": ["imread 결과가 None인지 resize보다 먼저 검사", "NumPy uint8 산술은 실수 승격 후 clip", "addWeighted 입력의 크기·타입을 일치", "컬러 equalizeHist는 YCrCb의 Y 채널에만 적용"],
+    },
 ]
 
 
