@@ -18,6 +18,7 @@ ROS 2 개발 환경, 로봇 내비게이션, LLM·모방학습, OpenCV 컴퓨터
 - 모방학습 실습 10개
 - TF Listener·RViz2 통합 심화 노트
 - OpenCV 실습 강의 9개(환경 설정, NumPy, 이미지, 도형, 콜백, 색 공간, 비디오, 필터링, 기하학적 변환)
+- OpenCV 강의별 Jupyter Notebook 9개 다운로드
 - 무작위 문제은행 385문제
 
-사이트는 GitHub Pages에서 바로 열 수 있으며, OpenCV 강의 HTML과 PDF도 사이트 안에서 바로 열립니다.
+사이트는 GitHub Pages에서 바로 열 수 있으며, OpenCV 강의 HTML·PDF를 열거나 강의별 `.ipynb` 실습 파일을 다운로드할 수 있습니다.
