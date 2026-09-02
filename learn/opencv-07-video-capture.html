@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>비디오 캡처 · OpenCV</title><link rel="stylesheet" href="opencv-study.css"></head><body>
+<header><div class="shell top"><a class="brand" href="../index.html"><b>ROS</b> FIELD NOTES</a><a class="back" href="../index.html">전체 강의로 돌아가기</a></div></header>
+<section class="hero"><div class="shell"><div class="kicker">08.07 · OPENCV CONCEPT STUDY</div><h1>비디오 캡처</h1><p class="lead">카메라와 동영상 파일을 프레임 스트림으로 읽고 FPS·해상도·코덱을 이해해 저장합니다.</p><div class="actions"><a class="button primary" target="_blank" rel="noopener" href="../opencv/07_Video_capture.html">원본 강의</a><a class="button pdf" target="_blank" rel="noopener" href="../opencv/07_Video_capture.pdf">강의 PDF</a><a class="button nb" download href="../opencv/notebooks/07_Video_capture.ipynb">IPYNB 다운로드</a></div></div></section>
+<div class="shell layout"><nav class="toc"><b>이 페이지에서</b><a href="#concepts">핵심 개념</a><a href="#theory">이론과 수식</a><a href="#matrix">행렬로 보기</a><a href="#functions">함수·용어 정리</a><a href="#flow">실습 흐름</a><a href="#check">확인할 점</a></nav><main>
+<section><div class="summary"><b>한 줄 정리</b><span>영상은 이미지 배열의 시간 순서입니다. 읽기 성공 여부 ret를 확인하고, 표시·처리·저장을 한 루프 안에서 수행해야 프레임 순서가 유지됩니다.</span></div></section>
+<section id="concepts"><h2>핵심 개념</h2><div class="concepts"><div class="concept"><b>VideoCapture</b><span>카메라 장치나 동영상 파일을 프레임 단위로 읽는 객체</span></div><div class="concept"><b>프레임</b><span>시간축에서 한 시점의 H×W×C 이미지 배열</span></div><div class="concept"><b>FPS</b><span>1초 동안 표시·저장되는 프레임 수</span></div><div class="concept"><b>FourCC</b><span>저장 스트림에 사용할 영상 코덱을 나타내는 네 문자 코드</span></div></div></section>
+<section id="theory"><h2>이론과 수식</h2><p>영상은 이미지 배열의 시간 순서입니다. 읽기 성공 여부 ret를 확인하고, 표시·처리·저장을 한 루프 안에서 수행해야 프레임 순서가 유지됩니다.</p><div class="equation">video = { frame₀, frame₁, …, frameₜ }
+duration ≈ frame_count / FPS
+frame shape = (height, width, channels)</div></section>
+<section id="matrix"><h2>행렬로 보기</h2><p class="note">이 강의는 행렬 계산보다 실행 환경과 이벤트 흐름을 이해하는 것이 핵심입니다.</p></section>
+<section id="functions"><h2>함수·용어 정리</h2><table class="study-table"><thead><tr><th>함수·표현</th><th>역할</th></tr></thead><tbody><tr><td><span class="code-key">CAP_PROP_FRAME_WIDTH</span></td><td>프레임 너비</td></tr><tr><td><span class="code-key">CAP_PROP_FRAME_HEIGHT</span></td><td>프레임 높이</td></tr><tr><td><span class="code-key">CAP_PROP_FPS</span></td><td>초당 프레임 수</td></tr><tr><td><span class="code-key">VideoWriter</span></td><td>프레임 배열을 동영상 파일로 인코딩</td></tr></tbody></table></section>
+<section id="flow"><h2>실습 흐름</h2><div class="flow"><span>장치 열기</span><span>ret·frame 읽기</span><span>표시·처리·저장</span><span>release</span></div></section>
+<section id="check"><h2>실습 전후 확인할 점</h2><ul class="checklist"><li>isOpened와 ret를 모두 검사</li><li>Writer 크기와 실제 frame 크기를 일치</li><li>카메라와 Writer를 종료할 때 release 호출</li></ul><p class="note">세부 코드와 실행 예제는 위의 IPYNB 파일에서 셀 단위로 실습할 수 있습니다.</p></section>
+<div class="nav-bottom"><a href="opencv-06-color-space.html">← 06</a><a href="opencv-08-filtering.html">08 →</a></div></main></div></body></html>

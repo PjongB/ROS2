@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>OpenCV 환경 설정 · OpenCV</title><link rel="stylesheet" href="opencv-study.css"></head><body>
+<header><div class="shell top"><a class="brand" href="../index.html"><b>ROS</b> FIELD NOTES</a><a class="back" href="../index.html">전체 강의로 돌아가기</a></div></header>
+<section class="hero"><div class="shell"><div class="kicker">08.01 · OPENCV CONCEPT STUDY</div><h1>OpenCV 환경 설정</h1><p class="lead">가상환경, 패키지, Jupyter 커널이 어떻게 연결되는지 이해하고 재현 가능한 실습 환경을 준비합니다.</p><div class="actions"><a class="button primary" target="_blank" rel="noopener" href="../opencv/01_OpenCV_Setting.html">원본 강의</a><a class="button pdf" target="_blank" rel="noopener" href="../opencv/01_OpenCV_Setting.pdf">강의 PDF</a><a class="button nb" download href="../opencv/notebooks/01_OpenCV_Setting.ipynb">IPYNB 다운로드</a></div></div></section>
+<div class="shell layout"><nav class="toc"><b>이 페이지에서</b><a href="#concepts">핵심 개념</a><a href="#theory">이론과 수식</a><a href="#matrix">행렬로 보기</a><a href="#functions">함수·용어 정리</a><a href="#flow">실습 흐름</a><a href="#check">확인할 점</a></nav><main>
+<section><div class="summary"><b>한 줄 정리</b><span>Python 코드는 선택된 인터프리터에서 실행되고, import는 그 환경의 site-packages를 탐색합니다. 따라서 설치한 환경과 노트북 커널이 다르면 cv2를 찾지 못합니다.</span></div></section>
+<section id="concepts"><h2>핵심 개념</h2><div class="concepts"><div class="concept"><b>가상환경</b><span>프로젝트별 Python과 패키지 버전을 격리하는 독립 실행 공간</span></div><div class="concept"><b>패키지</b><span>opencv-python, numpy, matplotlib처럼 실습 기능을 제공하는 모듈 묶음</span></div><div class="concept"><b>인터프리터</b><span>VS Code와 터미널이 실제로 실행할 Python 경로</span></div><div class="concept"><b>Jupyter 커널</b><span>노트북 셀을 실행하는 Python 프로세스. 가상환경과 일치해야 함</span></div></div></section>
+<section id="theory"><h2>이론과 수식</h2><p>Python 코드는 선택된 인터프리터에서 실행되고, import는 그 환경의 site-packages를 탐색합니다. 따라서 설치한 환경과 노트북 커널이 다르면 cv2를 찾지 못합니다.</p><div class="equation">terminal / VS Code / Jupyter
+            ↓ interpreter 선택
+Python virtual environment
+            ↓ import
+cv2 + numpy + matplotlib</div></section>
+<section id="matrix"><h2>행렬로 보기</h2><p class="note">이 강의는 행렬 계산보다 실행 환경과 이벤트 흐름을 이해하는 것이 핵심입니다.</p></section>
+<section id="functions"><h2>함수·용어 정리</h2><table class="study-table"><thead><tr><th>함수·표현</th><th>역할</th></tr></thead><tbody><tr><td><span class="code-key">python -m venv</span></td><td>독립 Python 환경 생성</td></tr><tr><td><span class="code-key">source .../bin/activate</span></td><td>현재 셸에서 환경 활성화</td></tr><tr><td><span class="code-key">pip install opencv-python</span></td><td>OpenCV Python 바인딩 설치</td></tr><tr><td><span class="code-key">cv2.__version__</span></td><td>실제로 import된 버전 확인</td></tr></tbody></table></section>
+<section id="flow"><h2>실습 흐름</h2><div class="flow"><span>가상환경 생성</span><span>환경 활성화</span><span>패키지 설치</span><span>커널·버전 확인</span></div></section>
+<section id="check"><h2>실습 전후 확인할 점</h2><ul class="checklist"><li>터미널의 python 경로와 VS Code 인터프리터가 같은지 확인</li><li>노트북 커널에서 import cv2 실행</li><li>재시작 후에도 같은 환경을 선택할 수 있는지 확인</li></ul><p class="note">세부 코드와 실행 예제는 위의 IPYNB 파일에서 셀 단위로 실습할 수 있습니다.</p></section>
+<div class="nav-bottom"><a href="../index.html">← 전체 목차</a><a href="opencv-02-numpy-array.html">02 →</a></div></main></div></body></html>
