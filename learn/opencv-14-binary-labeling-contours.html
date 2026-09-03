@@ -12,89 +12,139 @@
 circularity = 4πA / P²</div></section>
 <section id="matrix"><h2>행렬로 보기</h2><div class="matrix-row"><div class="matrix" style="--cols:3"><span>0</span><span>1</span><span>0</span><span>1</span><span>p</span><span>1</span><span>0</span><span>1</span><span>0</span></div><span class="matrix-label">4-연결성 이웃</span></div><div class="matrix-row"><div class="matrix" style="--cols:3"><span>1</span><span>1</span><span>1</span><span>1</span><span>p</span><span>1</span><span>1</span><span>1</span><span>1</span></div><span class="matrix-label">8-연결성 이웃</span></div><div class="matrix-row"><div class="matrix" style="--cols:3"><span>0</span><span>0</span><span>1</span><span>0</span><span>2</span><span>2</span><span>3</span><span>3</span><span>0</span></div><span class="matrix-label">연결 요소마다 고유 번호를 갖는 라벨 행렬</span></div></section>
 <section id="functions"><h2>함수 사용법</h2><p class="section-intro">강의에서 사용하는 핵심 함수의 호출 형태와 인자·반환값을 함께 정리했습니다. 긴 코드는 가로로 스크롤해서 볼 수 있습니다.</p><div class="table-scroll"><table class="study-table function-table"><thead><tr><th>함수·표현</th><th>호출 예</th><th>인자·반환값과 사용 포인트</th></tr></thead><tbody><tr><td><span class="code-key">threshold + THRESH_OTSU</span></td><td><code class="call-pattern">t, dst = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)</code></td><td>히스토그램에서 임계값 t를 자동 계산합니다. Otsu 플래그 사용 시 thresh 인자는 보통 0으로 둡니다.</td></tr><tr><td><span class="code-key">connectedComponentsWithStats</span></td><td><code class="call-pattern">count, labels, stats, centroids = cv2.connectedComponentsWithStats(binary, connectivity=8)</code></td><td>배경을 포함한 라벨 수, 라벨 행렬, 경계상자·면적 통계, 중심점을 반환합니다. 0번 라벨은 배경입니다.</td></tr><tr><td><span class="code-key">findContours / drawContours</span></td><td><code class="call-pattern">contours, hierarchy = cv2.findContours(binary, mode, method)</code></td><td>외곽선 좌표 목록과 부모·자식 계층을 반환합니다. drawContours는 선택한 외곽선을 원본 영상에 그립니다.</td></tr><tr><td><span class="code-key">arcLength / contourArea / approxPolyDP</span></td><td><code class="call-pattern">approx = cv2.approxPolyDP(cnt, epsilon, True)</code></td><td>arcLength는 둘레, contourArea는 면적을 구합니다. approxPolyDP는 epsilon 오차 안에서 꼭짓점 수를 줄입니다.</td></tr></tbody></table></div></section>
-<section id="practice"><h2>단계별 실습 코드</h2><p class="section-intro">다운로드용 노트북의 전체 실습 흐름입니다. 위에서 아래로 실행하면 강의 개념이 코드에서 어떻게 연결되는지 확인할 수 있습니다.</p><div class="practice-list"><article class="practice-step"><div class="step-head"><span>STEP 01</span><h3>14. 이진화·라벨링·외곽선</h3></div><p>Otsu 자동 임계값, 지역 이진화, 연결 요소 라벨링과 외곽선 형상 분석을 실습합니다. 모든 예제 영상을 코드에서 생성하므로 바로 실행할 수 있습니다.</p><pre><code>import cv2
-import numpy as np
-import matplotlib.pyplot as plt
+<section id="practice"><h2>단계별 실습 코드</h2><p class="section-intro">다운로드용 노트북의 전체 실습 흐름입니다. 위에서 아래로 실행하면 강의 개념이 코드에서 어떻게 연결되는지 확인할 수 있습니다.</p><div class="practice-list"><article class="practice-step"><div class="step-head"><span>STEP 01</span><h3>서로 다른 전역 임계값 비교</h3></div><pre><code>import sys
+import cv2
 
-def show(images, titles, cmap=&quot;gray&quot;):
-    fig, axes = plt.subplots(1, len(images), figsize=(5 * len(images), 4))
-    axes = np.atleast_1d(axes)
-    for ax, image, title in zip(axes, images, titles):
-        if image.ndim == 2:
-            ax.imshow(image, cmap=cmap, vmin=0, vmax=255)
-        else:
-            ax.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
-        ax.set_title(title)
-        ax.axis(&quot;off&quot;)
-    plt.tight_layout()</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 02</span><h3>전역 임계값과 Otsu 자동 임계값</h3></div><pre><code>rng = np.random.default_rng(14)
-background = rng.normal(65, 18, (260, 420))
-foreground = rng.normal(185, 22, (260, 420))
-mask = np.zeros((260, 420), dtype=np.uint8)
-cv2.circle(mask, (130, 130), 75, 255, -1)
-cv2.rectangle(mask, (250, 60), (380, 210), 255, -1)
-gray = np.where(mask &gt; 0, foreground, background)
-gray = np.clip(gray, 0, 255).astype(np.uint8)
+src = cv2.imread(&quot;./data/cells.jpg&quot;, cv2.IMREAD_GRAYSCALE)
 
-_, fixed = cv2.threshold(gray, 127, 255, cv2.THRESH_BINARY)
-otsu_value, otsu = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
-print(f&quot;Otsu threshold: {otsu_value:.1f}&quot;)
-show([gray, fixed, otsu], [&quot;source&quot;, &quot;fixed T=127&quot;, f&quot;Otsu T={otsu_value:.1f}&quot;])</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 03</span><h3>조명이 불균일한 영상과 적응형 이진화</h3></div><pre><code>height, width = 300, 500
-illumination = np.tile(np.linspace(50, 210, width, dtype=np.float32), (height, 1))
-uneven = illumination.copy()
-cv2.putText(uneven, &quot;OpenCV&quot;, (35, 190), cv2.FONT_HERSHEY_SIMPLEX, 3.0, 20, 12, cv2.LINE_AA)
-uneven = np.clip(uneven + rng.normal(0, 6, uneven.shape), 0, 255).astype(np.uint8)
+if src is None:
+    print(&quot;Image load failed!&quot;)
+    sys.exit()
 
-_, global_binary = cv2.threshold(uneven, 115, 255, cv2.THRESH_BINARY)
-adaptive = cv2.adaptiveThreshold(
-    uneven, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-    cv2.THRESH_BINARY, blockSize=31, C=8,
+_, dst1 = cv2.threshold(src, 100, 255, cv2.THRESH_BINARY)
+_, dst2 = cv2.threshold(src, 210, 255, cv2.THRESH_BINARY)
+
+cv2.imshow(&quot;src&quot;, src)
+cv2.imshow(&quot;dst1&quot;, dst1)
+cv2.imshow(&quot;dst2&quot;, dst2)
+cv2.waitKey()
+cv2.destroyAllWindows()</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 02</span><h3>Otsu 자동 임계값</h3></div><pre><code>import sys
+import cv2
+
+src = cv2.imread(&quot;./data/rice.jpg&quot;, cv2.IMREAD_GRAYSCALE)
+
+if src is None:
+    print(&quot;Image load failed!&quot;)
+    sys.exit()
+
+th, dst = cv2.threshold(src, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
+print(&quot;otsu&#x27;s threshold:&quot;, th)
+
+cv2.imshow(&quot;src&quot;, src)
+cv2.imshow(&quot;dst&quot;, dst)
+cv2.waitKey()
+cv2.destroyAllWindows()</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 03</span><h3>지역 적응형 이진화</h3></div><pre><code>import sys
+import cv2
+
+src = cv2.imread(&quot;./data/sudoku.jpg&quot;, cv2.IMREAD_GRAYSCALE)
+
+if src is None:
+    print(&quot;Image load failed!&quot;)
+    sys.exit()
+
+bsize = 201
+dst = cv2.adaptiveThreshold(
+    src, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, bsize, 5
 )
-show([uneven, global_binary, adaptive], [&quot;uneven light&quot;, &quot;global&quot;, &quot;adaptive Gaussian&quot;])</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 04</span><h3>연결 요소 라벨링</h3></div><pre><code>components = np.zeros((320, 520), dtype=np.uint8)
-cv2.circle(components, (90, 90), 45, 255, -1)
-cv2.rectangle(components, (190, 45), (300, 140), 255, -1)
-triangle = np.array([[390, 140], [455, 45], [500, 140]], dtype=np.int32)
-cv2.fillPoly(components, [triangle], 255)
-cv2.ellipse(components, (155, 240), (70, 38), 0, 0, 360, 255, -1)
 
-count, labels, stats, centroids = cv2.connectedComponentsWithStats(components, connectivity=8)
-print(&quot;objects:&quot;, count - 1)
-for label in range(1, count):
-    x, y, w, h, area = stats[label]
-    cx, cy = centroids[label]
-    print(f&quot;label={label}: bbox=({x},{y},{w},{h}), area={area}, center=({cx:.1f},{cy:.1f})&quot;)
+cv2.imshow(&quot;dst&quot;, dst)
+cv2.imshow(&quot;srs&quot;, src)
+cv2.namedWindow(&quot;dst&quot;)
+cv2.waitKey()
+cv2.destroyAllWindows()</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 04</span><h3>작은 행렬의 연결 요소 라벨링</h3></div><pre><code>import sys
+import numpy as np
+import cv2
 
-label_view = np.uint8(179 * labels / max(1, labels.max()))
-label_view = cv2.applyColorMap(label_view, cv2.COLORMAP_HSV)
-label_view[labels == 0] = 0
-show([components, label_view], [&quot;binary&quot;, &quot;connected labels&quot;])</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 05</span><h3>외곽선과 계층</h3></div><pre><code>contours, hierarchy = cv2.findContours(components.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-contour_view = cv2.cvtColor(components, cv2.COLOR_GRAY2BGR)
-cv2.drawContours(contour_view, contours, -1, (0, 0, 255), 2, cv2.LINE_AA)
-print(&quot;contours:&quot;, len(contours))
-print(&quot;hierarchy [next, previous, child, parent]:&quot;)
-print(hierarchy[0] if hierarchy is not None else None)
-show([components, contour_view], [&quot;binary&quot;, &quot;contours&quot;])</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 06</span><h3>면적·둘레·바운딩 도형·다각형 근사</h3></div><pre><code>analysis = cv2.cvtColor(components, cv2.COLOR_GRAY2BGR)
-for contour in contours:
-    area = cv2.contourArea(contour)
-    if area &lt; 100:
+mat = np.array(
+    [
+        [0, 0, 1, 1, 0, 0, 0, 0],
+        [1, 1, 1, 1, 0, 0, 1, 0],
+        [1, 1, 1, 1, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 1, 1, 0],
+        [0, 0, 0, 1, 1, 1, 1, 0],
+        [0, 0, 1, 1, 0, 0, 1, 0],
+        [0, 0, 1, 1, 1, 1, 1, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+    ],
+    np.uint8,
+)
+
+cnt, labels = cv2.connectedComponents(mat)
+print(&quot;sep:&quot;, mat, sep=&quot;\n&quot;)
+print(&quot;cnt:&quot;, cnt)
+print(&quot;labels:&quot;, labels, sep=&quot;\n&quot;)</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 05</span><h3>라벨별 통계와 바운딩 박스</h3></div><pre><code>import sys
+import cv2
+
+src = cv2.imread(&quot;./data/keyboard.jpg&quot;, cv2.IMREAD_GRAYSCALE)
+
+if src is None:
+    print(&quot;Image load failed!&quot;)
+    sys.exit()
+
+_, src_bin = cv2.threshold(src, 0, 255, cv2.THRESH_OTSU)
+cnt, labels, stats, centroids = cv2.connectedComponentsWithStats(src_bin)
+dst = cv2.cvtColor(src, cv2.COLOR_GRAY2BGR)
+
+for i in range(1, cnt):
+    (x, y, w, h, area) = stats[i]
+    if area &lt; 20:
         continue
-    perimeter = cv2.arcLength(contour, True)
-    approximation = cv2.approxPolyDP(contour, 0.02 * perimeter, True)
-    x, y, w, h = cv2.boundingRect(contour)
-    (cx, cy), radius = cv2.minEnclosingCircle(contour)
-    circularity = 4 * np.pi * area / (perimeter * perimeter) if perimeter else 0
+    cv2.rectangle(dst, (x, y, w, h), (0, 255, 255))
+    cv2.putText(dst, str(i), (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 1, cv2.LINE_AA)
 
-    cv2.rectangle(analysis, (x, y), (x + w, y + h), (255, 0, 0), 2)
-    cv2.circle(analysis, (round(cx), round(cy)), round(radius), (0, 255, 0), 2)
-    cv2.polylines(analysis, [approximation], True, (0, 0, 255), 2)
-    print(f&quot;vertices={len(approximation)}, area={area:.0f}, perimeter={perimeter:.1f}, circularity={circularity:.3f}, convex={cv2.isContourConvex(approximation)}&quot;)
+cv2.imshow(&quot;src&quot;, src)
+cv2.imshow(&quot;src_bin&quot;, src_bin)
+cv2.imshow(&quot;dst&quot;, dst)
+cv2.waitKey()
+cv2.destroyAllWindows()</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 06</span><h3>외곽선으로 삼각형·사각형·원 판별</h3></div><pre><code>import math
+import cv2
 
-show([components, analysis], [&quot;source&quot;, &quot;shape analysis&quot;])</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 07</span><h3>원 판별 예시</h3></div><pre><code>for index, contour in enumerate(contours):
-    area = cv2.contourArea(contour)
-    perimeter = cv2.arcLength(contour, True)
-    if area &lt; 100 or perimeter == 0:
-        continue
-    circularity = 4 * np.pi * area / (perimeter * perimeter)
-    print(f&quot;contour {index}: {&#x27;circle-like&#x27; if circularity &gt; 0.82 else &#x27;not circle&#x27;}, score={circularity:.3f}&quot;)</code></pre></article></div></section>
+def setLabel(img, pts, label):
+    (x, y, w, h) = cv2.boundingRect(pts)
+    pt1 = (x, y)
+    pt2 = (x + w, y + h)
+    cv2.rectangle(img, pt1, pt2, (0, 0, 255), 1)
+    cv2.putText(img, label, pt1, cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 255))
+
+def main():
+    img = cv2.imread(&quot;./data/polygon.jpg&quot;, cv2.IMREAD_COLOR)
+    if img is None:
+        print(&quot;Image load failed!&quot;)
+        return
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    _, img_bin = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
+    contours, _ = cv2.findContours(img_bin, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    for pts in contours:
+        if cv2.contourArea(pts) &lt; 400:  # 너무 작으면 무시
+            continue
+        approx = cv2.approxPolyDP(pts, cv2.arcLength(pts, True) * 0.02, True)
+        vtc = len(approx)
+        if vtc == 3:
+            setLabel(img, pts, &quot;TRI&quot;)
+        elif vtc == 4:
+            setLabel(img, pts, &quot;RECT&quot;)
+        else:
+            length = cv2.arcLength(pts, True)
+            area = cv2.contourArea(pts)
+            ratio = 4.0 * math.pi * area / (length * length)
+            if ratio &gt; 0.85:
+                setLabel(img, pts, &quot;CIR&quot;)
+    cv2.imshow(&quot;img&quot;, img)
+    cv2.waitKey()
+    cv2.destroyAllWindows()
+
+if __name__ == &quot;__main__&quot;:
+    main()</code></pre></article></div></section>
 <section id="flow"><h2>실습 흐름</h2><div class="flow"><span>그레이·이진 영상 준비</span><span>Otsu/지역 임계값 선택</span><span>라벨별 통계 계산</span><span>외곽선·형상 판별</span></div></section>
 <section id="check"><h2>실습 전후 확인할 점</h2><ul class="checklist"><li>라벨 0은 배경이므로 물체 수에서 제외</li><li>연결성 4와 8에서 대각선 픽셀 결합 여부가 달라짐</li><li>findContours가 원본을 바꾸는 버전 호환성을 고려해 복사본 전달</li><li>원형도는 1에 가까울수록 원이지만 작은 잡음은 면적으로 먼저 제거</li></ul><p class="note">세부 코드와 실행 예제는 위의 IPYNB 파일에서 셀 단위로 실습할 수 있습니다.</p></section>
 <div class="nav-bottom"><a href="opencv-13-image-thresholding.html">← 13</a><a href="../index.html">전체 목차 →</a></div></main></div></body></html>

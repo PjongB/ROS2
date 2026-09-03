@@ -11,38 +11,13 @@ RGB = BGR[:, :, [2, 1, 0]]
 resize: (H, W) → (H′, W′)</div></section>
 <section id="matrix"><h2>행렬로 보기</h2><div class="matrix-row"><div class="matrix" style="--cols:3"><span>B</span><span>G</span><span>R</span><span>↓</span><span>↓</span><span>↓</span><span>R</span><span>G</span><span>B</span></div><span class="matrix-label">색 채널 순서 변환</span></div></section>
 <section id="functions"><h2>함수 사용법</h2><p class="section-intro">강의에서 사용하는 핵심 함수의 호출 형태와 인자·반환값을 함께 정리했습니다. 긴 코드는 가로로 스크롤해서 볼 수 있습니다.</p><div class="table-scroll"><table class="study-table function-table"><thead><tr><th>함수·표현</th><th>호출 예</th><th>인자·반환값과 사용 포인트</th></tr></thead><tbody><tr><td><span class="code-key">imread</span></td><td><code class="call-pattern">img = cv2.imread(path, flag)</code></td><td>path의 파일을 배열로 디코딩합니다. flag로 컬러·그레이 방식을 정하며 읽기 실패 시 None을 반환합니다.</td></tr><tr><td><span class="code-key">cvtColor</span></td><td><code class="call-pattern">rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)</code></td><td>src와 변환 코드를 받아 새 색 공간 배열을 반환합니다. OpenCV 화면과 Matplotlib 사이의 색 순서 교정에 자주 씁니다.</td></tr><tr><td><span class="code-key">resize</span></td><td><code class="call-pattern">dst = cv2.resize(img, (width, height), interpolation=...)</code></td><td>출력 크기는 (너비, 높이) 순서입니다. 확대·축소 품질은 interpolation 인자로 선택합니다.</td></tr><tr><td><span class="code-key">flip</span></td><td><code class="call-pattern">dst = cv2.flip(img, flipCode)</code></td><td>flipCode 0은 상하, 1은 좌우, -1은 두 방향을 반전한 새 영상을 반환합니다.</td></tr></tbody></table></div></section>
-<section id="practice"><h2>단계별 실습 코드</h2><p class="section-intro">다운로드용 노트북의 전체 실습 흐름입니다. 위에서 아래로 실행하면 강의 개념이 코드에서 어떻게 연결되는지 확인할 수 있습니다.</p><div class="practice-list"><article class="practice-step"><div class="step-head"><span>STEP 01</span><h3>03. 이미지 읽기와 표시</h3></div><p>imread, 색상 변환, 크기 변경, 반전, 저장 방법을 실습합니다. 강의 슬라이드의 코드를 실행 순서에 맞게 정리한 실습 노트북입니다. 이미지 예제는 노트북과 같은 위치에 data 폴더를 만들고 강의에서 사용하는 파일을 넣어 실행하세요. cv2.imshow()와 카메라·마우스 예제는 데스크톱 Jupyter/VS Code 환경에서 실행하는 것을 권장합니다.</p><pre><code>from pathlib import Path
-import cv2
-import matplotlib.pyplot as plt
-
-path = Path(&quot;data/sample.jpg&quot;)
-if not path.exists():
-    raise FileNotFoundError(&quot;data/sample.jpg 파일을 준비하세요.&quot;)
-
-img_bgr = cv2.imread(str(path))
-if img_bgr is None:
-    raise RuntimeError(&quot;이미지를 읽지 못했습니다.&quot;)
-
-print(&quot;shape:&quot;, img_bgr.shape, &quot;dtype:&quot;, img_bgr.dtype)</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 02</span><h3>BGR을 RGB로 변환하여 표시</h3></div><pre><code>img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
-plt.imshow(img_rgb)
-plt.axis(&quot;off&quot;);</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 03</span><h3>그레이스케일로 읽기</h3></div><pre><code>gray = cv2.imread(str(path), cv2.IMREAD_GRAYSCALE)
-print(&quot;gray shape:&quot;, gray.shape)
-plt.imshow(gray, cmap=&quot;gray&quot;)
-plt.axis(&quot;off&quot;);</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 04</span><h3>크기 변경과 반전</h3></div><pre><code>small = cv2.resize(img_rgb, (320, 240))
-flip_vertical = cv2.flip(small, 0)
-flip_horizontal = cv2.flip(small, 1)
-flip_both = cv2.flip(small, -1)
-
-fig, axes = plt.subplots(1, 4, figsize=(16, 4))
-for ax, image, title in zip(axes,
-    [small, flip_vertical, flip_horizontal, flip_both],
-    [&quot;resize&quot;, &quot;vertical&quot;, &quot;horizontal&quot;, &quot;both&quot;]):
-    ax.imshow(image); ax.set_title(title); ax.axis(&quot;off&quot;)
-plt.show()</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 05</span><h3>이미지 저장</h3></div><pre><code>output = Path(&quot;output&quot;)
-output.mkdir(exist_ok=True)
-cv2.imwrite(str(output / &quot;gray.png&quot;), gray)
-cv2.imwrite(str(output / &quot;flipped.jpg&quot;), cv2.cvtColor(flip_both, cv2.COLOR_RGB2BGR))
-print(&quot;저장 완료:&quot;, output.resolve())</code></pre></article></div></section>
+<section id="practice"><h2>단계별 실습 코드</h2><p class="section-intro">다운로드용 노트북의 전체 실습 흐름입니다. 위에서 아래로 실행하면 강의 개념이 코드에서 어떻게 연결되는지 확인할 수 있습니다.</p><div class="practice-list"><article class="practice-step"><div class="step-head"><span>STEP 01</span><h3>라이브러리 준비</h3></div><pre><code>import matplotlib.pyplot as plt
+import cv2</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 02</span><h3>이미지 읽기</h3></div><pre><code>img = cv2.imread(&#x27;../data/lenna.bmp&#x27;)
+type(img)</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 03</span><h3>잘못된 경로 확인</h3></div><pre><code>tmp = cv2.imread(&#x27;./dddd.jpg&#x27;)
+type(tmp)</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 04</span><h3>영상 크기</h3></div><pre><code>img.shape</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 05</span><h3>BGR을 RGB로 변환</h3></div><pre><code>fix_img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+plt.imshow(fix_img)</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 06</span><h3>그레이 영상 읽기</h3></div><pre><code>img_gray = cv2.imread(&#x27;../data/lenna.bmp&#x27;, cv2.IMREAD_GRAYSCALE)
+plt.imshow(img_gray, cmap=&#x27;gray&#x27;)</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 07</span><h3>컬러 영상 크기</h3></div><pre><code>img.shape</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 08</span><h3>크기 변경</h3></div><pre><code>new_img = cv2.resize(fix_img, (800, 600))
+plt.imshow(new_img)</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 09</span><h3>상하 반전</h3></div><pre><code>plt.imshow(cv2.flip(fix_img, 0))</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 10</span><h3>좌우 반전</h3></div><pre><code>plt.imshow(cv2.flip(fix_img, 1))</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 11</span><h3>상하좌우 반전</h3></div><pre><code>plt.imshow(cv2.flip(fix_img, -1))</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 12</span><h3>그레이 영상 표시</h3></div><pre><code>plt.imshow(img_gray, cmap=&#x27;gray&#x27;)</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 13</span><h3>그레이 영상 저장</h3></div><pre><code>cv2.imwrite(&#x27;../data/lenna_gray.jpg&#x27;, img_gray)</code></pre></article></div></section>
 <section id="flow"><h2>실습 흐름</h2><div class="flow"><span>경로·파일 확인</span><span>imread</span><span>색·크기 변환</span><span>imshow/imwrite</span></div></section>
 <section id="check"><h2>실습 전후 확인할 점</h2><ul class="checklist"><li>img is None을 먼저 검사</li><li>cv2.resize의 크기 인자는 (width, height)</li><li>저장 전 RGB 배열을 BGR로 되돌릴지 확인</li></ul><p class="note">세부 코드와 실행 예제는 위의 IPYNB 파일에서 셀 단위로 실습할 수 있습니다.</p></section>
 <div class="nav-bottom"><a href="opencv-02-numpy-array.html">← 02</a><a href="opencv-04-drawing.html">04 →</a></div></main></div></body></html>

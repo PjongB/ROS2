@@ -11,29 +11,76 @@ LBUTTONDOWN: p_old ← (x, y)
 MOUSEMOVE: line(p_old, p_new), p_old ← p_new</div></section>
 <section id="matrix"><h2>행렬로 보기</h2><p class="note">이 강의는 행렬 계산보다 실행 환경과 이벤트 흐름을 이해하는 것이 핵심입니다.</p></section>
 <section id="functions"><h2>함수 사용법</h2><p class="section-intro">강의에서 사용하는 핵심 함수의 호출 형태와 인자·반환값을 함께 정리했습니다. 긴 코드는 가로로 스크롤해서 볼 수 있습니다.</p><div class="table-scroll"><table class="study-table function-table"><thead><tr><th>함수·표현</th><th>호출 예</th><th>인자·반환값과 사용 포인트</th></tr></thead><tbody><tr><td><span class="code-key">setMouseCallback</span></td><td><code class="call-pattern">cv2.setMouseCallback(winname, callback, param)</code></td><td>창 이름과 콜백을 연결합니다. 이벤트가 생기면 callback(event, x, y, flags, param)이 호출됩니다.</td></tr><tr><td><span class="code-key">EVENT_LBUTTONDOWN</span></td><td><code class="call-pattern">if event == cv2.EVENT_LBUTTONDOWN:</code></td><td>왼쪽 버튼을 누른 순간을 뜻합니다. 보통 그리기 시작 좌표나 드래그 상태를 저장합니다.</td></tr><tr><td><span class="code-key">EVENT_MOUSEMOVE</span></td><td><code class="call-pattern">if event == cv2.EVENT_MOUSEMOVE:</code></td><td>마우스가 움직일 때 발생합니다. flags와 함께 확인해야 버튼을 누른 채 이동한 경우만 처리할 수 있습니다.</td></tr><tr><td><span class="code-key">EVENT_FLAG_LBUTTON</span></td><td><code class="call-pattern">if flags &amp; cv2.EVENT_FLAG_LBUTTON:</code></td><td>현재 왼쪽 버튼이 눌려 있는지 비트 AND로 검사합니다. 독립 이벤트 값과 혼동하지 않아야 합니다.</td></tr></tbody></table></div></section>
-<section id="practice"><h2>단계별 실습 코드</h2><p class="section-intro">다운로드용 노트북의 전체 실습 흐름입니다. 위에서 아래로 실행하면 강의 개념이 코드에서 어떻게 연결되는지 확인할 수 있습니다.</p><div class="practice-list"><article class="practice-step"><div class="step-head"><span>STEP 01</span><h3>마우스 이벤트 확인</h3></div><p>아래 예제는 데스크톱 OpenCV 창을 사용합니다. ESC를 누르면 종료됩니다.</p><pre><code>import cv2
+<section id="practice"><h2>단계별 실습 코드</h2><p class="section-intro">다운로드용 노트북의 전체 실습 흐름입니다. 위에서 아래로 실행하면 강의 개념이 코드에서 어떻게 연결되는지 확인할 수 있습니다.</p><div class="practice-list"><article class="practice-step"><div class="step-head"><span>STEP 01</span><h3>창과 waitKey 반복문</h3></div><pre><code>import cv2
 import numpy as np
 
-old_x = old_y = -1
-image = np.ones((480, 640, 3), dtype=np.uint8) * 255
-
-def on_mouse(event, x, y, flags, param):
-    global old_x, old_y
-    if event == cv2.EVENT_LBUTTONDOWN:
-        old_x, old_y = x, y
-        print(f&quot;LBUTTON DOWN: {x}, {y}&quot;)
-    elif event == cv2.EVENT_LBUTTONUP:
-        print(f&quot;LBUTTON UP: {x}, {y}&quot;)
-    elif event == cv2.EVENT_MOUSEMOVE and flags &amp; cv2.EVENT_FLAG_LBUTTON:
-        cv2.line(param, (old_x, old_y), (x, y), (0, 0, 255), 4, cv2.LINE_AA)
-        old_x, old_y = x, y
-
-cv2.namedWindow(&quot;image&quot;)
-cv2.setMouseCallback(&quot;image&quot;, on_mouse, image)
+img = np.ones((512, 512, 3), np.uint8)
 
 while True:
-    cv2.imshow(&quot;image&quot;, image)
-    if cv2.waitKey(20) &amp; 0xFF == 27:
+    cv2.imshow(&quot;my_first_drawing&quot;, img)
+
+    if cv2.waitKey(10) == 27:
+        break
+
+cv2.destroyAllWindows()</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 02</span><h3>빈 마우스 콜백 등록</h3></div><pre><code>import cv2
+import numpy as np
+
+img = np.ones((512, 512, 3), np.uint8)
+
+def draw_circle(event, x, y, flags, param):
+    pass
+
+cv2.namedWindow(winname=&quot;my_first_drawing&quot;)
+cv2.setMouseCallback(&quot;my_first_drawing&quot;, draw_circle, img)
+
+while True:
+    cv2.imshow(&quot;my_first_drawing&quot;, img)
+
+    if cv2.waitKey(10) == 27:
+        break
+
+cv2.destroyAllWindows()</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 03</span><h3>왼쪽 버튼 좌표 출력</h3></div><pre><code>import cv2
+import numpy as np
+
+img = np.ones((512, 512, 3), np.uint8)
+
+def draw_circle(event, x, y, flags, param):
+    if event == cv2.EVENT_FLAG_LBUTTON:
+        print(x, y)
+
+cv2.namedWindow(winname=&quot;my_first_drawing&quot;)
+cv2.setMouseCallback(&quot;my_first_drawing&quot;, draw_circle, img)
+
+while True:
+    cv2.imshow(&quot;my_first_drawing&quot;, img)
+
+    if cv2.waitKey(10) == 27:
+        break
+
+cv2.destroyAllWindows()</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 04</span><h3>왼쪽 버튼으로 원 그리기</h3></div><pre><code>def draw_circle(event, x, y, flags, param):
+    if event == cv2.EVENT_FLAG_LBUTTON:
+        cv2.circle(img, (x, y), 30, (50, 50, 200), -1)</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 05</span><h3>왼쪽·오른쪽 버튼 분기</h3></div><pre><code>def draw_circle(event, x, y, flags, param):
+    if event == cv2.EVENT_FLAG_LBUTTON:
+        cv2.circle(img, (x, y), 30, (50, 50, 200), -1)
+    elif event == cv2.EVENT_FLAG_RBUTTON:
+        cv2.circle(img, (x, y), 30, (200, 50, 50), -1)</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 06</span><h3>전체 코드</h3></div><pre><code>import cv2
+import numpy as np
+
+img = np.ones((512, 512, 3), np.uint8)
+
+def draw_circle(event, x, y, flags, param):
+    if event == cv2.EVENT_FLAG_LBUTTON:
+        cv2.circle(img, (x, y), 30, (50, 50, 200), -1)
+    elif event == cv2.EVENT_FLAG_RBUTTON:
+        cv2.circle(img, (x, y), 30, (200, 50, 50), -1)
+
+cv2.namedWindow(winname=&quot;my_first_drawing&quot;)
+cv2.setMouseCallback(&quot;my_first_drawing&quot;, draw_circle, img)
+
+while True:
+    cv2.imshow(&quot;my_first_drawing&quot;, img)
+
+    if cv2.waitKey(10) == 27:
         break
 
 cv2.destroyAllWindows()</code></pre></article></div></section>

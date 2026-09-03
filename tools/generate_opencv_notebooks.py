@@ -529,11 +529,11 @@ show([document, scanned], ["document", "scanned"])
 
 
 def main() -> None:
-    OUT.mkdir(parents=True, exist_ok=True)
-    for filename, content in NOTEBOOKS.items():
-        path = OUT / filename
-        path.write_text(json.dumps(content, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
-        print(path.relative_to(ROOT))
+    # Keep this legacy entry point safe: the course-aligned generator is now
+    # authoritative and must run after the older synthetic notebook templates.
+    from generate_source_aligned_opencv_notebooks import main as aligned_main
+
+    aligned_main()
 
 
 if __name__ == "__main__":

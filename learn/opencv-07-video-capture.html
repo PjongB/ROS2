@@ -11,48 +11,30 @@ duration ≈ frame_count / FPS
 frame shape = (height, width, channels)</div></section>
 <section id="matrix"><h2>행렬로 보기</h2><p class="note">이 강의는 행렬 계산보다 실행 환경과 이벤트 흐름을 이해하는 것이 핵심입니다.</p></section>
 <section id="functions"><h2>함수 사용법</h2><p class="section-intro">강의에서 사용하는 핵심 함수의 호출 형태와 인자·반환값을 함께 정리했습니다. 긴 코드는 가로로 스크롤해서 볼 수 있습니다.</p><div class="table-scroll"><table class="study-table function-table"><thead><tr><th>함수·표현</th><th>호출 예</th><th>인자·반환값과 사용 포인트</th></tr></thead><tbody><tr><td><span class="code-key">VideoCapture</span></td><td><code class="call-pattern">cap = cv2.VideoCapture(0)</code></td><td>카메라 번호 또는 파일 경로로 입력 스트림을 엽니다. cap.isOpened()로 성공 여부를 확인합니다.</td></tr><tr><td><span class="code-key">read</span></td><td><code class="call-pattern">ret, frame = cap.read()</code></td><td>다음 프레임을 읽어 성공 여부 ret와 이미지 frame을 반환합니다. ret가 False면 frame을 사용하지 않습니다.</td></tr><tr><td><span class="code-key">get</span></td><td><code class="call-pattern">fps = cap.get(cv2.CAP_PROP_FPS)</code></td><td>CAP_PROP_* 속성 번호에 해당하는 값을 실수로 반환합니다. 장치가 지원하지 않으면 0 또는 부정확한 값일 수 있습니다.</td></tr><tr><td><span class="code-key">VideoWriter</span></td><td><code class="call-pattern">out = cv2.VideoWriter(path, fourcc, fps, size)</code></td><td>파일 경로·코덱·FPS·(너비, 높이)로 출력 스트림을 만들고 write(frame)으로 프레임을 기록합니다.</td></tr></tbody></table></div></section>
-<section id="practice"><h2>단계별 실습 코드</h2><p class="section-intro">다운로드용 노트북의 전체 실습 흐름입니다. 위에서 아래로 실행하면 강의 개념이 코드에서 어떻게 연결되는지 확인할 수 있습니다.</p><div class="practice-list"><article class="practice-step"><div class="step-head"><span>STEP 01</span><h3>카메라 장치 확인</h3></div><p>Linux 터미널에서는 ls /dev/video*로 카메라 장치를 확인할 수 있습니다.</p><pre><code>import cv2
+<section id="practice"><h2>단계별 실습 코드</h2><p class="section-intro">다운로드용 노트북의 전체 실습 흐름입니다. 위에서 아래로 실행하면 강의 개념이 코드에서 어떻게 연결되는지 확인할 수 있습니다.</p><div class="practice-list"><article class="practice-step"><div class="step-head"><span>STEP 01</span><h3>동영상 파일 열기와 프레임 반복</h3></div><pre><code>import cv2
 
-cap = cv2.VideoCapture(0)
+video_path = &quot;./data/vtest.avi&quot;
+cap = cv2.VideoCapture(video_path)
+
 if not cap.isOpened():
-    raise RuntimeError(&quot;카메라를 열 수 없습니다.&quot;)
+    raise RuntimeError(f&quot;Failed to open video file: {video_path}&quot;)
 
-print(&quot;width:&quot;, int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)))
-print(&quot;height:&quot;, int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)))
-print(&quot;fps:&quot;, cap.get(cv2.CAP_PROP_FPS))
+try:
+    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    print(f&quot;width: {width}, height: {height}&quot;)
 
-while True:
-    ok, frame = cap.read()
-    if not ok:
-        break
-    cv2.imshow(&quot;camera&quot;, frame)
-    if cv2.waitKey(1) &amp; 0xFF in (27, ord(&quot;q&quot;)):
-        break
+    while True:
+        ret, frame = cap.read()
 
-cap.release()
-cv2.destroyAllWindows()</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 02</span><h3>카메라 영상 저장</h3></div><p>q 또는 ESC를 누르면 저장을 마칩니다.</p><pre><code>cap = cv2.VideoCapture(0)
-if not cap.isOpened():
-    raise RuntimeError(&quot;카메라를 열 수 없습니다.&quot;)
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        cv2.imshow(&quot;frame&quot;, gray)
 
-width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
-fourcc = cv2.VideoWriter_fourcc(*&quot;mp4v&quot;)
-writer = cv2.VideoWriter(&quot;output.mp4&quot;, fourcc, fps, (width, height))
-
-while True:
-    ok, frame = cap.read()
-    if not ok:
-        break
-    writer.write(frame)
-    cv2.imshow(&quot;recording&quot;, frame)
-    if cv2.waitKey(1) &amp; 0xFF in (27, ord(&quot;q&quot;)):
-        break
-
-writer.release()
-cap.release()
-cv2.destroyAllWindows()
-print(&quot;output.mp4 저장 완료&quot;)</code></pre></article></div></section>
+        if cv2.waitKey(1) == 27:  # ESC 키를 누르면 종료
+            break
+finally:
+    cap.release()
+    cv2.destroyAllWindows()</code></pre></article></div></section>
 <section id="flow"><h2>실습 흐름</h2><div class="flow"><span>장치 열기</span><span>ret·frame 읽기</span><span>표시·처리·저장</span><span>release</span></div></section>
 <section id="check"><h2>실습 전후 확인할 점</h2><ul class="checklist"><li>isOpened와 ret를 모두 검사</li><li>Writer 크기와 실제 frame 크기를 일치</li><li>카메라와 Writer를 종료할 때 release 호출</li></ul><p class="note">세부 코드와 실행 예제는 위의 IPYNB 파일에서 셀 단위로 실습할 수 있습니다.</p></section>
 <div class="nav-bottom"><a href="opencv-06-color-space.html">← 06</a><a href="opencv-08-filtering.html">08 →</a></div></main></div></body></html>

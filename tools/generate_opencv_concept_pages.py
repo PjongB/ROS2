@@ -398,10 +398,11 @@ def practice_html(lesson):
         elif cell.get("cell_type") == "code" and source.strip():
             number = len(steps) + 1
             description = f'<p>{escape(pending_body)}</p>' if pending_body else ""
+            display_source = "\n".join(line.rstrip() for line in source.rstrip().splitlines())
             steps.append(
                 f'<article class="practice-step"><div class="step-head"><span>STEP {number:02d}</span>'
                 f'<h3>{escape(pending_title)}</h3></div>{description}'
-                f'<pre><code>{escape(source.rstrip())}</code></pre></article>'
+                f'<pre><code>{escape(display_source)}</code></pre></article>'
             )
             pending_title, pending_body = "다음 실습", ""
     return "".join(steps)

@@ -11,68 +11,118 @@ affine: 마지막 행 = [0 0 1]
 projective: w로 나눔 → (x′/w, y′/w)</div></section>
 <section id="matrix"><h2>행렬로 보기</h2><div class="matrix-row"><div class="matrix" style="--cols:3"><span>1</span><span>0</span><span>tₓ</span><span>0</span><span>1</span><span>tᵧ</span><span>0</span><span>0</span><span>1</span></div><span class="matrix-label">이동</span></div><div class="matrix-row"><div class="matrix" style="--cols:3"><span>cosθ</span><span>-sinθ</span><span>0</span><span>sinθ</span><span>cosθ</span><span>0</span><span>0</span><span>0</span><span>1</span></div><span class="matrix-label">회전</span></div><div class="matrix-row"><div class="matrix" style="--cols:3"><span>a</span><span>b</span><span>tₓ</span><span>c</span><span>d</span><span>tᵧ</span><span>0</span><span>0</span><span>1</span></div><span class="matrix-label">어파인</span></div><div class="matrix-row"><div class="matrix" style="--cols:3"><span>h₁₁</span><span>h₁₂</span><span>h₁₃</span><span>h₂₁</span><span>h₂₂</span><span>h₂₃</span><span>h₃₁</span><span>h₃₂</span><span>1</span></div><span class="matrix-label">투시</span></div></section>
 <section id="functions"><h2>함수 사용법</h2><p class="section-intro">강의에서 사용하는 핵심 함수의 호출 형태와 인자·반환값을 함께 정리했습니다. 긴 코드는 가로로 스크롤해서 볼 수 있습니다.</p><div class="table-scroll"><table class="study-table function-table"><thead><tr><th>함수·표현</th><th>호출 예</th><th>인자·반환값과 사용 포인트</th></tr></thead><tbody><tr><td><span class="code-key">warpAffine</span></td><td><code class="call-pattern">dst = cv2.warpAffine(src, M, dsize)</code></td><td>2×3 변환행렬 M을 적용합니다. dsize는 출력의 (너비, 높이)이며 기본적으로 역방향 매핑과 보간을 사용합니다.</td></tr><tr><td><span class="code-key">getRotationMatrix2D</span></td><td><code class="call-pattern">M = cv2.getRotationMatrix2D(center, angle, scale)</code></td><td>회전 중심·반시계 방향 각도(도)·배율로 2×3 어파인 행렬을 반환합니다.</td></tr><tr><td><span class="code-key">getAffineTransform</span></td><td><code class="call-pattern">M = cv2.getAffineTransform(src_pts, dst_pts)</code></td><td>대응하는 float32 점 3쌍으로 2×3 어파인 행렬을 계산합니다.</td></tr><tr><td><span class="code-key">getPerspectiveTransform</span></td><td><code class="call-pattern">H = cv2.getPerspectiveTransform(src_pts, dst_pts)</code></td><td>대응하는 float32 점 4쌍으로 3×3 투시변환 행렬을 계산하며 warpPerspective와 함께 사용합니다.</td></tr></tbody></table></div></section>
-<section id="practice"><h2>단계별 실습 코드</h2><p class="section-intro">다운로드용 노트북의 전체 실습 흐름입니다. 위에서 아래로 실행하면 강의 개념이 코드에서 어떻게 연결되는지 확인할 수 있습니다.</p><div class="practice-list"><article class="practice-step"><div class="step-head"><span>STEP 01</span><h3>09. 기하학적 변환</h3></div><p>이동·전단·크기·회전·어파인·투시 변환과 문서 스캔 원리를 실습합니다. 강의 슬라이드의 코드를 실행 순서에 맞게 정리한 실습 노트북입니다. 이미지 예제는 노트북과 같은 위치에 data 폴더를 만들고 강의에서 사용하는 파일을 넣어 실행하세요. cv2.imshow()와 카메라·마우스 예제는 데스크톱 Jupyter/VS Code 환경에서 실행하는 것을 권장합니다.</p><pre><code>from pathlib import Path
-import math
-import cv2
+<section id="practice"><h2>단계별 실습 코드</h2><p class="section-intro">다운로드용 노트북의 전체 실습 흐름입니다. 위에서 아래로 실행하면 강의 개념이 코드에서 어떻게 연결되는지 확인할 수 있습니다.</p><div class="practice-list"><article class="practice-step"><div class="step-head"><span>STEP 01</span><h3>이동 변환</h3></div><pre><code>import sys
 import numpy as np
-import matplotlib.pyplot as plt
+import cv2
 
-def read_image(name):
-    image = cv2.imread(str(Path(&quot;data&quot;) / name))
-    if image is None:
-        raise FileNotFoundError(f&quot;data/{name}&quot;)
-    return image
+src = cv2.imread(&#x27;./data/tekapo.bmp&#x27;)
 
-def show(images, titles):
-    fig, axes = plt.subplots(1, len(images), figsize=(6 * len(images), 5))
-    axes = np.atleast_1d(axes)
-    for ax, image, title in zip(axes, images, titles):
-        ax.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
-        ax.set_title(title); ax.axis(&quot;off&quot;)
-    plt.show()</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 02</span><h3>이동과 전단</h3></div><pre><code>src = read_image(&quot;tekapo.bmp&quot;)
+aff = np.array([[1, 0, 200],
+                [0, 1, 100]], dtype=np.float32)    # x로 200, y로 100 이동
+
+dst = cv2.warpAffine(src, aff, (0, 0))             # 출력 크기 = 입력과 동일
+
+cv2.imshow(&#x27;src&#x27;, src)
+cv2.imshow(&#x27;dst&#x27;, dst)
+cv2.waitKey()
+cv2.destroyAllWindows()</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 02</span><h3>전단 변환</h3></div><pre><code>src = cv2.imread(&quot;./data/tekapo.bmp&quot;)
+
+aff = np.array([[1, 0.5, 0],
+                [0, 1,   0]], dtype=np.float32)     # 가로 방향 전단, m = 0.5
+
 h, w = src.shape[:2]
 
-translation = np.array([[1, 0, 200], [0, 1, 100]], dtype=np.float32)
-moved = cv2.warpAffine(src, translation, (w + 200, h + 100))
+dst = cv2.warpAffine(src, aff, (w + int(h * 0.5), h))   # 밀린 만큼 폭을 늘림
 
-shear = np.array([[1, 0.5, 0], [0, 1, 0]], dtype=np.float32)
-sheared = cv2.warpAffine(src, shear, (w + int(h * 0.5), h))
-show([src, moved, sheared], [&quot;source&quot;, &quot;translation&quot;, &quot;shear&quot;])</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 03</span><h3>크기 변경과 보간</h3></div><pre><code>rose = read_image(&quot;rose.bmp&quot;)
-nearest = cv2.resize(rose, None, fx=2, fy=2, interpolation=cv2.INTER_NEAREST)
-linear = cv2.resize(rose, None, fx=2, fy=2, interpolation=cv2.INTER_LINEAR)
-cubic = cv2.resize(rose, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC)
-lanczos = cv2.resize(rose, None, fx=2, fy=2, interpolation=cv2.INTER_LANCZOS4)
-show([nearest, linear, cubic, lanczos], [&quot;nearest&quot;, &quot;linear&quot;, &quot;cubic&quot;, &quot;lanczos&quot;])</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 04</span><h3>중심 기준 회전</h3></div><pre><code>center = (w / 2, h / 2)
-rotation = cv2.getRotationMatrix2D(center, 20, 0.7)
-rotated = cv2.warpAffine(src, rotation, (w, h))
-show([src, rotated], [&quot;source&quot;, &quot;rotate 20°, scale 0.7&quot;])</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 05</span><h3>어파인 변환</h3></div><pre><code>src_points = np.float32([[0, 0], [w - 1, 0], [0, h - 1]])
-dst_points = np.float32([[80, 80], [w - 120, 30], [40, h - 70]])
-matrix = cv2.getAffineTransform(src_points, dst_points)
-affine = cv2.warpAffine(src, matrix, (w, h))
-show([src, affine], [&quot;source&quot;, &quot;affine&quot;])</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 06</span><h3>투시 변환으로 명함 펴기</h3></div><pre><code>card = read_image(&quot;pinkwink_namecard.png&quot;)
-out_w, out_h = 720, 400
-src_quad = np.array([[360, 345], [879, 404], [895, 664], [254, 573]], np.float32)
-dst_quad = np.array([[0, 0], [out_w - 1, 0],
-                     [out_w - 1, out_h - 1], [0, out_h - 1]], np.float32)
+cv2.imshow(&quot;src&quot;, src)
+cv2.imshow(&quot;dst&quot;, dst)
+cv2.waitKey()
+cv2.destroyAllWindows()</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 03</span><h3>확대와 축소</h3></div><pre><code>import sys
+import numpy as np
+import cv2
 
-perspective = cv2.getPerspectiveTransform(src_quad, dst_quad)
-flattened = cv2.warpPerspective(card, perspective, (out_w, out_h))
-show([card, flattened], [&quot;source&quot;, &quot;perspective corrected&quot;])</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 07</span><h3>문서 스캔 기본 함수</h3></div><p>선택한 네 모서리를 A4 비율의 평면으로 변환합니다.</p><pre><code>def scan_document(image, corners, output_width=500):
-    output_height = round(output_width * 297 / 210)
-    source = np.asarray(corners, dtype=np.float32)
-    target = np.array([
-        [0, 0], [0, output_height - 1],
-        [output_width - 1, output_height - 1], [output_width - 1, 0]
-    ], dtype=np.float32)
-    matrix = cv2.getPerspectiveTransform(source, target)
-    return cv2.warpPerspective(image, matrix, (output_width, output_height),
-                               flags=cv2.INTER_CUBIC)
+src = cv2.imread(&#x27;./data/rose.bmp&#x27;)       # src.shape = (320, 480)
 
-document = read_image(&quot;scanned.jpg&quot;)
-dh, dw = document.shape[:2]
-corners = [[30, 30], [30, dh - 30], [dw - 30, dh - 30], [dw - 30, 30]]
-scanned = scan_document(document, corners)
-show([document, scanned], [&quot;document&quot;, &quot;scanned&quot;])</code></pre></article></div></section>
+if src is None:
+    print(&#x27;Image load failed!&#x27;)
+    sys.exit()
+
+dst1 = cv2.resize(src, (0, 0), fx=4, fy=4, interpolation=cv2.INTER_NEAREST)
+dst2 = cv2.resize(src, (1920, 1280))                                    # INTER_LINEAR
+dst3 = cv2.resize(src, (1920, 1280), interpolation=cv2.INTER_CUBIC)
+dst4 = cv2.resize(src, (1920, 1280), interpolation=cv2.INTER_LANCZOS4)
+
+cv2.imshow(&#x27;src&#x27;, src)
+cv2.imshow(&#x27;dst1&#x27;, dst1[500:900, 400:800])     # 같은 영역만 잘라 비교
+cv2.imshow(&#x27;dst2&#x27;, dst2[500:900, 400:800])
+cv2.imshow(&#x27;dst3&#x27;, dst3[500:900, 400:800])
+cv2.imshow(&#x27;dst4&#x27;, dst4[500:900, 400:800])
+cv2.waitKey()
+cv2.destroyAllWindows()</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 04</span><h3>회전행렬 직접 계산</h3></div><pre><code>import math
+
+src = cv2.imread(&quot;./data/tekapo.bmp&quot;)
+
+rad = 20 * math.pi / 180                        # degree → radian
+aff = np.array([[ math.cos(rad), math.sin(rad), 0],
+                [-math.sin(rad), math.cos(rad), 0]], dtype=np.float32)
+
+dst = cv2.warpAffine(src, aff, (0, 0))
+
+cv2.imshow(&quot;src&quot;, src)
+cv2.imshow(&quot;dst&quot;, dst)
+cv2.waitKey()
+cv2.destroyAllWindows()</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 05</span><h3>중심 기준 회전</h3></div><pre><code>import sys
+import numpy as np
+import cv2
+
+src = cv2.imread(&quot;./data/tekapo.bmp&quot;)
+
+if src is None:
+    print(&quot;Image load failed!&quot;)
+    sys.exit()
+
+cp = (src.shape[1] / 2, src.shape[0] / 2)        # 영상 중앙 (x, y)
+rot = cv2.getRotationMatrix2D(cp, 20, 0.7)       # 20도 회전 + 0.7배 축소
+
+dst = cv2.warpAffine(src, rot, (0, 0))
+
+cv2.imshow(&quot;src&quot;, src)
+cv2.imshow(&quot;dst&quot;, dst)
+cv2.waitKey()
+
+cv2.destroyAllWindows()</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 06</span><h3>회전 결과 확인</h3></div><pre><code>rot</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 07</span><h3>명함 실습 라이브러리</h3></div><pre><code>import sys
+import cv2
+import numpy as np</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 08</span><h3>명함 이미지 읽기</h3></div><pre><code>src = cv2.imread(&quot;./data/pinkwink_namecard.png&quot;)</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 09</span><h3>원본 크기</h3></div><pre><code>src.shape</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 10</span><h3>미리보기 축소</h3></div><pre><code>dst = cv2.resize(src, (0, 0), fx=0.5, fy=0.5)     # 0.5배 축소</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 11</span><h3>축소 크기</h3></div><pre><code>dst.shape</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 12</span><h3>선택점과 미리보기</h3></div><pre><code>points = []
+preview = cv2.resize(src, (0, 0), fx=0.5, fy=0.5)</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 13</span><h3>마우스 콜백</h3></div><pre><code>def click_event(event, x, y, flags, param):
+    if event == cv2.EVENT_LBUTTONDOWN and len(points) &lt; 4:
+        points.append([x, y])
+
+        cv2.imshow(&quot;preview&quot;, preview)
+        print(f&quot;{len(points)}번 좌표: ({x}, {y})&quot;)</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 14</span><h3>네 점 선택과 투시 변환</h3></div><pre><code>cv2.imshow(&quot;preview&quot;, preview)
+cv2.setMouseCallback(&quot;preview&quot;, click_event)
+
+while True:
+    if cv2.waitKey() == 27:          # ESC로 종료
+        break
+
+cv2.destroyAllWindows()
+
+if len(points) != 4:
+    raise ValueError(&quot;좌표를 4개 선택해야 합니다.&quot;)
+
+# 클릭 순서: 왼쪽 위 → 오른쪽 위 → 오른쪽 아래 → 왼쪽 아래
+src_quad = np.float32(points)
+
+w, h = 720, 480
+dst_quad = np.float32([[0, 0],[w - 1, 0],[w - 1, h - 1],[0, h - 1]])
+
+pers = cv2.getPerspectiveTransform(src_quad, dst_quad)
+
+result = cv2.warpPerspective(preview, pers, (w, h))
+
+cv2.imshow(&quot;result&quot;, result)
+cv2.waitKey()
+cv2.destroyAllWindows()</code></pre></article></div></section>
 <section id="flow"><h2>실습 흐름</h2><div class="flow"><span>대응점·행렬 정의</span><span>출력 크기 결정</span><span>역매핑·보간</span><span>잘림·경계 확인</span></div></section>
 <section id="check"><h2>실습 전후 확인할 점</h2><ul class="checklist"><li>점 좌표 dtype을 float32로 맞춤</li><li>cv2 함수의 점 순서를 일관되게 지정</li><li>변환 후 필요한 출력 dsize를 직접 계산</li></ul><p class="note">세부 코드와 실행 예제는 위의 IPYNB 파일에서 셀 단위로 실습할 수 있습니다.</p></section>
 <div class="nav-bottom"><a href="opencv-08-filtering.html">← 08</a><a href="opencv-10-brightness-contrast.html">10 →</a></div></main></div></body></html>

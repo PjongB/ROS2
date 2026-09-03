@@ -11,36 +11,17 @@ color[y, x] → [R, G, B] 또는 [B, G, R]
 shape = (height, width, channels)</div></section>
 <section id="matrix"><h2>행렬로 보기</h2><div class="matrix-row"><div class="matrix" style="--cols:3"><span>R00</span><span>R01</span><span>…</span><span>R10</span><span>R11</span><span>…</span><span>⋮</span><span>⋮</span><span>Rhw</span></div><span class="matrix-label">R 채널 행렬 - G와 B도 같은 크기</span></div></section>
 <section id="functions"><h2>함수 사용법</h2><p class="section-intro">강의에서 사용하는 핵심 함수의 호출 형태와 인자·반환값을 함께 정리했습니다. 긴 코드는 가로로 스크롤해서 볼 수 있습니다.</p><div class="table-scroll"><table class="study-table function-table"><thead><tr><th>함수·표현</th><th>호출 예</th><th>인자·반환값과 사용 포인트</th></tr></thead><tbody><tr><td><span class="code-key">img[y, x]</span></td><td><code class="call-pattern">pixel = img[y, x]</code></td><td>y행 x열의 픽셀을 읽습니다. 그레이 영상은 스칼라, 컬러 영상은 BGR 값 3개가 반환됩니다.</td></tr><tr><td><span class="code-key">img[:, :, 0]</span></td><td><code class="call-pattern">blue = img[:, :, 0]</code></td><td>모든 행과 열에서 0번 채널만 선택합니다. OpenCV 컬러 영상의 0번 채널은 Blue입니다.</td></tr><tr><td><span class="code-key">img[y1:y2, x1:x2]</span></td><td><code class="call-pattern">roi = img[y1:y2, x1:x2]</code></td><td>반열린 구간으로 관심 영역을 선택합니다. 기본적으로 원본을 공유하는 view이므로 roi 수정이 원본에도 반영됩니다.</td></tr><tr><td><span class="code-key">img[:, :, 1] = 0</span></td><td><code class="call-pattern">img[:, :, 1] = 0</code></td><td>모든 픽셀의 Green 채널을 0으로 바꿉니다. 원본 배열을 직접 수정하는 대입입니다.</td></tr></tbody></table></div></section>
-<section id="practice"><h2>단계별 실습 코드</h2><p class="section-intro">다운로드용 노트북의 전체 실습 흐름입니다. 위에서 아래로 실행하면 강의 개념이 코드에서 어떻게 연결되는지 확인할 수 있습니다.</p><div class="practice-list"><article class="practice-step"><div class="step-head"><span>STEP 01</span><h3>02. NumPy 배열과 OpenCV</h3></div><p>이미지가 NumPy 배열로 표현되는 원리와 RGB 채널별 픽셀 연산을 익힙니다. 강의 슬라이드의 코드를 실행 순서에 맞게 정리한 실습 노트북입니다. 이미지 예제는 노트북과 같은 위치에 data 폴더를 만들고 강의에서 사용하는 파일을 넣어 실행하세요. cv2.imshow()와 카메라·마우스 예제는 데스크톱 Jupyter/VS Code 환경에서 실행하는 것을 권장합니다.</p><pre><code>from pathlib import Path
-import cv2
-import numpy as np
-import matplotlib.pyplot as plt</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 02</span><h3>1. 이미지 읽기</h3></div><p>sample.jpg가 없으면 실습용 컬러 이미지를 자동으로 만듭니다.</p><pre><code>path = Path(&quot;data/sample.jpg&quot;)
-if path.exists():
-    bgr = cv2.imread(str(path))
-    rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
-else:
-    x = np.linspace(0, 255, 640, dtype=np.uint8)
-    y = np.linspace(0, 255, 360, dtype=np.uint8)[:, None]
-    rgb = np.dstack((np.tile(x, (360, 1)), np.tile(y, (1, 640)), np.full((360, 640), 128, np.uint8)))
-
-print(type(rgb), rgb.shape, rgb.dtype)
-plt.imshow(rgb)
-plt.axis(&quot;off&quot;);</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 03</span><h3>2. 채널별 값 관찰</h3></div><pre><code>fig, axes = plt.subplots(1, 3, figsize=(15, 4))
-for axis, channel, name in zip(axes, range(3), [&quot;Red&quot;, &quot;Green&quot;, &quot;Blue&quot;]):
-    axis.imshow(rgb[:, :, channel], cmap=&quot;gray&quot;, vmin=0, vmax=255)
-    axis.set_title(name)
-    axis.axis(&quot;off&quot;)
-plt.show()</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 04</span><h3>3. 특정 채널 제거</h3></div><pre><code>without_green = rgb.copy()
-without_green[:, :, 1] = 0
-
-plt.imshow(without_green)
-plt.title(&quot;Green channel = 0&quot;)
-plt.axis(&quot;off&quot;);</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 05</span><h3>4. 픽셀과 영역 수정</h3></div><pre><code>edited = rgb.copy()
-edited[40:140, 40:220] = (255, 80, 80)
-edited[180:300, 360:580, 2] = 255
-
-plt.imshow(edited)
-plt.axis(&quot;off&quot;);</code></pre></article></div></section>
+<section id="practice"><h2>단계별 실습 코드</h2><p class="section-intro">다운로드용 노트북의 전체 실습 흐름입니다. 위에서 아래로 실행하면 강의 개념이 코드에서 어떻게 연결되는지 확인할 수 있습니다.</p><div class="practice-list"><article class="practice-step"><div class="step-head"><span>STEP 01</span><h3>라이브러리 준비</h3></div><pre><code>import numpy as np
+import matplotlib.pyplot as plt
+from PIL import Image</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 02</span><h3>PIL 이미지 읽기</h3></div><pre><code>pic = Image.open(&#x27;../data/test.png&#x27;)
+pic</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 03</span><h3>PIL 타입</h3></div><pre><code>type(pic)</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 04</span><h3>NumPy 배열 변환</h3></div><pre><code>pic_arr = np.asarray(pic)
+type(pic_arr)</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 05</span><h3>배열 크기</h3></div><pre><code>pic_arr.shape</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 06</span><h3>전체 이미지 표시</h3></div><pre><code>plt.imshow(pic_arr)</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 07</span><h3>R 채널과 viridis</h3></div><pre><code>pic_red = pic_arr.copy()
+plt.imshow(pic_red[:, :, 0])</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 08</span><h3>R 채널을 gray로 표시</h3></div><pre><code>pic_red = pic_arr.copy()
+plt.imshow(pic_red[:, :, 0], cmap=&#x27;gray&#x27;)</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 09</span><h3>G 채널</h3></div><pre><code>pic_red = pic_arr.copy()
+plt.imshow(pic_red[:, :, 1], cmap=&#x27;gray&#x27;)</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 10</span><h3>B 채널</h3></div><pre><code>pic_red = pic_arr.copy()
+plt.imshow(pic_red[:, :, 2], cmap=&#x27;gray&#x27;)</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 11</span><h3>G 채널 제거</h3></div><pre><code>pic_red[:, :, 1] = 0
+plt.imshow(pic_red)</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 12</span><h3>B 채널도 제거</h3></div><pre><code>pic_red[:, :, 2] = 0
+plt.imshow(pic_red)</code></pre></article></div></section>
 <section id="flow"><h2>실습 흐름</h2><div class="flow"><span>이미지 읽기</span><span>shape·dtype 확인</span><span>채널 분리</span><span>배열 연산·표시</span></div></section>
 <section id="check"><h2>실습 전후 확인할 점</h2><ul class="checklist"><li>행 인덱스 y가 높이, 열 인덱스 x가 너비임을 구분</li><li>uint8에서 255를 넘는 연산의 overflow 주의</li><li>Matplotlib의 RGB와 OpenCV의 BGR 순서 확인</li></ul><p class="note">세부 코드와 실행 예제는 위의 IPYNB 파일에서 셀 단위로 실습할 수 있습니다.</p></section>
 <div class="nav-bottom"><a href="opencv-01-setting.html">← 01</a><a href="opencv-03-image-read.html">03 →</a></div></main></div></body></html>

@@ -195,16 +195,9 @@ show(outputs, [f"block={block}, C={c}" for block, c in settings])
 
 
 def main() -> None:
-    OUT.mkdir(parents=True, exist_ok=True)
-    metadata = {
-        "kernelspec": {"display_name": "Python 3", "language": "python", "name": "python3"},
-        "language_info": {"name": "python", "version": "3"},
-    }
-    for filename, cells in NOTEBOOKS.items():
-        document = {"cells": cells, "metadata": metadata, "nbformat": 4, "nbformat_minor": 5}
-        path = OUT / filename
-        path.write_text(json.dumps(document, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
-        print(path.relative_to(ROOT))
+    from generate_source_aligned_opencv_notebooks import main as aligned_main
+
+    aligned_main()
 
 
 if __name__ == "__main__":

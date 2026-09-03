@@ -21,4 +21,4 @@ ROS 2 개발 환경, 로봇 내비게이션, LLM·모방학습, OpenCV 컴퓨터
 - OpenCV 강의별 Jupyter Notebook 14개 다운로드
 - 무작위 문제은행 385문제
 
-사이트는 GitHub Pages에서 바로 열 수 있으며, OpenCV 개념 페이지에서 원본 강의 HTML·PDF를 열거나 강의별 `.ipynb` 실습 파일을 다운로드할 수 있습니다.
+사이트는 GitHub Pages에서 바로 열 수 있으며, OpenCV 개념 페이지에서 원본 강의 HTML·PDF를 열거나 강의 화면의 코드 순서와 파일명을 보존한 강의별 `.ipynb` 실습 파일을 다운로드할 수 있습니다.

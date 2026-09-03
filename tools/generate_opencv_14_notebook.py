@@ -127,18 +127,9 @@ show([components, analysis], ["source", "shape analysis"])
 
 
 def main() -> None:
-    OUTPUT.parent.mkdir(parents=True, exist_ok=True)
-    notebook = {
-        "cells": CELLS,
-        "metadata": {
-            "kernelspec": {"display_name": "Python 3", "language": "python", "name": "python3"},
-            "language_info": {"name": "python", "version": "3"},
-        },
-        "nbformat": 4,
-        "nbformat_minor": 5,
-    }
-    OUTPUT.write_text(json.dumps(notebook, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
-    print(OUTPUT.relative_to(ROOT))
+    from generate_source_aligned_opencv_notebooks import main as aligned_main
+
+    aligned_main()
 
 
 if __name__ == "__main__":
