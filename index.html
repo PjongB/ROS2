@@ -19,7 +19,7 @@
 </head>
 <body>
 <header class="shell top"><div class="brand"><b>ROS</b> FIELD NOTES</div><div class="source">강의 원본 기반 · 로컬 아카이브</div></header>
-<section class="hero"><div class="shell"><div class="eyebrow">FROM SETUP TO AUTONOMOUS ROBOTICS</div><h1>ROS2 &amp; AI</h1><p>개발 환경과 ROS 2 통신·TF부터 모바일 로봇 내비게이션, LLM·모방학습, OpenCV 컴퓨터 비전까지 직접 배우는 실습형 학습 아카이브입니다.</p><div class="hero-actions"><a class="quiz-start" href="quiz.html?v=llm09">문제 풀기 →</a></div><div class="statbar"><div class="stat"><b id="totalCount">76</b><span>전체 강의</span></div><div class="stat"><b>385</b><span>연습 문제</span></div><div class="stat"><b id="doneCount">0</b><span>완료한 강의</span></div></div></div></section>
+<section class="hero"><div class="shell"><div class="eyebrow">FROM SETUP TO AUTONOMOUS ROBOTICS</div><h1>ROS2 &amp; AI</h1><p>개발 환경과 ROS 2 통신·TF부터 모바일 로봇 내비게이션, LLM·모방학습, OpenCV 컴퓨터 비전까지 직접 배우는 실습형 학습 아카이브입니다.</p><div class="hero-actions"><a class="quiz-start" href="quiz.html?v=llm09">문제 풀기 →</a></div><div class="statbar"><div class="stat"><b id="totalCount">77</b><span>전체 강의</span></div><div class="stat"><b>385</b><span>연습 문제</span></div><div class="stat"><b id="doneCount">0</b><span>완료한 강의</span></div></div></div></section>
 <div class="tools"><div class="shell"><div class="toolrow"><input id="search" class="search" type="search" placeholder="강의 검색 — OpenCV, 내비게이션, LLM, TF…"><button id="reset" class="reset">진도 초기화</button></div><div class="progress"><i id="bar"></i></div></div></div>
 <section class="shell glossary-card"><div class="num">ABC</div><div><h2>ROS2·로봇 용어 정리</h2><p>Node와 TF부터 SLAM, Nav2, A*, Dijkstra, DWB, RPP, PID까지 분야별로 찾아보는 용어 사전</p></div><a class="open" href="learn/glossary.html">용어 보기 →</a></section>
 <section class="shell glossary-card"><div class="num">RQT</div><div><h2>로봇 파라미터·RQT 설정 가이드</h2><p>공통 원리와 PinkyPro·TurtleBot3별 실행 명령, 노드, 파라미터를 분리한 참고서</p></div><div class="guide-links"><a class="open" href="learn/robot-parameter-rqt-guide.html">공통</a><a class="open robot" href="learn/pinkypro-parameter-rqt-guide.html">PinkyPro</a><a class="open robot" href="learn/turtlebot3-parameter-rqt-guide.html">TurtleBot3</a></div></section>
@@ -107,7 +107,7 @@ const modules=[
   ["08","데이터셋 관리 - OMX-AI","시각화·재생, 에피소드 삭제·분할·병합과 feature 관리","learn/imitation-omx-ai-dataset-management.html","assets/imitation-08/omx-ai-dataset-management.pdf"],
   ["09","모방학습 모델 학습 및 추론 - OMX-AI","ACT 학습·체크포인트 재개, 동기 평가와 비동기 추론","learn/imitation-omx-ai-act-training-inference.html","assets/imitation-09/omx-ai-act-training-inference.pdf"]
  ]},
- {title:"08 · OpenCV",desc:"이미지 기초부터 필터링, 특징 추출과 이진화까지",lessons:[
+ {title:"08 · OpenCV",desc:"이미지 기초부터 특징 추출, 라벨링과 외곽선까지",lessons:[
   ["01","OpenCV 환경 설정","OpenCV 설치와 첫 실행 환경 준비","learn/opencv-01-setting.html","opencv/01_OpenCV_Setting.pdf","opencv/notebooks/01_OpenCV_Setting.ipynb"],
   ["02","NumPy 배열과 OpenCV","NumPy로 이미지 픽셀 데이터 다루기","learn/opencv-02-numpy-array.html","opencv/02_Numpy_array_with_OpenCV.pdf","opencv/notebooks/02_Numpy_array_with_OpenCV.ipynb"],
   ["03","이미지 읽기와 표시","imread·imshow로 이미지 불러오기","learn/opencv-03-image-read.html","opencv/03_Image_read.pdf","opencv/notebooks/03_Image_read.ipynb"],
@@ -120,7 +120,8 @@ const modules=[
   ["10","밝기와 명암비","포화 연산·히스토그램·색상 추출","learn/opencv-10-brightness-contrast.html","opencv/10_Brightness_Contrast_.pdf","opencv/notebooks/10_Brightness_Contrast.ipynb"],
   ["11","모폴로지와 그래디언트","침식·팽창·열기·닫기와 영상 미분","learn/opencv-11-morphology-gradient.html","opencv/11_Morphology_Gradient.pdf","opencv/notebooks/11_Morphology_Gradient.ipynb"],
   ["12","특징 추출","Sobel·Canny와 Hough 선·원 검출","learn/opencv-12-feature-extraction.html","opencv/12_Feature_extraction.pdf","opencv/notebooks/12_Feature_extraction.ipynb"],
-  ["13","영상 이진화","전역·적응형 임계값 처리","learn/opencv-13-image-thresholding.html","opencv/13_Image_Thresholding.pdf","opencv/notebooks/13_Image_Thresholding.ipynb"]
+  ["13","영상 이진화","전역·적응형 임계값 처리","learn/opencv-13-image-thresholding.html","opencv/13_Image_Thresholding.pdf","opencv/notebooks/13_Image_Thresholding.ipynb"],
+  ["14","이진화·라벨링·외곽선","Otsu·연결 요소·형상 분석","learn/opencv-14-binary-labeling-contours.html","opencv/14_Binary.pdf","opencv/notebooks/14_Binary_Labeling_Contours.ipynb"]
  ]}
 ];
 const totalLessons=modules.reduce((sum,module)=>sum+module.lessons.length,0);
