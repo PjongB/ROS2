@@ -2,8 +2,9 @@
 <html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>모폴로지와 그래디언트 · OpenCV</title><link rel="stylesheet" href="opencv-study.css"><link rel="stylesheet" href="opencv-functions.css"></head><body>
 <header><div class="shell top"><a class="brand" href="../index.html"><b>ROS</b> FIELD NOTES</a><a class="back" href="../index.html">전체 강의로 돌아가기</a></div></header>
 <section class="hero"><div class="shell"><div class="kicker">08.11 · OPENCV CONCEPT STUDY</div><h1>모폴로지와 그래디언트</h1><p class="lead">구조 요소로 이진 영상의 모양을 바꾸는 침식·팽창·열기·닫기와 밝기 변화율을 측정하는 그래디언트를 학습합니다.</p><div class="actions"><a class="button primary" target="_blank" rel="noopener" href="../opencv/11_present_Morphology_Gradient.html">원본 강의</a><a class="button pdf" target="_blank" rel="noopener" href="../opencv/11_Morphology_Gradient.pdf">강의 PDF</a><a class="button nb" download href="../opencv/notebooks/11_Morphology_Gradient.ipynb">IPYNB 다운로드</a></div></div></section>
-<div class="shell layout"><nav class="toc"><b>이 페이지에서</b><a href="#concepts">핵심 개념</a><a href="#theory">이론과 수식</a><a href="#matrix">행렬로 보기</a><a href="#functions">함수 사용법</a><a href="#flow">실습 흐름</a><a href="#check">확인할 점</a></nav><main>
+<div class="shell layout"><nav class="toc"><b>이 페이지에서</b><a href="#outline">강의 전체 구성</a><a href="#concepts">핵심 개념</a><a href="#theory">이론과 수식</a><a href="#matrix">행렬로 보기</a><a href="#functions">함수 사용법</a><a href="#practice">단계별 실습 코드</a><a href="#flow">실습 흐름</a><a href="#check">확인할 점</a></nav><main>
 <section><div class="summary"><b>한 줄 정리</b><span>침식은 커널 영역이 모두 전경일 때만 중심을 남기고, 팽창은 하나라도 전경이면 중심을 채웁니다. 열기는 침식 뒤 팽창, 닫기는 팽창 뒤 침식입니다. Sobel은 1차 미분, Laplacian은 2차 미분으로 밝기 변화가 큰 경계를 강조합니다.</span></div></section>
+<section id="outline"><h2>강의 전체 구성</h2><p class="section-intro">원본 강의자료의 슬라이드 순서를 큰 주제와 세부 주제로 나눴습니다. 항목을 열어 학습 범위를 확인하세요.</p><div class="outline-groups"><details class="outline-group"><summary><b>모폴로지</b><span>30개 세부 주제</span></summary><ol><li>일단 import</li><li>테스트용 이미지 만들기 함수</li><li>이미지를 디스플레이하는 함수</li><li>이렇게 생긴 아이</li><li>커널하나 만들고</li><li>여러번 돌면서 침식? 시키라고 하면~</li><li>erode</li><li>침식이란</li><li>침식은 이런식으로</li><li>흰색이 얇아짐</li><li>이렇게 점점 얇아짐</li><li>일단 이미지 다시 부르고</li><li>noise 만들고</li><li>noise 를 입힌 글자 이미지</li><li>Dilation 연산</li><li>dilate</li><li>팽창이란</li><li>팽창은 이런식으로~</li><li>오프닝 연산</li><li>오프닝 연산을 통한 노이즈 제거</li><li>morphologyEx</li><li>이미지 다시 읽고 노이즈 만들고</li><li>noise가 많은 글자 이미지 또 ~</li><li>테스트 이미지 만들려고 고생하는 중~</li><li>아이쿠 만들었다~</li><li>클로징 연산</li><li>크로징 연산을 통한 노이즈 제거</li><li>열기와 닫기의 차이</li><li>다시 새로 시작</li><li>이번에는 그레디언트 연산</li></ol></details><details class="outline-group"><summary><b>그래디언트</b><span>10개 세부 주제</span></summary><ol><li>이미지 세상에서 그래디언트는?</li><li>그래디언트 중 쇼벨 연산자</li><li>이미지 그리는</li><li>이 이미지 하나 불러와서</li><li>x 방향 쇼벨~</li><li>y 방향 그래디언트</li><li>Laplacian 연산</li><li>x, y 방향의 그래디언트를 합치기</li><li>이번에는 threshold 시켜보고</li><li>그래디언트 연산으로 모폴로지도 시켜보고</li></ol></details></div></section>
 <section id="concepts"><h2>핵심 개념</h2><div class="concepts"><div class="concept"><b>구조 요소</b><span>주변 픽셀을 검사할 모양과 크기를 정하는 커널</span></div><div class="concept"><b>침식·팽창</b><span>흰색 전경을 각각 축소하거나 확장하는 기본 연산</span></div><div class="concept"><b>열기·닫기</b><span>작은 흰 잡음을 제거하거나 검은 구멍을 메우는 복합 연산</span></div><div class="concept"><b>그래디언트</b><span>x·y 방향 밝기 변화량으로 경계의 크기와 방향을 표현</span></div></div></section>
 <section id="theory"><h2>이론과 수식</h2><p>침식은 커널 영역이 모두 전경일 때만 중심을 남기고, 팽창은 하나라도 전경이면 중심을 채웁니다. 열기는 침식 뒤 팽창, 닫기는 팽창 뒤 침식입니다. Sobel은 1차 미분, Laplacian은 2차 미분으로 밝기 변화가 큰 경계를 강조합니다.</p><div class="equation">opening: A ○ B = (A ⊖ B) ⊕ B
 closing: A • B = (A ⊕ B) ⊖ B
@@ -11,6 +12,58 @@ closing: A • B = (A ⊕ B) ⊖ B
 Laplacian = ∂²I/∂x² + ∂²I/∂y²</div></section>
 <section id="matrix"><h2>행렬로 보기</h2><div class="matrix-row"><div class="matrix" style="--cols:3"><span>1</span><span>1</span><span>1</span><span>1</span><span>1</span><span>1</span><span>1</span><span>1</span><span>1</span></div><span class="matrix-label">3×3 사각형 구조 요소</span></div><div class="matrix-row"><div class="matrix" style="--cols:3"><span>-1</span><span>0</span><span>1</span><span>-2</span><span>0</span><span>2</span><span>-1</span><span>0</span><span>1</span></div><span class="matrix-label">x 방향 Sobel 커널</span></div></section>
 <section id="functions"><h2>함수 사용법</h2><p class="section-intro">강의에서 사용하는 핵심 함수의 호출 형태와 인자·반환값을 함께 정리했습니다. 긴 코드는 가로로 스크롤해서 볼 수 있습니다.</p><div class="table-scroll"><table class="study-table function-table"><thead><tr><th>함수·표현</th><th>호출 예</th><th>인자·반환값과 사용 포인트</th></tr></thead><tbody><tr><td><span class="code-key">erode / dilate</span></td><td><code class="call-pattern">dst = cv2.erode(src, kernel, iterations=1)</code></td><td>kernel 이웃의 최솟값/최댓값을 택해 밝은 전경을 축소/확장합니다. iterations는 반복 횟수입니다.</td></tr><tr><td><span class="code-key">morphologyEx</span></td><td><code class="call-pattern">dst = cv2.morphologyEx(src, op, kernel)</code></td><td>op에 MORPH_OPEN·CLOSE·GRADIENT 등을 지정해 복합 형태학 연산을 한 번에 수행합니다.</td></tr><tr><td><span class="code-key">Sobel / Scharr</span></td><td><code class="call-pattern">gx = cv2.Sobel(gray, cv2.CV_32F, 1, 0)</code></td><td>dx·dy로 미분 방향을 고르고 ddepth로 음수 기울기를 보존합니다. Scharr는 3×3 미분 정확도를 개선한 연산입니다.</td></tr><tr><td><span class="code-key">Laplacian</span></td><td><code class="call-pattern">lap = cv2.Laplacian(gray, cv2.CV_32F)</code></td><td>x·y 방향 2차 미분을 합친 영상을 반환합니다. 부호가 있으므로 CV_32F 등에 받은 뒤 절댓값·정규화합니다.</td></tr></tbody></table></div></section>
+<section id="practice"><h2>단계별 실습 코드</h2><p class="section-intro">다운로드용 노트북의 전체 실습 흐름입니다. 위에서 아래로 실행하면 강의 개념이 코드에서 어떻게 연결되는지 확인할 수 있습니다.</p><div class="practice-list"><article class="practice-step"><div class="step-head"><span>STEP 01</span><h3>11. 모폴로지와 그래디언트</h3></div><p>침식·팽창·열기·닫기와 Sobel·Laplacian 그래디언트를 실습합니다. 예제 이미지는 노트북 옆 data 폴더에 넣으세요.</p><pre><code>from pathlib import Path
+import cv2
+import numpy as np
+import matplotlib.pyplot as plt
+
+def read_image(name, flags=cv2.IMREAD_COLOR):
+    path = Path(&quot;data&quot;) / name
+    image = cv2.imread(str(path), flags)
+    if image is None:
+        raise FileNotFoundError(path)
+    return image
+
+def show(images, titles):
+    fig, axes = plt.subplots(1, len(images), figsize=(5 * len(images), 4))
+    axes = np.atleast_1d(axes)
+    for ax, image, title in zip(axes, images, titles):
+        if image.ndim == 2:
+            ax.imshow(image, cmap=&quot;gray&quot;, vmin=0, vmax=255)
+        else:
+            ax.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+        ax.set_title(title)
+        ax.axis(&quot;off&quot;)
+    plt.tight_layout()</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 02</span><h3>테스트용 이진 영상과 구조 요소</h3></div><pre><code>binary = np.zeros((240, 640), dtype=np.uint8)
+cv2.putText(binary, &quot;ABCDE&quot;, (20, 170), cv2.FONT_HERSHEY_SIMPLEX, 3.2, 255, 12, cv2.LINE_AA)
+kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+show([binary, kernel * 255], [&quot;binary image&quot;, &quot;3x3 kernel&quot;])</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 03</span><h3>침식과 팽창</h3></div><pre><code>eroded = cv2.erode(binary, kernel, iterations=2)
+dilated = cv2.dilate(binary, kernel, iterations=2)
+show([binary, eroded, dilated], [&quot;source&quot;, &quot;erosion&quot;, &quot;dilation&quot;])</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 04</span><h3>열기와 닫기</h3></div><pre><code>rng = np.random.default_rng(7)
+salt = binary.copy()
+ys = rng.integers(0, salt.shape[0], 1200)
+xs = rng.integers(0, salt.shape[1], 1200)
+salt[ys, xs] = 255
+
+pepper = binary.copy()
+ys = rng.integers(0, pepper.shape[0], 1200)
+xs = rng.integers(0, pepper.shape[1], 1200)
+pepper[ys, xs] = 0
+
+opened = cv2.morphologyEx(salt, cv2.MORPH_OPEN, kernel)
+closed = cv2.morphologyEx(pepper, cv2.MORPH_CLOSE, kernel)
+show([salt, opened, pepper, closed], [&quot;salt noise&quot;, &quot;opening&quot;, &quot;pepper holes&quot;, &quot;closing&quot;])</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 05</span><h3>형태학적 그래디언트</h3></div><pre><code>morph_gradient = cv2.morphologyEx(binary, cv2.MORPH_GRADIENT, kernel)
+show([binary, morph_gradient], [&quot;source&quot;, &quot;morphological gradient&quot;])</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 06</span><h3>Sobel과 Laplacian</h3></div><pre><code>gray = read_image(&quot;sudoku.jpg&quot;, cv2.IMREAD_GRAYSCALE)
+gx = cv2.Sobel(gray, cv2.CV_32F, 1, 0, ksize=3)
+gy = cv2.Sobel(gray, cv2.CV_32F, 0, 1, ksize=3)
+magnitude = cv2.magnitude(gx, gy)
+laplacian = cv2.Laplacian(gray, cv2.CV_32F)
+
+gx_view = cv2.convertScaleAbs(gx)
+gy_view = cv2.convertScaleAbs(gy)
+mag_view = cv2.convertScaleAbs(magnitude)
+lap_view = cv2.convertScaleAbs(laplacian)
+show([gray, gx_view, gy_view, mag_view, lap_view], [&quot;source&quot;, &quot;Sobel x&quot;, &quot;Sobel y&quot;, &quot;magnitude&quot;, &quot;Laplacian&quot;])</code></pre></article></div></section>
 <section id="flow"><h2>실습 흐름</h2><div class="flow"><span>이진 영상 준비</span><span>구조 요소 선택</span><span>모폴로지 적용</span><span>그래디언트·임계값 비교</span></div></section>
 <section id="check"><h2>실습 전후 확인할 점</h2><ul class="checklist"><li>흰색을 전경으로 보는지 확인</li><li>커널 크기와 iterations가 커질수록 변화가 강해짐</li><li>미분 결과는 음수를 보존하도록 float 자료형 사용</li><li>표시 전 절댓값과 uint8 변환</li></ul><p class="note">세부 코드와 실행 예제는 위의 IPYNB 파일에서 셀 단위로 실습할 수 있습니다.</p></section>
 <div class="nav-bottom"><a href="opencv-10-brightness-contrast.html">← 10</a><a href="opencv-12-feature-extraction.html">12 →</a></div></main></div></body></html>

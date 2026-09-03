@@ -2,14 +2,41 @@
 <html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>콜백 함수 활용 · OpenCV</title><link rel="stylesheet" href="opencv-study.css"><link rel="stylesheet" href="opencv-functions.css"></head><body>
 <header><div class="shell top"><a class="brand" href="../index.html"><b>ROS</b> FIELD NOTES</a><a class="back" href="../index.html">전체 강의로 돌아가기</a></div></header>
 <section class="hero"><div class="shell"><div class="kicker">08.05 · OPENCV CONCEPT STUDY</div><h1>콜백 함수 활용</h1><p class="lead">마우스 이벤트가 발생할 때 호출되는 함수를 등록하고, 상태를 유지하며 대화형 그리기를 구현합니다.</p><div class="actions"><a class="button primary" target="_blank" rel="noopener" href="../opencv/05_Use_Callback_function.html">원본 강의</a><a class="button pdf" target="_blank" rel="noopener" href="../opencv/05_Use_Callback_function.pdf">강의 PDF</a><a class="button nb" download href="../opencv/notebooks/05_Use_Callback_function.ipynb">IPYNB 다운로드</a></div></div></section>
-<div class="shell layout"><nav class="toc"><b>이 페이지에서</b><a href="#concepts">핵심 개념</a><a href="#theory">이론과 수식</a><a href="#matrix">행렬로 보기</a><a href="#functions">함수 사용법</a><a href="#flow">실습 흐름</a><a href="#check">확인할 점</a></nav><main>
+<div class="shell layout"><nav class="toc"><b>이 페이지에서</b><a href="#outline">강의 전체 구성</a><a href="#concepts">핵심 개념</a><a href="#theory">이론과 수식</a><a href="#matrix">행렬로 보기</a><a href="#functions">함수 사용법</a><a href="#practice">단계별 실습 코드</a><a href="#flow">실습 흐름</a><a href="#check">확인할 점</a></nav><main>
 <section><div class="summary"><b>한 줄 정리</b><span>프로그램이 마우스를 반복 확인하는 대신 이벤트 시스템이 콜백을 호출합니다. 클릭 시작 좌표를 상태로 저장하고 이동할 때 새 좌표까지 선을 그리면 자유 곡선이 됩니다.</span></div></section>
+<section id="outline"><h2>강의 전체 구성</h2><p class="section-intro">원본 강의자료의 슬라이드 순서를 큰 주제와 세부 주제로 나눴습니다. 항목을 열어 학습 범위를 확인하세요.</p><div class="outline-groups"><details class="outline-group"><summary><b>마우스 사용해보기</b><span>22개 세부 주제</span></summary><ol><li>일단 준비 - mouse_event.py라는 파일 준비</li><li>python select interpreter ( Ctrl + Shift + P ) 에서</li><li>가상환경 선택</li><li>심플하게 작성할 코드</li><li>잠깐, waitKey?</li><li>실행하는 방법은?</li><li>Run python file in terminal을 선택하든지</li><li>터미널에서 환경에 진입한 후 직접 실행해도 된다</li><li>아무튼 실행하면 이런 아이가~</li><li>마우스 이벤트를 받을 함수를 만들고 연결하기</li><li>여기서 잠시 콜백~</li><li>콜백함수 형식</li><li>이벤트 인자</li><li>flag 인자</li><li>그래서 이렇게 바꿔보자</li><li>그래서 실행해보면 ~</li><li>그럼 이렇게 바꾸면</li><li>요렇게 된다</li><li>draw_circle 코드에 이벤트 추가</li><li>그럼 요런것도 가능하겠지</li><li>전체코드</li><li>이 코드 해석 가능할까요?</li></ol></details></div></section>
 <section id="concepts"><h2>핵심 개념</h2><div class="concepts"><div class="concept"><b>이벤트 루프</b><span>waitKey가 창 메시지를 처리하며 입력을 계속 기다리는 구조</span></div><div class="concept"><b>콜백</b><span>특정 이벤트가 발생했을 때 OpenCV가 대신 호출하는 함수</span></div><div class="concept"><b>event/flags</b><span>발생 사건과 현재 눌린 버튼·보조키 상태</span></div><div class="concept"><b>상태</b><span>이전 좌표 oldx, oldy를 저장해 연속적인 선으로 연결</span></div></div></section>
 <section id="theory"><h2>이론과 수식</h2><p>프로그램이 마우스를 반복 확인하는 대신 이벤트 시스템이 콜백을 호출합니다. 클릭 시작 좌표를 상태로 저장하고 이동할 때 새 좌표까지 선을 그리면 자유 곡선이 됩니다.</p><div class="equation">event → callback(event, x, y, flags, param)
 LBUTTONDOWN: p_old ← (x, y)
 MOUSEMOVE: line(p_old, p_new), p_old ← p_new</div></section>
 <section id="matrix"><h2>행렬로 보기</h2><p class="note">이 강의는 행렬 계산보다 실행 환경과 이벤트 흐름을 이해하는 것이 핵심입니다.</p></section>
 <section id="functions"><h2>함수 사용법</h2><p class="section-intro">강의에서 사용하는 핵심 함수의 호출 형태와 인자·반환값을 함께 정리했습니다. 긴 코드는 가로로 스크롤해서 볼 수 있습니다.</p><div class="table-scroll"><table class="study-table function-table"><thead><tr><th>함수·표현</th><th>호출 예</th><th>인자·반환값과 사용 포인트</th></tr></thead><tbody><tr><td><span class="code-key">setMouseCallback</span></td><td><code class="call-pattern">cv2.setMouseCallback(winname, callback, param)</code></td><td>창 이름과 콜백을 연결합니다. 이벤트가 생기면 callback(event, x, y, flags, param)이 호출됩니다.</td></tr><tr><td><span class="code-key">EVENT_LBUTTONDOWN</span></td><td><code class="call-pattern">if event == cv2.EVENT_LBUTTONDOWN:</code></td><td>왼쪽 버튼을 누른 순간을 뜻합니다. 보통 그리기 시작 좌표나 드래그 상태를 저장합니다.</td></tr><tr><td><span class="code-key">EVENT_MOUSEMOVE</span></td><td><code class="call-pattern">if event == cv2.EVENT_MOUSEMOVE:</code></td><td>마우스가 움직일 때 발생합니다. flags와 함께 확인해야 버튼을 누른 채 이동한 경우만 처리할 수 있습니다.</td></tr><tr><td><span class="code-key">EVENT_FLAG_LBUTTON</span></td><td><code class="call-pattern">if flags &amp; cv2.EVENT_FLAG_LBUTTON:</code></td><td>현재 왼쪽 버튼이 눌려 있는지 비트 AND로 검사합니다. 독립 이벤트 값과 혼동하지 않아야 합니다.</td></tr></tbody></table></div></section>
+<section id="practice"><h2>단계별 실습 코드</h2><p class="section-intro">다운로드용 노트북의 전체 실습 흐름입니다. 위에서 아래로 실행하면 강의 개념이 코드에서 어떻게 연결되는지 확인할 수 있습니다.</p><div class="practice-list"><article class="practice-step"><div class="step-head"><span>STEP 01</span><h3>마우스 이벤트 확인</h3></div><p>아래 예제는 데스크톱 OpenCV 창을 사용합니다. ESC를 누르면 종료됩니다.</p><pre><code>import cv2
+import numpy as np
+
+old_x = old_y = -1
+image = np.ones((480, 640, 3), dtype=np.uint8) * 255
+
+def on_mouse(event, x, y, flags, param):
+    global old_x, old_y
+    if event == cv2.EVENT_LBUTTONDOWN:
+        old_x, old_y = x, y
+        print(f&quot;LBUTTON DOWN: {x}, {y}&quot;)
+    elif event == cv2.EVENT_LBUTTONUP:
+        print(f&quot;LBUTTON UP: {x}, {y}&quot;)
+    elif event == cv2.EVENT_MOUSEMOVE and flags &amp; cv2.EVENT_FLAG_LBUTTON:
+        cv2.line(param, (old_x, old_y), (x, y), (0, 0, 255), 4, cv2.LINE_AA)
+        old_x, old_y = x, y
+
+cv2.namedWindow(&quot;image&quot;)
+cv2.setMouseCallback(&quot;image&quot;, on_mouse, image)
+
+while True:
+    cv2.imshow(&quot;image&quot;, image)
+    if cv2.waitKey(20) &amp; 0xFF == 27:
+        break
+
+cv2.destroyAllWindows()</code></pre></article></div></section>
 <section id="flow"><h2>실습 흐름</h2><div class="flow"><span>창 생성</span><span>콜백 등록</span><span>이벤트·상태 처리</span><span>waitKey 루프</span></div></section>
 <section id="check"><h2>실습 전후 확인할 점</h2><ul class="checklist"><li>namedWindow 다음 setMouseCallback 호출</li><li>콜백 안에서 공유 상태를 명확히 관리</li><li>종료 시 destroyAllWindows 호출</li></ul><p class="note">세부 코드와 실행 예제는 위의 IPYNB 파일에서 셀 단위로 실습할 수 있습니다.</p></section>
 <div class="nav-bottom"><a href="opencv-04-drawing.html">← 04</a><a href="opencv-06-color-space.html">06 →</a></div></main></div></body></html>

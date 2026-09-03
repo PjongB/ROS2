@@ -3,7 +3,9 @@
 
 from __future__ import annotations
 
-from html import escape
+import json
+import re
+from html import escape, unescape
 from pathlib import Path
 
 
@@ -327,6 +329,84 @@ def matrix_html(values, label):
     return f'<div class="matrix-row"><div class="matrix" style="--cols:{cols}">{cells}</div><span class="matrix-label">{escape(label)}</span></div>'
 
 
+def repo_path(relative_url):
+    """Resolve a ../opencv/... URL used by a learn page into the repository."""
+    return ROOT / relative_url.removeprefix("../")
+
+
+def lecture_outline_html(lesson):
+    """Build a grouped outline directly from the original lecture slide metadata."""
+    source = repo_path(lesson["source"])
+    raw = source.read_text(encoding="utf-8", errors="ignore")
+    slides = [
+        (level, unescape(title).strip())
+        for level, title in re.findall(
+            r'data-toc-level="([^"]+)"\s+data-toc-title="([^"]+)"', raw
+        )
+    ]
+
+    groups = []
+    current = None
+    for level, title in slides:
+        if not title:
+            continue
+        if level == "h1":
+            current = {"title": title, "items": []}
+            groups.append(current)
+        else:
+            if current is None:
+                current = {"title": "강의 순서", "items": []}
+                groups.append(current)
+            if not current["items"] or current["items"][-1] != title:
+                current["items"].append(title)
+
+    if not groups:
+        return '<p class="note">원본 강의 버튼에서 전체 슬라이드 순서를 확인할 수 있습니다.</p>'
+
+    cards = []
+    for group in groups:
+        items = "".join(f"<li>{escape(item)}</li>" for item in group["items"])
+        count = f'{len(group["items"])}개 세부 주제' if group["items"] else "도입"
+        cards.append(
+            f'<details class="outline-group"><summary><b>{escape(group["title"])}</b>'
+            f'<span>{count}</span></summary><ol>{items}</ol></details>'
+        )
+    return '<div class="outline-groups">' + "".join(cards) + "</div>"
+
+
+def markdown_note(source):
+    lines = [line.strip() for line in source.splitlines() if line.strip()]
+    heading = next((line.lstrip("# ") for line in lines if line.startswith("#")), "실습")
+    body = [
+        line.lstrip(">- ").replace("`", "")
+        for line in lines
+        if not line.startswith("#")
+    ]
+    return heading, " ".join(body)
+
+
+def practice_html(lesson):
+    """Render the downloadable notebook's complete code path into the lesson page."""
+    notebook = json.loads(repo_path(lesson["nb"]).read_text(encoding="utf-8"))
+    pending_title = "준비 코드"
+    pending_body = ""
+    steps = []
+    for cell in notebook.get("cells", []):
+        source = "".join(cell.get("source", []))
+        if cell.get("cell_type") == "markdown":
+            pending_title, pending_body = markdown_note(source)
+        elif cell.get("cell_type") == "code" and source.strip():
+            number = len(steps) + 1
+            description = f'<p>{escape(pending_body)}</p>' if pending_body else ""
+            steps.append(
+                f'<article class="practice-step"><div class="step-head"><span>STEP {number:02d}</span>'
+                f'<h3>{escape(pending_title)}</h3></div>{description}'
+                f'<pre><code>{escape(source.rstrip())}</code></pre></article>'
+            )
+            pending_title, pending_body = "다음 실습", ""
+    return "".join(steps)
+
+
 def page(lesson, index):
     concepts = "".join(f'<div class="concept"><b>{escape(k)}</b><span>{escape(v)}</span></div>' for k, v in lesson["concepts"])
     guides = FUNCTION_GUIDES.get(lesson["slug"])
@@ -348,6 +428,8 @@ def page(lesson, index):
     checks = "".join(f"<li>{escape(x)}</li>" for x in lesson["checks"])
     matrices = lesson.get("matrices") or ([lesson["matrix"]] if lesson.get("matrix") else [])
     matrix_section = "".join(matrix_html(*m) for m in matrices) or '<p class="note">이 강의는 행렬 계산보다 실행 환경과 이벤트 흐름을 이해하는 것이 핵심입니다.</p>'
+    lecture_outline = lecture_outline_html(lesson)
+    practice = practice_html(lesson)
     prev_lesson = LESSONS[index - 1] if index else None
     next_lesson = LESSONS[index + 1] if index + 1 < len(LESSONS) else None
     prev_link = f'<a href="{prev_lesson["slug"]}.html">← {prev_lesson["num"]}</a>' if prev_lesson else '<a href="../index.html">← 전체 목차</a>'
@@ -356,12 +438,14 @@ def page(lesson, index):
 <html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{escape(lesson["title"])} · OpenCV</title><link rel="stylesheet" href="opencv-study.css"><link rel="stylesheet" href="opencv-functions.css"></head><body>
 <header><div class="shell top"><a class="brand" href="../index.html"><b>ROS</b> FIELD NOTES</a><a class="back" href="../index.html">전체 강의로 돌아가기</a></div></header>
 <section class="hero"><div class="shell"><div class="kicker">08.{lesson["num"]} · OPENCV CONCEPT STUDY</div><h1>{escape(lesson["title"])}</h1><p class="lead">{escape(lesson["lead"])}</p><div class="actions"><a class="button primary" target="_blank" rel="noopener" href="{lesson["source"]}">원본 강의</a><a class="button pdf" target="_blank" rel="noopener" href="{lesson["pdf"]}">강의 PDF</a><a class="button nb" download href="{lesson["nb"]}">IPYNB 다운로드</a></div></div></section>
-<div class="shell layout"><nav class="toc"><b>이 페이지에서</b><a href="#concepts">핵심 개념</a><a href="#theory">이론과 수식</a><a href="#matrix">행렬로 보기</a><a href="#functions">함수 사용법</a><a href="#flow">실습 흐름</a><a href="#check">확인할 점</a></nav><main>
+<div class="shell layout"><nav class="toc"><b>이 페이지에서</b><a href="#outline">강의 전체 구성</a><a href="#concepts">핵심 개념</a><a href="#theory">이론과 수식</a><a href="#matrix">행렬로 보기</a><a href="#functions">함수 사용법</a><a href="#practice">단계별 실습 코드</a><a href="#flow">실습 흐름</a><a href="#check">확인할 점</a></nav><main>
 <section><div class="summary"><b>한 줄 정리</b><span>{escape(lesson["theory"])}</span></div></section>
+<section id="outline"><h2>강의 전체 구성</h2><p class="section-intro">원본 강의자료의 슬라이드 순서를 큰 주제와 세부 주제로 나눴습니다. 항목을 열어 학습 범위를 확인하세요.</p>{lecture_outline}</section>
 <section id="concepts"><h2>핵심 개념</h2><div class="concepts">{concepts}</div></section>
 <section id="theory"><h2>이론과 수식</h2><p>{escape(lesson["theory"])}</p><div class="equation">{escape(lesson["equation"])}</div></section>
 <section id="matrix"><h2>행렬로 보기</h2>{matrix_section}</section>
 <section id="functions"><h2>함수 사용법</h2><p class="section-intro">강의에서 사용하는 핵심 함수의 호출 형태와 인자·반환값을 함께 정리했습니다. 긴 코드는 가로로 스크롤해서 볼 수 있습니다.</p><div class="table-scroll"><table class="study-table function-table"><thead><tr><th>함수·표현</th><th>호출 예</th><th>인자·반환값과 사용 포인트</th></tr></thead><tbody>{table}</tbody></table></div></section>
+<section id="practice"><h2>단계별 실습 코드</h2><p class="section-intro">다운로드용 노트북의 전체 실습 흐름입니다. 위에서 아래로 실행하면 강의 개념이 코드에서 어떻게 연결되는지 확인할 수 있습니다.</p><div class="practice-list">{practice}</div></section>
 <section id="flow"><h2>실습 흐름</h2><div class="flow">{flow}</div></section>
 <section id="check"><h2>실습 전후 확인할 점</h2><ul class="checklist">{checks}</ul><p class="note">세부 코드와 실행 예제는 위의 IPYNB 파일에서 셀 단위로 실습할 수 있습니다.</p></section>
 <div class="nav-bottom">{prev_link}{next_link}</div></main></div></body></html>'''

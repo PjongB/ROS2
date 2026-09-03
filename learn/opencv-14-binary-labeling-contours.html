@@ -2,8 +2,9 @@
 <html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>이진화·라벨링·외곽선 · OpenCV</title><link rel="stylesheet" href="opencv-study.css"><link rel="stylesheet" href="opencv-functions.css"></head><body>
 <header><div class="shell top"><a class="brand" href="../index.html"><b>ROS</b> FIELD NOTES</a><a class="back" href="../index.html">전체 강의로 돌아가기</a></div></header>
 <section class="hero"><div class="shell"><div class="kicker">08.14 · OPENCV CONCEPT STUDY</div><h1>이진화·라벨링·외곽선</h1><p class="lead">Otsu 자동 임계값과 지역 이진화에서 출발해 연결 요소 라벨링과 외곽선 분석으로 물체의 개수와 형태를 구합니다.</p><div class="actions"><a class="button primary" target="_blank" rel="noopener" href="../opencv/14_present_Binary.html">원본 강의</a><a class="button pdf" target="_blank" rel="noopener" href="../opencv/14_Binary.pdf">강의 PDF</a><a class="button nb" download href="../opencv/notebooks/14_Binary_Labeling_Contours.ipynb">IPYNB 다운로드</a></div></div></section>
-<div class="shell layout"><nav class="toc"><b>이 페이지에서</b><a href="#concepts">핵심 개념</a><a href="#theory">이론과 수식</a><a href="#matrix">행렬로 보기</a><a href="#functions">함수 사용법</a><a href="#flow">실습 흐름</a><a href="#check">확인할 점</a></nav><main>
+<div class="shell layout"><nav class="toc"><b>이 페이지에서</b><a href="#outline">강의 전체 구성</a><a href="#concepts">핵심 개념</a><a href="#theory">이론과 수식</a><a href="#matrix">행렬로 보기</a><a href="#functions">함수 사용법</a><a href="#practice">단계별 실습 코드</a><a href="#flow">실습 흐름</a><a href="#check">확인할 점</a></nav><main>
 <section><div class="summary"><b>한 줄 정리</b><span>Otsu 방법은 밝기 히스토그램이 전경과 배경의 두 봉우리로 나뉠 때 효과적입니다. 라벨링은 연결된 전경마다 고유 정수를 부여하고 통계와 중심점을 계산합니다. 외곽선은 경계 좌표를 반환하므로 면적·둘레·근사 다각형과 부모-자식 계층을 분석할 수 있습니다.</span></div></section>
+<section id="outline"><h2>강의 전체 구성</h2><p class="section-intro">원본 강의자료의 슬라이드 순서를 큰 주제와 세부 주제로 나눴습니다. 항목을 열어 학습 범위를 확인하세요.</p><div class="outline-groups"><details class="outline-group"><summary><b>영상의 이진화</b><span>6개 세부 주제</span></summary><ol><li>영상의 이진화</li><li>그레이 이미지의 이진화</li><li>threshold 함수</li><li>threshold의 type</li><li>이진화 동작</li><li>코드</li></ol></details><details class="outline-group"><summary><b>Otsu</b><span>4개 세부 주제</span></summary><ol><li>자동으로 threshold를 잡고 싶다면</li><li>Otsu 이진화</li><li>Otsu 이진화 결과</li><li>코드</li></ol></details><details class="outline-group"><summary><b>지역 이진화</b><span>4개 세부 주제</span></summary><ol><li>균일하지 않은 조명에서 일괄적인 threshold 적용은 문제가 된다</li><li>많이 사용하는 방법은 분할시켜서 각각 이진화</li><li>적응형 이진화 함수</li><li>코드</li></ol></details><details class="outline-group"><summary><b>픽셀 라벨링</b><span>8개 세부 주제</span></summary><ol><li>라벨링</li><li>예제</li><li>라벨링 함수</li><li>정보를 보다 많이 반환하는 함수</li><li>이런 결과가 나타남</li><li>코드</li><li>이번에는~</li><li>코드</li></ol></details><details class="outline-group"><summary><b>외곽선 검출</b><span>17개 세부 주제</span></summary><ol><li>외곽선 검출 함수</li><li>외곽선 그리는 함수</li><li>외곽선 검출 예제</li><li>결과</li><li>계층 정보 없는 외곽선</li><li>이렇게</li><li>외곽선 관련 함수</li><li>외곽선 길이 구하기</li><li>면적 구하기</li><li>바운딩 박스 구하기</li><li>바운딩 서클 구하기</li><li>외곽선 근사화</li><li>컨벡스 검사</li><li>다각형 검출해보기</li><li>원 판별하기</li><li>코드</li><li>결과</li></ol></details></div></section>
 <section id="concepts"><h2>핵심 개념</h2><div class="concepts"><div class="concept"><b>Otsu 이진화</b><span>두 클래스의 내부 분산이 가장 작아지는 임계값을 자동 선택</span></div><div class="concept"><b>연결 요소</b><span>4-방향 또는 8-방향으로 서로 이어진 전경 픽셀 집합</span></div><div class="concept"><b>외곽선</b><span>같은 물체의 경계를 순서가 있는 좌표열로 표현</span></div><div class="concept"><b>형상 기술자</b><span>면적·둘레·바운딩 박스·원형도·볼록성으로 모양을 수치화</span></div></div></section>
 <section id="theory"><h2>이론과 수식</h2><p>Otsu 방법은 밝기 히스토그램이 전경과 배경의 두 봉우리로 나뉠 때 효과적입니다. 라벨링은 연결된 전경마다 고유 정수를 부여하고 통계와 중심점을 계산합니다. 외곽선은 경계 좌표를 반환하므로 면적·둘레·근사 다각형과 부모-자식 계층을 분석할 수 있습니다.</p><div class="equation">t* = argminₜ [w₀(t)σ₀²(t) + w₁(t)σ₁²(t)]
 4-connectivity: 상·하·좌·우
@@ -11,6 +12,89 @@
 circularity = 4πA / P²</div></section>
 <section id="matrix"><h2>행렬로 보기</h2><div class="matrix-row"><div class="matrix" style="--cols:3"><span>0</span><span>1</span><span>0</span><span>1</span><span>p</span><span>1</span><span>0</span><span>1</span><span>0</span></div><span class="matrix-label">4-연결성 이웃</span></div><div class="matrix-row"><div class="matrix" style="--cols:3"><span>1</span><span>1</span><span>1</span><span>1</span><span>p</span><span>1</span><span>1</span><span>1</span><span>1</span></div><span class="matrix-label">8-연결성 이웃</span></div><div class="matrix-row"><div class="matrix" style="--cols:3"><span>0</span><span>0</span><span>1</span><span>0</span><span>2</span><span>2</span><span>3</span><span>3</span><span>0</span></div><span class="matrix-label">연결 요소마다 고유 번호를 갖는 라벨 행렬</span></div></section>
 <section id="functions"><h2>함수 사용법</h2><p class="section-intro">강의에서 사용하는 핵심 함수의 호출 형태와 인자·반환값을 함께 정리했습니다. 긴 코드는 가로로 스크롤해서 볼 수 있습니다.</p><div class="table-scroll"><table class="study-table function-table"><thead><tr><th>함수·표현</th><th>호출 예</th><th>인자·반환값과 사용 포인트</th></tr></thead><tbody><tr><td><span class="code-key">threshold + THRESH_OTSU</span></td><td><code class="call-pattern">t, dst = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)</code></td><td>히스토그램에서 임계값 t를 자동 계산합니다. Otsu 플래그 사용 시 thresh 인자는 보통 0으로 둡니다.</td></tr><tr><td><span class="code-key">connectedComponentsWithStats</span></td><td><code class="call-pattern">count, labels, stats, centroids = cv2.connectedComponentsWithStats(binary, connectivity=8)</code></td><td>배경을 포함한 라벨 수, 라벨 행렬, 경계상자·면적 통계, 중심점을 반환합니다. 0번 라벨은 배경입니다.</td></tr><tr><td><span class="code-key">findContours / drawContours</span></td><td><code class="call-pattern">contours, hierarchy = cv2.findContours(binary, mode, method)</code></td><td>외곽선 좌표 목록과 부모·자식 계층을 반환합니다. drawContours는 선택한 외곽선을 원본 영상에 그립니다.</td></tr><tr><td><span class="code-key">arcLength / contourArea / approxPolyDP</span></td><td><code class="call-pattern">approx = cv2.approxPolyDP(cnt, epsilon, True)</code></td><td>arcLength는 둘레, contourArea는 면적을 구합니다. approxPolyDP는 epsilon 오차 안에서 꼭짓점 수를 줄입니다.</td></tr></tbody></table></div></section>
+<section id="practice"><h2>단계별 실습 코드</h2><p class="section-intro">다운로드용 노트북의 전체 실습 흐름입니다. 위에서 아래로 실행하면 강의 개념이 코드에서 어떻게 연결되는지 확인할 수 있습니다.</p><div class="practice-list"><article class="practice-step"><div class="step-head"><span>STEP 01</span><h3>14. 이진화·라벨링·외곽선</h3></div><p>Otsu 자동 임계값, 지역 이진화, 연결 요소 라벨링과 외곽선 형상 분석을 실습합니다. 모든 예제 영상을 코드에서 생성하므로 바로 실행할 수 있습니다.</p><pre><code>import cv2
+import numpy as np
+import matplotlib.pyplot as plt
+
+def show(images, titles, cmap=&quot;gray&quot;):
+    fig, axes = plt.subplots(1, len(images), figsize=(5 * len(images), 4))
+    axes = np.atleast_1d(axes)
+    for ax, image, title in zip(axes, images, titles):
+        if image.ndim == 2:
+            ax.imshow(image, cmap=cmap, vmin=0, vmax=255)
+        else:
+            ax.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+        ax.set_title(title)
+        ax.axis(&quot;off&quot;)
+    plt.tight_layout()</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 02</span><h3>전역 임계값과 Otsu 자동 임계값</h3></div><pre><code>rng = np.random.default_rng(14)
+background = rng.normal(65, 18, (260, 420))
+foreground = rng.normal(185, 22, (260, 420))
+mask = np.zeros((260, 420), dtype=np.uint8)
+cv2.circle(mask, (130, 130), 75, 255, -1)
+cv2.rectangle(mask, (250, 60), (380, 210), 255, -1)
+gray = np.where(mask &gt; 0, foreground, background)
+gray = np.clip(gray, 0, 255).astype(np.uint8)
+
+_, fixed = cv2.threshold(gray, 127, 255, cv2.THRESH_BINARY)
+otsu_value, otsu = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
+print(f&quot;Otsu threshold: {otsu_value:.1f}&quot;)
+show([gray, fixed, otsu], [&quot;source&quot;, &quot;fixed T=127&quot;, f&quot;Otsu T={otsu_value:.1f}&quot;])</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 03</span><h3>조명이 불균일한 영상과 적응형 이진화</h3></div><pre><code>height, width = 300, 500
+illumination = np.tile(np.linspace(50, 210, width, dtype=np.float32), (height, 1))
+uneven = illumination.copy()
+cv2.putText(uneven, &quot;OpenCV&quot;, (35, 190), cv2.FONT_HERSHEY_SIMPLEX, 3.0, 20, 12, cv2.LINE_AA)
+uneven = np.clip(uneven + rng.normal(0, 6, uneven.shape), 0, 255).astype(np.uint8)
+
+_, global_binary = cv2.threshold(uneven, 115, 255, cv2.THRESH_BINARY)
+adaptive = cv2.adaptiveThreshold(
+    uneven, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+    cv2.THRESH_BINARY, blockSize=31, C=8,
+)
+show([uneven, global_binary, adaptive], [&quot;uneven light&quot;, &quot;global&quot;, &quot;adaptive Gaussian&quot;])</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 04</span><h3>연결 요소 라벨링</h3></div><pre><code>components = np.zeros((320, 520), dtype=np.uint8)
+cv2.circle(components, (90, 90), 45, 255, -1)
+cv2.rectangle(components, (190, 45), (300, 140), 255, -1)
+triangle = np.array([[390, 140], [455, 45], [500, 140]], dtype=np.int32)
+cv2.fillPoly(components, [triangle], 255)
+cv2.ellipse(components, (155, 240), (70, 38), 0, 0, 360, 255, -1)
+
+count, labels, stats, centroids = cv2.connectedComponentsWithStats(components, connectivity=8)
+print(&quot;objects:&quot;, count - 1)
+for label in range(1, count):
+    x, y, w, h, area = stats[label]
+    cx, cy = centroids[label]
+    print(f&quot;label={label}: bbox=({x},{y},{w},{h}), area={area}, center=({cx:.1f},{cy:.1f})&quot;)
+
+label_view = np.uint8(179 * labels / max(1, labels.max()))
+label_view = cv2.applyColorMap(label_view, cv2.COLORMAP_HSV)
+label_view[labels == 0] = 0
+show([components, label_view], [&quot;binary&quot;, &quot;connected labels&quot;])</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 05</span><h3>외곽선과 계층</h3></div><pre><code>contours, hierarchy = cv2.findContours(components.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+contour_view = cv2.cvtColor(components, cv2.COLOR_GRAY2BGR)
+cv2.drawContours(contour_view, contours, -1, (0, 0, 255), 2, cv2.LINE_AA)
+print(&quot;contours:&quot;, len(contours))
+print(&quot;hierarchy [next, previous, child, parent]:&quot;)
+print(hierarchy[0] if hierarchy is not None else None)
+show([components, contour_view], [&quot;binary&quot;, &quot;contours&quot;])</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 06</span><h3>면적·둘레·바운딩 도형·다각형 근사</h3></div><pre><code>analysis = cv2.cvtColor(components, cv2.COLOR_GRAY2BGR)
+for contour in contours:
+    area = cv2.contourArea(contour)
+    if area &lt; 100:
+        continue
+    perimeter = cv2.arcLength(contour, True)
+    approximation = cv2.approxPolyDP(contour, 0.02 * perimeter, True)
+    x, y, w, h = cv2.boundingRect(contour)
+    (cx, cy), radius = cv2.minEnclosingCircle(contour)
+    circularity = 4 * np.pi * area / (perimeter * perimeter) if perimeter else 0
+
+    cv2.rectangle(analysis, (x, y), (x + w, y + h), (255, 0, 0), 2)
+    cv2.circle(analysis, (round(cx), round(cy)), round(radius), (0, 255, 0), 2)
+    cv2.polylines(analysis, [approximation], True, (0, 0, 255), 2)
+    print(f&quot;vertices={len(approximation)}, area={area:.0f}, perimeter={perimeter:.1f}, circularity={circularity:.3f}, convex={cv2.isContourConvex(approximation)}&quot;)
+
+show([components, analysis], [&quot;source&quot;, &quot;shape analysis&quot;])</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 07</span><h3>원 판별 예시</h3></div><pre><code>for index, contour in enumerate(contours):
+    area = cv2.contourArea(contour)
+    perimeter = cv2.arcLength(contour, True)
+    if area &lt; 100 or perimeter == 0:
+        continue
+    circularity = 4 * np.pi * area / (perimeter * perimeter)
+    print(f&quot;contour {index}: {&#x27;circle-like&#x27; if circularity &gt; 0.82 else &#x27;not circle&#x27;}, score={circularity:.3f}&quot;)</code></pre></article></div></section>
 <section id="flow"><h2>실습 흐름</h2><div class="flow"><span>그레이·이진 영상 준비</span><span>Otsu/지역 임계값 선택</span><span>라벨별 통계 계산</span><span>외곽선·형상 판별</span></div></section>
 <section id="check"><h2>실습 전후 확인할 점</h2><ul class="checklist"><li>라벨 0은 배경이므로 물체 수에서 제외</li><li>연결성 4와 8에서 대각선 픽셀 결합 여부가 달라짐</li><li>findContours가 원본을 바꾸는 버전 호환성을 고려해 복사본 전달</li><li>원형도는 1에 가까울수록 원이지만 작은 잡음은 면적으로 먼저 제거</li></ul><p class="note">세부 코드와 실행 예제는 위의 IPYNB 파일에서 셀 단위로 실습할 수 있습니다.</p></section>
 <div class="nav-bottom"><a href="opencv-13-image-thresholding.html">← 13</a><a href="../index.html">전체 목차 →</a></div></main></div></body></html>

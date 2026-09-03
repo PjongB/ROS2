@@ -2,14 +2,39 @@
 <html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>기본 도형 그리기 · OpenCV</title><link rel="stylesheet" href="opencv-study.css"><link rel="stylesheet" href="opencv-functions.css"></head><body>
 <header><div class="shell top"><a class="brand" href="../index.html"><b>ROS</b> FIELD NOTES</a><a class="back" href="../index.html">전체 강의로 돌아가기</a></div></header>
 <section class="hero"><div class="shell"><div class="kicker">08.04 · OPENCV CONCEPT STUDY</div><h1>기본 도형 그리기</h1><p class="lead">영상 좌표계와 도형 API의 공통 인자를 이해하고 선·사각형·원·텍스트·다각형을 그립니다.</p><div class="actions"><a class="button primary" target="_blank" rel="noopener" href="../opencv/04_Draw_simple_figure.html">원본 강의</a><a class="button pdf" target="_blank" rel="noopener" href="../opencv/04_Draw_simple_figure.pdf">강의 PDF</a><a class="button nb" download href="../opencv/notebooks/04_Draw_simple_figure.ipynb">IPYNB 다운로드</a></div></div></section>
-<div class="shell layout"><nav class="toc"><b>이 페이지에서</b><a href="#concepts">핵심 개념</a><a href="#theory">이론과 수식</a><a href="#matrix">행렬로 보기</a><a href="#functions">함수 사용법</a><a href="#flow">실습 흐름</a><a href="#check">확인할 점</a></nav><main>
+<div class="shell layout"><nav class="toc"><b>이 페이지에서</b><a href="#outline">강의 전체 구성</a><a href="#concepts">핵심 개념</a><a href="#theory">이론과 수식</a><a href="#matrix">행렬로 보기</a><a href="#functions">함수 사용법</a><a href="#practice">단계별 실습 코드</a><a href="#flow">실습 흐름</a><a href="#check">확인할 점</a></nav><main>
 <section><div class="summary"><b>한 줄 정리</b><span>도형 그리기는 연속적인 기하 도형을 이산 픽셀 격자에 기록하는 래스터화입니다. 모든 점은 (x, y)로 입력하지만 배열 접근은 [y, x] 순서입니다.</span></div></section>
+<section id="outline"><h2>강의 전체 구성</h2><p class="section-intro">원본 강의자료의 슬라이드 순서를 큰 주제와 세부 주제로 나눴습니다. 항목을 열어 학습 범위를 확인하세요.</p><div class="outline-groups"><details class="outline-group"><summary><b>강의 순서</b><span>23개 세부 주제</span></summary><ol><li>import</li><li>0으로 채운 행렬 하나~ 근데 shape이…</li><li>RGB가 다 0이면~ 까망색</li><li>사각형 그리는 함수</li><li>사각형 그려보기</li><li>이번에는 파랑색 박스 추가</li><li>원 그리는 함수</li><li>원 그리기~</li><li>thickness를 -1로 하면</li><li>직선 만드는 함수</li><li>직선 만들기</li><li>글자 넣는 함수</li><li>글자 넣기</li><li>글자 넣기 결과</li><li>새로 시작하면서, 네 꼭지점을 저장하자</li><li>shape은 이렇게 생겼지</li><li>살짝 reshape을~</li><li>이게 뭐냐면~</li><li>다각형 그리는 함수</li><li>다각형 그리기</li><li>한번더 선그리기</li><li>사각형 그리기</li><li>원과 다각형</li></ol></details></div></section>
 <section id="concepts"><h2>핵심 개념</h2><div class="concepts"><div class="concept"><b>영상 좌표</b><span>왼쪽 위가 원점, x는 오른쪽, y는 아래쪽으로 증가</span></div><div class="concept"><b>색과 두께</b><span>BGR 튜플과 thickness로 외곽선·채우기를 제어</span></div><div class="concept"><b>lineType</b><span>LINE_AA로 계단 현상을 줄인 선을 그림</span></div><div class="concept"><b>다각형 배열</b><span>꼭짓점을 (N, 1, 2) 형태의 int32 배열로 전달</span></div></div></section>
 <section id="theory"><h2>이론과 수식</h2><p>도형 그리기는 연속적인 기하 도형을 이산 픽셀 격자에 기록하는 래스터화입니다. 모든 점은 (x, y)로 입력하지만 배열 접근은 [y, x] 순서입니다.</p><div class="equation">image coordinate: origin = (0, 0) at top-left
 x → right, y → down
 point array shape: (N, 1, 2)</div></section>
 <section id="matrix"><h2>행렬로 보기</h2><div class="matrix-row"><div class="matrix" style="--cols:2"><span>x₁</span><span>y₁</span><span>x₂</span><span>y₂</span><span>⋮</span><span>⋮</span><span>xₙ</span><span>yₙ</span></div><span class="matrix-label">꼭짓점 좌표 행렬 - reshape 후 polylines에 전달</span></div></section>
 <section id="functions"><h2>함수 사용법</h2><p class="section-intro">강의에서 사용하는 핵심 함수의 호출 형태와 인자·반환값을 함께 정리했습니다. 긴 코드는 가로로 스크롤해서 볼 수 있습니다.</p><div class="table-scroll"><table class="study-table function-table"><thead><tr><th>함수·표현</th><th>호출 예</th><th>인자·반환값과 사용 포인트</th></tr></thead><tbody><tr><td><span class="code-key">rectangle</span></td><td><code class="call-pattern">cv2.rectangle(img, pt1, pt2, color, thickness)</code></td><td>두 꼭짓점 pt1·pt2 사이에 사각형을 그립니다. thickness=-1이면 내부를 채우며 img를 직접 변경합니다.</td></tr><tr><td><span class="code-key">circle</span></td><td><code class="call-pattern">cv2.circle(img, center, radius, color, thickness)</code></td><td>중심점과 반지름으로 원을 그립니다. 좌표·색·두께는 정수이며 color는 BGR 순서입니다.</td></tr><tr><td><span class="code-key">line</span></td><td><code class="call-pattern">cv2.line(img, pt1, pt2, color, thickness, lineType)</code></td><td>두 점을 선으로 연결합니다. lineType=cv2.LINE_AA를 쓰면 가장자리가 더 부드럽습니다.</td></tr><tr><td><span class="code-key">polylines / fillPoly</span></td><td><code class="call-pattern">cv2.polylines(img, [pts], True, color)</code></td><td>int32 꼭짓점 배열을 받아 다각형 외곽선 또는 내부를 그립니다. 여러 도형은 배열 목록으로 전달합니다.</td></tr></tbody></table></div></section>
+<section id="practice"><h2>단계별 실습 코드</h2><p class="section-intro">다운로드용 노트북의 전체 실습 흐름입니다. 위에서 아래로 실행하면 강의 개념이 코드에서 어떻게 연결되는지 확인할 수 있습니다.</p><div class="practice-list"><article class="practice-step"><div class="step-head"><span>STEP 01</span><h3>04. 기본 도형 그리기</h3></div><p>빈 캔버스에 사각형, 원, 선, 텍스트, 다각형을 그립니다. 강의 슬라이드의 코드를 실행 순서에 맞게 정리한 실습 노트북입니다. 이미지 예제는 노트북과 같은 위치에 data 폴더를 만들고 강의에서 사용하는 파일을 넣어 실행하세요. cv2.imshow()와 카메라·마우스 예제는 데스크톱 Jupyter/VS Code 환경에서 실행하는 것을 권장합니다.</p><pre><code>import cv2
+import numpy as np
+import matplotlib.pyplot as plt
+
+canvas = np.zeros((512, 512, 3), dtype=np.uint8)</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 02</span><h3>사각형·원·선·텍스트</h3></div><pre><code>cv2.rectangle(canvas, (30, 30), (220, 160), (0, 255, 0), 6)
+cv2.rectangle(canvas, (300, 30), (480, 160), (255, 0, 0), -1)
+cv2.circle(canvas, (256, 285), 70, (0, 0, 255), 6)
+cv2.circle(canvas, (100, 290), 45, (255, 0, 255), -1)
+cv2.line(canvas, (0, 0), (511, 511), (180, 180, 180), 3, cv2.LINE_AA)
+cv2.putText(canvas, &quot;OpenCV&quot;, (145, 475), cv2.FONT_HERSHEY_TRIPLEX,
+            1.4, (255, 255, 255), 2, cv2.LINE_AA)
+
+plt.figure(figsize=(7, 7))
+plt.imshow(cv2.cvtColor(canvas, cv2.COLOR_BGR2RGB))
+plt.axis(&quot;off&quot;);</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 03</span><h3>다각형</h3></div><pre><code>polygon_img = np.zeros((512, 512, 3), dtype=np.uint8)
+vertices = np.array([[100, 300], [200, 120], [420, 260], [260, 430]], dtype=np.int32)
+points = vertices.reshape((-1, 1, 2))
+
+cv2.polylines(polygon_img, [points], isClosed=True,
+              color=(0, 255, 0), thickness=5, lineType=cv2.LINE_AA)
+cv2.fillPoly(polygon_img, [points], color=(40, 90, 180))
+
+plt.imshow(cv2.cvtColor(polygon_img, cv2.COLOR_BGR2RGB))
+plt.axis(&quot;off&quot;);</code></pre></article></div></section>
 <section id="flow"><h2>실습 흐름</h2><div class="flow"><span>캔버스 생성</span><span>좌표·색 선택</span><span>도형 래스터화</span><span>RGB 변환·표시</span></div></section>
 <section id="check"><h2>실습 전후 확인할 점</h2><ul class="checklist"><li>캔버스 dtype을 uint8로 생성</li><li>thickness=-1은 내부 채우기</li><li>좌표가 영상 범위를 벗어나지 않는지 확인</li></ul><p class="note">세부 코드와 실행 예제는 위의 IPYNB 파일에서 셀 단위로 실습할 수 있습니다.</p></section>
 <div class="nav-bottom"><a href="opencv-03-image-read.html">← 03</a><a href="opencv-05-callback.html">05 →</a></div></main></div></body></html>

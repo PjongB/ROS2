@@ -2,14 +2,53 @@
 <html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>색 공간 · OpenCV</title><link rel="stylesheet" href="opencv-study.css"><link rel="stylesheet" href="opencv-functions.css"></head><body>
 <header><div class="shell top"><a class="brand" href="../index.html"><b>ROS</b> FIELD NOTES</a><a class="back" href="../index.html">전체 강의로 돌아가기</a></div></header>
 <section class="hero"><div class="shell"><div class="kicker">08.06 · OPENCV CONCEPT STUDY</div><h1>색 공간</h1><p class="lead">RGB/BGR과 HSV를 비교하고 가중 합성, ROI, 마스크, 비트 연산으로 워터마크를 만듭니다.</p><div class="actions"><a class="button primary" target="_blank" rel="noopener" href="../opencv/06_Color_space.html">원본 강의</a><a class="button pdf" target="_blank" rel="noopener" href="../opencv/06_Color_space.pdf">강의 PDF</a><a class="button nb" download href="../opencv/notebooks/06_Color_space.ipynb">IPYNB 다운로드</a></div></div></section>
-<div class="shell layout"><nav class="toc"><b>이 페이지에서</b><a href="#concepts">핵심 개념</a><a href="#theory">이론과 수식</a><a href="#matrix">행렬로 보기</a><a href="#functions">함수 사용법</a><a href="#flow">실습 흐름</a><a href="#check">확인할 점</a></nav><main>
+<div class="shell layout"><nav class="toc"><b>이 페이지에서</b><a href="#outline">강의 전체 구성</a><a href="#concepts">핵심 개념</a><a href="#theory">이론과 수식</a><a href="#matrix">행렬로 보기</a><a href="#functions">함수 사용법</a><a href="#practice">단계별 실습 코드</a><a href="#flow">실습 흐름</a><a href="#check">확인할 점</a></nav><main>
 <section><div class="summary"><b>한 줄 정리</b><span>addWeighted는 크기가 같은 두 영상의 대응 원소를 선형 결합합니다. 워터마크는 ROI에서 배경을 마스크로 비우고 전경을 OR/ADD하여 합성합니다.</span></div></section>
+<section id="outline"><h2>강의 전체 구성</h2><p class="section-intro">원본 강의자료의 슬라이드 순서를 큰 주제와 세부 주제로 나눴습니다. 항목을 열어 학습 범위를 확인하세요.</p><div class="outline-groups"><details class="outline-group"><summary><b>색상의 개념</b><span>3개 세부 주제</span></summary><ol><li>RGB시스템</li><li>HSL - 색조 채도 밝기</li><li>HSV - 색조 채도 명도</li></ol></details><details class="outline-group"><summary><b>addWeighted</b><span>12개 세부 주제</span></summary><ol><li>뭐 import하고</li><li>평화로운 일상</li><li>요딴 이미지 하나</li><li>두 이미지는 크기가 다르군요</li><li>잠깐~ addWeighted 함수의 옵션의 의미</li><li>그래서 addWeighted를 시켰더니.. 에러가~</li><li>resize 시키고~</li><li>합치기~</li><li>다시 resize</li><li>이건 offset 작업</li><li>픽셀 교체~</li><li>흠…</li></ol></details><details class="outline-group"><summary><b>워터마크</b><span>14개 세부 주제</span></summary><ol><li>다시 시작해봅시다</li><li>offset을 계산하고</li><li>offset에 의해 잘린 영역만 본다면~</li><li>잠깐. roi란?</li><li>일단 img2를 gray로</li><li>gray에서는 255가 흰색, 0이 검은색~</li><li>이 관계를 뒤집는다</li><li>gray니까 shape은 2차원</li><li>잠깐 bitwise_and</li><li>bitwise_or</li><li>bitwise_xor</li><li>까망색배경, 즉, 0으로 배경이 채워지게~</li><li>roi에다가 덮어버림</li><li>짠!</li></ol></details><details class="outline-group"><summary><b>mask 연습</b><span>6개 세부 주제</span></summary><ol><li>이런 소스에</li><li>mask가 될 그림을 가져오고</li><li>이 배경에 넣고 싶다면~</li><li>이번에는 copyTo</li><li>이렇게 하고 싶다는 거지</li><li>황당할 만큼 간단함</li></ol></details></div></section>
 <section id="concepts"><h2>핵심 개념</h2><div class="concepts"><div class="concept"><b>RGB/BGR</b><span>빛의 삼원색을 직접 채널 값으로 표현</span></div><div class="concept"><b>HSV</b><span>색조 H, 채도 S, 명도 V로 색과 밝기를 분리</span></div><div class="concept"><b>알파 블렌딩</b><span>두 영상의 대응 픽셀을 가중합</span></div><div class="concept"><b>마스크·ROI</b><span>연산할 영역과 통과시킬 픽셀을 제한</span></div></div></section>
 <section id="theory"><h2>이론과 수식</h2><p>addWeighted는 크기가 같은 두 영상의 대응 원소를 선형 결합합니다. 워터마크는 ROI에서 배경을 마스크로 비우고 전경을 OR/ADD하여 합성합니다.</p><div class="equation">dst(x,y) = α·src1(x,y) + β·src2(x,y) + γ
 mask=0 → 차단, mask=255 → 통과
 result = background ∨ foreground</div></section>
 <section id="matrix"><h2>행렬로 보기</h2><div class="matrix-row"><div class="matrix" style="--cols:3"><span>R</span><span>G</span><span>B</span><span>α</span><span>α</span><span>α</span><span>R′</span><span>G′</span><span>B′</span></div><span class="matrix-label">채널별 동일한 가중 합성 연산</span></div></section>
 <section id="functions"><h2>함수 사용법</h2><p class="section-intro">강의에서 사용하는 핵심 함수의 호출 형태와 인자·반환값을 함께 정리했습니다. 긴 코드는 가로로 스크롤해서 볼 수 있습니다.</p><div class="table-scroll"><table class="study-table function-table"><thead><tr><th>함수·표현</th><th>호출 예</th><th>인자·반환값과 사용 포인트</th></tr></thead><tbody><tr><td><span class="code-key">cvtColor</span></td><td><code class="call-pattern">hsv = cv2.cvtColor(bgr, cv2.COLOR_BGR2HSV)</code></td><td>입력 배열과 변환 코드를 받아 새 색 공간 영상을 반환합니다. 변환 방향에 맞는 코드를 사용해야 합니다.</td></tr><tr><td><span class="code-key">addWeighted</span></td><td><code class="call-pattern">dst = cv2.addWeighted(a, alpha, b, beta, gamma)</code></td><td>같은 크기·자료형의 두 영상을 alpha·beta 비율로 합하고 gamma를 더한 포화 연산 결과를 반환합니다.</td></tr><tr><td><span class="code-key">bitwise_and</span></td><td><code class="call-pattern">dst = cv2.bitwise_and(src1, src2, mask=mask)</code></td><td>대응 비트를 AND하며 선택적 mask가 0이 아닌 위치만 결과에 반영합니다.</td></tr><tr><td><span class="code-key">bitwise_not</span></td><td><code class="call-pattern">inverse = cv2.bitwise_not(mask)</code></td><td>각 비트를 반전합니다. 0/255 이진 마스크에서는 선택 영역과 배경이 서로 바뀝니다.</td></tr></tbody></table></div></section>
+<section id="practice"><h2>단계별 실습 코드</h2><p class="section-intro">다운로드용 노트북의 전체 실습 흐름입니다. 위에서 아래로 실행하면 강의 개념이 코드에서 어떻게 연결되는지 확인할 수 있습니다.</p><div class="practice-list"><article class="practice-step"><div class="step-head"><span>STEP 01</span><h3>06. 색 공간</h3></div><p>BGR·RGB·HSV 변환, 이미지 합성, ROI와 마스크를 이용한 워터마크를 실습합니다. 강의 슬라이드의 코드를 실행 순서에 맞게 정리한 실습 노트북입니다. 이미지 예제는 노트북과 같은 위치에 data 폴더를 만들고 강의에서 사용하는 파일을 넣어 실행하세요. cv2.imshow()와 카메라·마우스 예제는 데스크톱 Jupyter/VS Code 환경에서 실행하는 것을 권장합니다.</p><pre><code>from pathlib import Path
+import cv2
+import numpy as np
+import matplotlib.pyplot as plt
+
+def read_rgb(path):
+    image = cv2.imread(str(path))
+    if image is None:
+        raise FileNotFoundError(path)
+    return cv2.cvtColor(image, cv2.COLOR_BGR2RGB)</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 02</span><h3>BGR·RGB·HSV 변환</h3></div><pre><code>image = read_rgb(Path(&quot;data/sample.jpg&quot;))
+hsv = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
+
+fig, axes = plt.subplots(1, 4, figsize=(16, 4))
+axes[0].imshow(image); axes[0].set_title(&quot;RGB&quot;)
+for ax, channel, title in zip(axes[1:], cv2.split(hsv), [&quot;Hue&quot;, &quot;Saturation&quot;, &quot;Value&quot;]):
+    ax.imshow(channel, cmap=&quot;gray&quot;); ax.set_title(title)
+for ax in axes: ax.axis(&quot;off&quot;)
+plt.show()</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 03</span><h3>크기를 맞춘 뒤 가중 합성</h3></div><pre><code>overlay = read_rgb(Path(&quot;data/watermark_no_copy.png&quot;))
+overlay = cv2.resize(overlay, (image.shape[1], image.shape[0]))
+blended = cv2.addWeighted(image, 0.7, overlay, 0.3, 0)
+
+plt.imshow(blended)
+plt.axis(&quot;off&quot;);</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 04</span><h3>ROI와 마스크로 워터마크 합성</h3></div><pre><code>base = image.copy()
+logo = read_rgb(Path(&quot;data/watermark_no_copy.png&quot;))
+logo = cv2.resize(logo, (min(320, base.shape[1] // 3), min(180, base.shape[0] // 3)))
+
+y0 = base.shape[0] - logo.shape[0]
+x0 = base.shape[1] - logo.shape[1]
+roi = base[y0:, x0:]
+
+gray = cv2.cvtColor(logo, cv2.COLOR_RGB2GRAY)
+_, mask = cv2.threshold(gray, 245, 255, cv2.THRESH_BINARY_INV)
+background = cv2.bitwise_and(roi, roi, mask=cv2.bitwise_not(mask))
+foreground = cv2.bitwise_and(logo, logo, mask=mask)
+base[y0:, x0:] = cv2.add(background, foreground)
+
+plt.imshow(base)
+plt.axis(&quot;off&quot;);</code></pre></article></div></section>
 <section id="flow"><h2>실습 흐름</h2><div class="flow"><span>두 영상 읽기</span><span>크기·ROI 정렬</span><span>마스크 생성</span><span>전경·배경 합성</span></div></section>
 <section id="check"><h2>실습 전후 확인할 점</h2><ul class="checklist"><li>합성 전 두 이미지 크기와 채널 수 일치</li><li>OpenCV HSV의 H 범위는 기본적으로 0~179</li><li>ROI shape과 워터마크 shape이 같은지 확인</li></ul><p class="note">세부 코드와 실행 예제는 위의 IPYNB 파일에서 셀 단위로 실습할 수 있습니다.</p></section>
 <div class="nav-bottom"><a href="opencv-05-callback.html">← 05</a><a href="opencv-07-video-capture.html">07 →</a></div></main></div></body></html>

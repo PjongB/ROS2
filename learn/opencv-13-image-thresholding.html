@@ -2,14 +2,64 @@
 <html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>영상 이진화 · OpenCV</title><link rel="stylesheet" href="opencv-study.css"><link rel="stylesheet" href="opencv-functions.css"></head><body>
 <header><div class="shell top"><a class="brand" href="../index.html"><b>ROS</b> FIELD NOTES</a><a class="back" href="../index.html">전체 강의로 돌아가기</a></div></header>
 <section class="hero"><div class="shell"><div class="kicker">08.13 · OPENCV CONCEPT STUDY</div><h1>영상 이진화</h1><p class="lead">전역 임계값의 다섯 가지 모드와 지역 밝기에 적응하는 평균·가우시안 적응형 이진화를 비교합니다.</p><div class="actions"><a class="button primary" target="_blank" rel="noopener" href="../opencv/13_present_Image_Thresholding.html">원본 강의</a><a class="button pdf" target="_blank" rel="noopener" href="../opencv/13_Image_Thresholding.pdf">강의 PDF</a><a class="button nb" download href="../opencv/notebooks/13_Image_Thresholding.ipynb">IPYNB 다운로드</a></div></div></section>
-<div class="shell layout"><nav class="toc"><b>이 페이지에서</b><a href="#concepts">핵심 개념</a><a href="#theory">이론과 수식</a><a href="#matrix">행렬로 보기</a><a href="#functions">함수 사용법</a><a href="#flow">실습 흐름</a><a href="#check">확인할 점</a></nav><main>
+<div class="shell layout"><nav class="toc"><b>이 페이지에서</b><a href="#outline">강의 전체 구성</a><a href="#concepts">핵심 개념</a><a href="#theory">이론과 수식</a><a href="#matrix">행렬로 보기</a><a href="#functions">함수 사용법</a><a href="#practice">단계별 실습 코드</a><a href="#flow">실습 흐름</a><a href="#check">확인할 점</a></nav><main>
 <section><div class="summary"><b>한 줄 정리</b><span>조명이 균일하면 전역 임계값이 단순하고 빠릅니다. 그림자나 조명 기울기가 있으면 지역 평균 또는 가우시안 가중 평균에서 C를 뺀 값을 픽셀별 임계값으로 사용합니다. blockSize는 중심이 존재하도록 3 이상의 홀수여야 합니다.</span></div></section>
+<section id="outline"><h2>강의 전체 구성</h2><p class="section-intro">원본 강의자료의 슬라이드 순서를 큰 주제와 세부 주제로 나눴습니다. 항목을 열어 학습 범위를 확인하세요.</p><div class="outline-groups"><details class="outline-group"><summary><b>Image Thresholding</b><span>18개 세부 주제</span></summary><ol><li>그림하나 불러오자</li><li>그레이 스케일로 읽으면~</li><li>이렇게 보면 되지</li><li>THRESH_BINARY</li><li>THRESH_BINARY_INV</li><li>THRESH_TRUNC</li><li>THRESH_TOZERO</li><li>THRESH_TOZERO_INV</li><li>이번에는 요런 데이터 하나</li><li>간단하게 그리는 함수 하나</li><li>요런 아이</li><li>간단히 binary로</li><li>threshold 값을 바꿔볼까</li><li>언제 또 이걸 찾나</li><li>adpativeThreshold라는 아이가 있다</li><li>잘 확인하기 위해 addWeighted로 겹쳐보자</li><li>이번에는 gaussian 방법으로</li><li>이번에는 이런 결과가~</li></ol></details></div></section>
 <section id="concepts"><h2>핵심 개념</h2><div class="concepts"><div class="concept"><b>임계값</b><span>픽셀을 두 집합으로 나누는 밝기 기준 T</span></div><div class="concept"><b>전역 이진화</b><span>영상 전체에 하나의 임계값을 적용</span></div><div class="concept"><b>적응형 이진화</b><span>각 픽셀 주변 영역에서 서로 다른 임계값을 계산</span></div><div class="concept"><b>blockSize·C</b><span>지역 통계 범위와 계산된 임계값에서 뺄 보정값</span></div></div></section>
 <section id="theory"><h2>이론과 수식</h2><p>조명이 균일하면 전역 임계값이 단순하고 빠릅니다. 그림자나 조명 기울기가 있으면 지역 평균 또는 가우시안 가중 평균에서 C를 뺀 값을 픽셀별 임계값으로 사용합니다. blockSize는 중심이 존재하도록 3 이상의 홀수여야 합니다.</p><div class="equation">binary: dst(x,y) = maxVal if src(x,y) &gt; T else 0
 adaptive: T(x,y) = mean or Gaussian(neighborhood) - C
 blockSize ∈ {3,5,7,…}</div></section>
 <section id="matrix"><h2>행렬로 보기</h2><div class="matrix-row"><div class="matrix" style="--cols:3"><span>p₁</span><span>p₂</span><span>p₃</span><span>p₄</span><span>p</span><span>p₆</span><span>p₇</span><span>p₈</span><span>p₉</span></div><span class="matrix-label">픽셀 p의 3×3 지역 임계값 계산 범위</span></div><div class="matrix-row"><div class="matrix" style="--cols:3"><span>1</span><span>2</span><span>1</span><span>2</span><span>4</span><span>2</span><span>1</span><span>2</span><span>1</span></div><span class="matrix-label">가우시안 방식의 중심 강조 가중치 예시</span></div></section>
 <section id="functions"><h2>함수 사용법</h2><p class="section-intro">강의에서 사용하는 핵심 함수의 호출 형태와 인자·반환값을 함께 정리했습니다. 긴 코드는 가로로 스크롤해서 볼 수 있습니다.</p><div class="table-scroll"><table class="study-table function-table"><thead><tr><th>함수·표현</th><th>호출 예</th><th>인자·반환값과 사용 포인트</th></tr></thead><tbody><tr><td><span class="code-key">threshold</span></td><td><code class="call-pattern">retval, dst = cv2.threshold(src, thresh, maxval, type)</code></td><td>기준값 thresh와 방식 type으로 전체 영상을 이진화합니다. 실제 사용 임계값과 결과 영상 두 값을 반환합니다.</td></tr><tr><td><span class="code-key">THRESH_BINARY / INV</span></td><td><code class="call-pattern">cv2.THRESH_BINARY 또는 cv2.THRESH_BINARY_INV</code></td><td>기준보다 큰 픽셀을 maxval로 만들거나 그 반대로 만듭니다. 함수가 아니라 threshold에 전달하는 플래그입니다.</td></tr><tr><td><span class="code-key">THRESH_TRUNC / TOZERO</span></td><td><code class="call-pattern">cv2.THRESH_TRUNC 또는 cv2.THRESH_TOZERO</code></td><td>TRUNC는 큰 값을 기준값으로 제한하고 TOZERO는 기준 이하를 0으로 만듭니다.</td></tr><tr><td><span class="code-key">adaptiveThreshold</span></td><td><code class="call-pattern">dst = cv2.adaptiveThreshold(src, maxval, method, type, blockSize, C)</code></td><td>주변 blockSize 영역의 평균·가중평균에서 C를 빼 픽셀별 임계값을 정합니다. 입력은 1채널 uint8입니다.</td></tr></tbody></table></div></section>
+<section id="practice"><h2>단계별 실습 코드</h2><p class="section-intro">다운로드용 노트북의 전체 실습 흐름입니다. 위에서 아래로 실행하면 강의 개념이 코드에서 어떻게 연결되는지 확인할 수 있습니다.</p><div class="practice-list"><article class="practice-step"><div class="step-head"><span>STEP 01</span><h3>13. 영상 이진화</h3></div><p>전역 임계값 모드와 평균·가우시안 적응형 이진화를 비교합니다. 문서 예제 이미지는 노트북 옆 data 폴더에 crossword.jpg로 넣으세요.</p><pre><code>from pathlib import Path
+import cv2
+import numpy as np
+import matplotlib.pyplot as plt
+
+def read_image(name, flags=cv2.IMREAD_COLOR):
+    path = Path(&quot;data&quot;) / name
+    image = cv2.imread(str(path), flags)
+    if image is None:
+        raise FileNotFoundError(path)
+    return image
+
+def show(images, titles):
+    fig, axes = plt.subplots(1, len(images), figsize=(5 * len(images), 4))
+    axes = np.atleast_1d(axes)
+    for ax, image, title in zip(axes, images, titles):
+        if image.ndim == 2:
+            ax.imshow(image, cmap=&quot;gray&quot;, vmin=0, vmax=255)
+        else:
+            ax.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+        ax.set_title(title)
+        ax.axis(&quot;off&quot;)
+    plt.tight_layout()</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 02</span><h3>임계값 모드 비교</h3></div><pre><code>gradient = np.tile(np.arange(256, dtype=np.uint8), (180, 1))
+modes = [
+    (cv2.THRESH_BINARY, &quot;BINARY&quot;),
+    (cv2.THRESH_BINARY_INV, &quot;BINARY_INV&quot;),
+    (cv2.THRESH_TRUNC, &quot;TRUNC&quot;),
+    (cv2.THRESH_TOZERO, &quot;TOZERO&quot;),
+    (cv2.THRESH_TOZERO_INV, &quot;TOZERO_INV&quot;),
+]
+results, titles = [gradient], [&quot;source&quot;]
+for mode, name in modes:
+    _, dst = cv2.threshold(gradient, 127, 255, mode)
+    results.append(dst)
+    titles.append(name)
+show(results, titles)</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 03</span><h3>전역 임계값</h3></div><pre><code>document = read_image(&quot;crossword.jpg&quot;, cv2.IMREAD_GRAYSCALE)
+_, global_binary = cv2.threshold(document, 127, 255, cv2.THRESH_BINARY)
+show([document, global_binary], [&quot;source&quot;, &quot;global threshold&quot;])</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 04</span><h3>평균 적응형 이진화</h3></div><pre><code>adaptive_mean = cv2.adaptiveThreshold(
+    document, 255, cv2.ADAPTIVE_THRESH_MEAN_C,
+    cv2.THRESH_BINARY, blockSize=21, C=10,
+)
+show([document, global_binary, adaptive_mean], [&quot;source&quot;, &quot;global&quot;, &quot;adaptive mean&quot;])</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 05</span><h3>가우시안 적응형 이진화</h3></div><pre><code>adaptive_gaussian = cv2.adaptiveThreshold(
+    document, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+    cv2.THRESH_BINARY, blockSize=21, C=10,
+)
+comparison = cv2.addWeighted(adaptive_mean, 0.5, adaptive_gaussian, 0.5, 0)
+show([adaptive_mean, adaptive_gaussian, comparison], [&quot;adaptive mean&quot;, &quot;adaptive Gaussian&quot;, &quot;overlay&quot;])</code></pre></article><article class="practice-step"><div class="step-head"><span>STEP 06</span><h3>blockSize와 C 비교</h3></div><pre><code>settings = [(11, 5), (21, 10), (41, 15)]
+outputs = [cv2.adaptiveThreshold(document, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, block, c) for block, c in settings]
+show(outputs, [f&quot;block={block}, C={c}&quot; for block, c in settings])</code></pre></article></div></section>
 <section id="flow"><h2>실습 흐름</h2><div class="flow"><span>그레이 영상 준비</span><span>히스토그램·조명 확인</span><span>전역/적응형 선택</span><span>blockSize·C 조정</span></div></section>
 <section id="check"><h2>실습 전후 확인할 점</h2><ul class="checklist"><li>threshold와 adaptiveThreshold 입력은 1채널 uint8</li><li>blockSize는 3 이상의 홀수</li><li>문자가 검게 필요하면 BINARY_INV 여부 확인</li><li>너무 작은 영역은 잡음, 너무 큰 영역은 조명 변화 대응 저하</li></ul><p class="note">세부 코드와 실행 예제는 위의 IPYNB 파일에서 셀 단위로 실습할 수 있습니다.</p></section>
 <div class="nav-bottom"><a href="opencv-12-feature-extraction.html">← 12</a><a href="opencv-14-binary-labeling-contours.html">14 →</a></div></main></div></body></html>
