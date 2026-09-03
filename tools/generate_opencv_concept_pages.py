@@ -231,6 +231,96 @@ LESSONS = [
 ]
 
 
+# Each entry supplements the short lecture glossary with an executable calling
+# pattern and the practical meaning of its arguments and return value.
+FUNCTION_GUIDES = {
+    "opencv-01-setting": [
+        ("python -m venv", "python -m venv .venv", "현재 Python으로 .venv 폴더에 독립 환경을 만듭니다. 성공하면 별도 반환값 없이 환경 파일이 생성됩니다."),
+        ("source .../bin/activate", "source .venv/bin/activate", "현재 셸의 PATH를 바꿔 python과 pip가 가상환경을 가리키게 합니다. 새 터미널에서는 다시 실행해야 합니다."),
+        ("pip install opencv-python", "python -m pip install opencv-python", "선택한 Python 환경에 cv2 바인딩을 설치합니다. python -m pip 형식은 다른 환경의 pip를 쓰는 실수를 줄입니다."),
+        ("cv2.__version__", "print(cv2.__version__)", "현재 인터프리터가 불러온 OpenCV 버전 문자열입니다. 설치·커널 연결을 확인할 때 사용합니다."),
+    ],
+    "opencv-02-numpy-array": [
+        ("img[y, x]", "pixel = img[y, x]", "y행 x열의 픽셀을 읽습니다. 그레이 영상은 스칼라, 컬러 영상은 BGR 값 3개가 반환됩니다."),
+        ("img[:, :, 0]", "blue = img[:, :, 0]", "모든 행과 열에서 0번 채널만 선택합니다. OpenCV 컬러 영상의 0번 채널은 Blue입니다."),
+        ("img[y1:y2, x1:x2]", "roi = img[y1:y2, x1:x2]", "반열린 구간으로 관심 영역을 선택합니다. 기본적으로 원본을 공유하는 view이므로 roi 수정이 원본에도 반영됩니다."),
+        ("img[:, :, 1] = 0", "img[:, :, 1] = 0", "모든 픽셀의 Green 채널을 0으로 바꿉니다. 원본 배열을 직접 수정하는 대입입니다."),
+    ],
+    "opencv-03-image-read": [
+        ("imread", "img = cv2.imread(path, flag)", "path의 파일을 배열로 디코딩합니다. flag로 컬러·그레이 방식을 정하며 읽기 실패 시 None을 반환합니다."),
+        ("cvtColor", "rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)", "src와 변환 코드를 받아 새 색 공간 배열을 반환합니다. OpenCV 화면과 Matplotlib 사이의 색 순서 교정에 자주 씁니다."),
+        ("resize", "dst = cv2.resize(img, (width, height), interpolation=...)", "출력 크기는 (너비, 높이) 순서입니다. 확대·축소 품질은 interpolation 인자로 선택합니다."),
+        ("flip", "dst = cv2.flip(img, flipCode)", "flipCode 0은 상하, 1은 좌우, -1은 두 방향을 반전한 새 영상을 반환합니다."),
+    ],
+    "opencv-04-drawing": [
+        ("rectangle", "cv2.rectangle(img, pt1, pt2, color, thickness)", "두 꼭짓점 pt1·pt2 사이에 사각형을 그립니다. thickness=-1이면 내부를 채우며 img를 직접 변경합니다."),
+        ("circle", "cv2.circle(img, center, radius, color, thickness)", "중심점과 반지름으로 원을 그립니다. 좌표·색·두께는 정수이며 color는 BGR 순서입니다."),
+        ("line", "cv2.line(img, pt1, pt2, color, thickness, lineType)", "두 점을 선으로 연결합니다. lineType=cv2.LINE_AA를 쓰면 가장자리가 더 부드럽습니다."),
+        ("polylines / fillPoly", "cv2.polylines(img, [pts], True, color)", "int32 꼭짓점 배열을 받아 다각형 외곽선 또는 내부를 그립니다. 여러 도형은 배열 목록으로 전달합니다."),
+    ],
+    "opencv-05-callback": [
+        ("setMouseCallback", "cv2.setMouseCallback(winname, callback, param)", "창 이름과 콜백을 연결합니다. 이벤트가 생기면 callback(event, x, y, flags, param)이 호출됩니다."),
+        ("EVENT_LBUTTONDOWN", "if event == cv2.EVENT_LBUTTONDOWN:", "왼쪽 버튼을 누른 순간을 뜻합니다. 보통 그리기 시작 좌표나 드래그 상태를 저장합니다."),
+        ("EVENT_MOUSEMOVE", "if event == cv2.EVENT_MOUSEMOVE:", "마우스가 움직일 때 발생합니다. flags와 함께 확인해야 버튼을 누른 채 이동한 경우만 처리할 수 있습니다."),
+        ("EVENT_FLAG_LBUTTON", "if flags & cv2.EVENT_FLAG_LBUTTON:", "현재 왼쪽 버튼이 눌려 있는지 비트 AND로 검사합니다. 독립 이벤트 값과 혼동하지 않아야 합니다."),
+    ],
+    "opencv-06-color-space": [
+        ("cvtColor", "hsv = cv2.cvtColor(bgr, cv2.COLOR_BGR2HSV)", "입력 배열과 변환 코드를 받아 새 색 공간 영상을 반환합니다. 변환 방향에 맞는 코드를 사용해야 합니다."),
+        ("addWeighted", "dst = cv2.addWeighted(a, alpha, b, beta, gamma)", "같은 크기·자료형의 두 영상을 alpha·beta 비율로 합하고 gamma를 더한 포화 연산 결과를 반환합니다."),
+        ("bitwise_and", "dst = cv2.bitwise_and(src1, src2, mask=mask)", "대응 비트를 AND하며 선택적 mask가 0이 아닌 위치만 결과에 반영합니다."),
+        ("bitwise_not", "inverse = cv2.bitwise_not(mask)", "각 비트를 반전합니다. 0/255 이진 마스크에서는 선택 영역과 배경이 서로 바뀝니다."),
+    ],
+    "opencv-07-video-capture": [
+        ("VideoCapture", "cap = cv2.VideoCapture(0)", "카메라 번호 또는 파일 경로로 입력 스트림을 엽니다. cap.isOpened()로 성공 여부를 확인합니다."),
+        ("read", "ret, frame = cap.read()", "다음 프레임을 읽어 성공 여부 ret와 이미지 frame을 반환합니다. ret가 False면 frame을 사용하지 않습니다."),
+        ("get", "fps = cap.get(cv2.CAP_PROP_FPS)", "CAP_PROP_* 속성 번호에 해당하는 값을 실수로 반환합니다. 장치가 지원하지 않으면 0 또는 부정확한 값일 수 있습니다."),
+        ("VideoWriter", "out = cv2.VideoWriter(path, fourcc, fps, size)", "파일 경로·코덱·FPS·(너비, 높이)로 출력 스트림을 만들고 write(frame)으로 프레임을 기록합니다."),
+    ],
+    "opencv-08-filtering": [
+        ("filter2D / blur", "dst = cv2.filter2D(src, ddepth, kernel)", "filter2D는 직접 만든 커널을 적용하고 blur는 지정 크기의 평균을 냅니다. ddepth=-1은 입력 깊이를 유지합니다."),
+        ("GaussianBlur", "dst = cv2.GaussianBlur(src, ksize, sigmaX)", "홀수 크기 ksize와 표준편차 sigmaX로 가우시안 블러를 적용합니다. ksize=(0,0)이면 sigma로 크기를 정합니다."),
+        ("medianBlur", "dst = cv2.medianBlur(src, ksize)", "주변값의 중앙값을 택해 소금·후추 잡음을 줄입니다. ksize는 1보다 큰 홀수입니다."),
+        ("bilateralFilter", "dst = cv2.bilateralFilter(src, d, sigmaColor, sigmaSpace)", "공간 거리와 색 차이를 함께 반영해 경계를 보존합니다. 두 sigma가 클수록 더 넓은 차이를 섞습니다."),
+    ],
+    "opencv-09-geometrical-transform": [
+        ("warpAffine", "dst = cv2.warpAffine(src, M, dsize)", "2×3 변환행렬 M을 적용합니다. dsize는 출력의 (너비, 높이)이며 기본적으로 역방향 매핑과 보간을 사용합니다."),
+        ("getRotationMatrix2D", "M = cv2.getRotationMatrix2D(center, angle, scale)", "회전 중심·반시계 방향 각도(도)·배율로 2×3 어파인 행렬을 반환합니다."),
+        ("getAffineTransform", "M = cv2.getAffineTransform(src_pts, dst_pts)", "대응하는 float32 점 3쌍으로 2×3 어파인 행렬을 계산합니다."),
+        ("getPerspectiveTransform", "H = cv2.getPerspectiveTransform(src_pts, dst_pts)", "대응하는 float32 점 4쌍으로 3×3 투시변환 행렬을 계산하며 warpPerspective와 함께 사용합니다."),
+    ],
+    "opencv-10-brightness-contrast": [
+        ("cv2.add / subtract", "dst = cv2.add(src1, src2)", "두 배열 또는 배열과 스칼라를 포화 덧셈·뺄셈합니다. uint8 결과가 0~255 범위를 벗어나지 않습니다."),
+        ("cv2.absdiff / addWeighted", "diff = cv2.absdiff(a, b)", "absdiff는 절대 차이를, addWeighted는 가중합을 반환합니다. 두 입력의 크기와 자료형이 같아야 합니다."),
+        ("normalize / equalizeHist", "dst = cv2.equalizeHist(gray)", "normalize는 지정 범위로 값을 재배치하고 equalizeHist는 1채널 uint8 히스토그램의 누적분포를 평탄화합니다."),
+        ("cvtColor / inRange", "mask = cv2.inRange(hsv, lower, upper)", "inRange는 각 채널이 lower~upper에 모두 속한 픽셀만 255인 1채널 마스크를 반환합니다."),
+    ],
+    "opencv-11-morphology-gradient": [
+        ("erode / dilate", "dst = cv2.erode(src, kernel, iterations=1)", "kernel 이웃의 최솟값/최댓값을 택해 밝은 전경을 축소/확장합니다. iterations는 반복 횟수입니다."),
+        ("morphologyEx", "dst = cv2.morphologyEx(src, op, kernel)", "op에 MORPH_OPEN·CLOSE·GRADIENT 등을 지정해 복합 형태학 연산을 한 번에 수행합니다."),
+        ("Sobel / Scharr", "gx = cv2.Sobel(gray, cv2.CV_32F, 1, 0)", "dx·dy로 미분 방향을 고르고 ddepth로 음수 기울기를 보존합니다. Scharr는 3×3 미분 정확도를 개선한 연산입니다."),
+        ("Laplacian", "lap = cv2.Laplacian(gray, cv2.CV_32F)", "x·y 방향 2차 미분을 합친 영상을 반환합니다. 부호가 있으므로 CV_32F 등에 받은 뒤 절댓값·정규화합니다."),
+    ],
+    "opencv-12-feature-extraction": [
+        ("Sobel / Scharr", "gx = cv2.Sobel(gray, cv2.CV_32F, 1, 0)", "dx·dy 인자로 가로·세로 밝기 변화량을 계산합니다. 두 결과를 결합하면 에지 세기와 방향을 얻습니다."),
+        ("magnitude / phase", "mag = cv2.magnitude(gx, gy)", "실수형 Gx·Gy에서 벡터 크기와 각도를 계산합니다. phase의 angleInDegrees=True로 도 단위를 받을 수 있습니다."),
+        ("Canny", "edge = cv2.Canny(gray, low, high)", "낮은·높은 두 임계값으로 강한 에지와 연결된 약한 에지를 선택해 0/255 영상을 반환합니다."),
+        ("HoughLinesP / HoughCircles", "lines = cv2.HoughLinesP(edge, rho, theta, threshold)", "에지 점의 누적 투표로 선분 또는 원 후보를 반환합니다. 검출되지 않으면 None일 수 있습니다."),
+    ],
+    "opencv-13-image-thresholding": [
+        ("threshold", "retval, dst = cv2.threshold(src, thresh, maxval, type)", "기준값 thresh와 방식 type으로 전체 영상을 이진화합니다. 실제 사용 임계값과 결과 영상 두 값을 반환합니다."),
+        ("THRESH_BINARY / INV", "cv2.THRESH_BINARY 또는 cv2.THRESH_BINARY_INV", "기준보다 큰 픽셀을 maxval로 만들거나 그 반대로 만듭니다. 함수가 아니라 threshold에 전달하는 플래그입니다."),
+        ("THRESH_TRUNC / TOZERO", "cv2.THRESH_TRUNC 또는 cv2.THRESH_TOZERO", "TRUNC는 큰 값을 기준값으로 제한하고 TOZERO는 기준 이하를 0으로 만듭니다."),
+        ("adaptiveThreshold", "dst = cv2.adaptiveThreshold(src, maxval, method, type, blockSize, C)", "주변 blockSize 영역의 평균·가중평균에서 C를 빼 픽셀별 임계값을 정합니다. 입력은 1채널 uint8입니다."),
+    ],
+    "opencv-14-binary-labeling-contours": [
+        ("threshold + THRESH_OTSU", "t, dst = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)", "히스토그램에서 임계값 t를 자동 계산합니다. Otsu 플래그 사용 시 thresh 인자는 보통 0으로 둡니다."),
+        ("connectedComponentsWithStats", "count, labels, stats, centroids = cv2.connectedComponentsWithStats(binary, connectivity=8)", "배경을 포함한 라벨 수, 라벨 행렬, 경계상자·면적 통계, 중심점을 반환합니다. 0번 라벨은 배경입니다."),
+        ("findContours / drawContours", "contours, hierarchy = cv2.findContours(binary, mode, method)", "외곽선 좌표 목록과 부모·자식 계층을 반환합니다. drawContours는 선택한 외곽선을 원본 영상에 그립니다."),
+        ("arcLength / contourArea / approxPolyDP", "approx = cv2.approxPolyDP(cnt, epsilon, True)", "arcLength는 둘레, contourArea는 면적을 구합니다. approxPolyDP는 epsilon 오차 안에서 꼭짓점 수를 줄입니다."),
+    ],
+}
+
+
 def matrix_html(values, label):
     cols = len(values[0])
     cells = "".join(f"<span>{escape(str(v))}</span>" for row in values for v in row)
@@ -239,7 +329,21 @@ def matrix_html(values, label):
 
 def page(lesson, index):
     concepts = "".join(f'<div class="concept"><b>{escape(k)}</b><span>{escape(v)}</span></div>' for k, v in lesson["concepts"])
-    table = "".join(f"<tr><td><span class=\"code-key\">{escape(a)}</span></td><td>{escape(b)}</td></tr>" for a, b in lesson["table"])
+    guides = FUNCTION_GUIDES.get(lesson["slug"])
+    if guides:
+        table = "".join(
+            f'<tr><td><span class="code-key">{escape(name)}</span></td>'
+            f'<td><code class="call-pattern">{escape(call)}</code></td>'
+            f'<td>{escape(detail)}</td></tr>'
+            for name, call, detail in guides
+        )
+    else:
+        table = "".join(
+            f'<tr><td><span class="code-key">{escape(name)}</span></td>'
+            f'<td><code class="call-pattern">{escape(name)}</code></td>'
+            f'<td>{escape(role)}</td></tr>'
+            for name, role in lesson["table"]
+        )
     flow = "".join(f"<span>{escape(x)}</span>" for x in lesson["flow"])
     checks = "".join(f"<li>{escape(x)}</li>" for x in lesson["checks"])
     matrices = lesson.get("matrices") or ([lesson["matrix"]] if lesson.get("matrix") else [])
@@ -249,15 +353,15 @@ def page(lesson, index):
     prev_link = f'<a href="{prev_lesson["slug"]}.html">← {prev_lesson["num"]}</a>' if prev_lesson else '<a href="../index.html">← 전체 목차</a>'
     next_link = f'<a href="{next_lesson["slug"]}.html">{next_lesson["num"]} →</a>' if next_lesson else '<a href="../index.html">전체 목차 →</a>'
     return f'''<!doctype html>
-<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{escape(lesson["title"])} · OpenCV</title><link rel="stylesheet" href="opencv-study.css"></head><body>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{escape(lesson["title"])} · OpenCV</title><link rel="stylesheet" href="opencv-study.css"><link rel="stylesheet" href="opencv-functions.css"></head><body>
 <header><div class="shell top"><a class="brand" href="../index.html"><b>ROS</b> FIELD NOTES</a><a class="back" href="../index.html">전체 강의로 돌아가기</a></div></header>
 <section class="hero"><div class="shell"><div class="kicker">08.{lesson["num"]} · OPENCV CONCEPT STUDY</div><h1>{escape(lesson["title"])}</h1><p class="lead">{escape(lesson["lead"])}</p><div class="actions"><a class="button primary" target="_blank" rel="noopener" href="{lesson["source"]}">원본 강의</a><a class="button pdf" target="_blank" rel="noopener" href="{lesson["pdf"]}">강의 PDF</a><a class="button nb" download href="{lesson["nb"]}">IPYNB 다운로드</a></div></div></section>
-<div class="shell layout"><nav class="toc"><b>이 페이지에서</b><a href="#concepts">핵심 개념</a><a href="#theory">이론과 수식</a><a href="#matrix">행렬로 보기</a><a href="#functions">함수·용어 정리</a><a href="#flow">실습 흐름</a><a href="#check">확인할 점</a></nav><main>
+<div class="shell layout"><nav class="toc"><b>이 페이지에서</b><a href="#concepts">핵심 개념</a><a href="#theory">이론과 수식</a><a href="#matrix">행렬로 보기</a><a href="#functions">함수 사용법</a><a href="#flow">실습 흐름</a><a href="#check">확인할 점</a></nav><main>
 <section><div class="summary"><b>한 줄 정리</b><span>{escape(lesson["theory"])}</span></div></section>
 <section id="concepts"><h2>핵심 개념</h2><div class="concepts">{concepts}</div></section>
 <section id="theory"><h2>이론과 수식</h2><p>{escape(lesson["theory"])}</p><div class="equation">{escape(lesson["equation"])}</div></section>
 <section id="matrix"><h2>행렬로 보기</h2>{matrix_section}</section>
-<section id="functions"><h2>함수·용어 정리</h2><table class="study-table"><thead><tr><th>함수·표현</th><th>역할</th></tr></thead><tbody>{table}</tbody></table></section>
+<section id="functions"><h2>함수 사용법</h2><p class="section-intro">강의에서 사용하는 핵심 함수의 호출 형태와 인자·반환값을 함께 정리했습니다. 긴 코드는 가로로 스크롤해서 볼 수 있습니다.</p><div class="table-scroll"><table class="study-table function-table"><thead><tr><th>함수·표현</th><th>호출 예</th><th>인자·반환값과 사용 포인트</th></tr></thead><tbody>{table}</tbody></table></div></section>
 <section id="flow"><h2>실습 흐름</h2><div class="flow">{flow}</div></section>
 <section id="check"><h2>실습 전후 확인할 점</h2><ul class="checklist">{checks}</ul><p class="note">세부 코드와 실행 예제는 위의 IPYNB 파일에서 셀 단위로 실습할 수 있습니다.</p></section>
 <div class="nav-bottom">{prev_link}{next_link}</div></main></div></body></html>'''

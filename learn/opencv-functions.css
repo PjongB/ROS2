@@ -1,0 +1,38 @@
+.section-intro {
+  margin: -4px 0 17px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.table-scroll {
+  overflow-x: auto;
+  border-radius: 12px;
+}
+
+.function-table {
+  min-width: 860px;
+}
+
+.function-table th:first-child {
+  width: 20%;
+}
+
+.function-table th:nth-child(2) {
+  width: 36%;
+}
+
+.call-pattern {
+  display: block;
+  padding: 8px 10px;
+  border: 1px solid #d8e2f0;
+  border-radius: 8px;
+  color: #174873;
+  background: #f6f9fd;
+  font: 12px/1.55 ui-monospace, SFMono-Regular, Consolas, monospace;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.function-table td:last-child {
+  line-height: 1.65;
+}
